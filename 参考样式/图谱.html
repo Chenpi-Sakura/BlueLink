@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --bg-color: #F9F7F2;
+            --kb-blue: #002FA7;
+            --line-grey: #D1D1D1;
+        }
+
+        body { margin: 0; background: #FFFFFF; font-family: 'Georgia', serif; overflow: hidden; }
+
+        .phone-frame {
+            width: 393px; height: 854px; margin: 40px auto;
+            background: var(--bg-color); border-radius: 44px;
+            border: 8px solid #333; position: relative; overflow: hidden;
+        }
+
+        .status-bar { height: 48px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; position: absolute; top: 0; left: 0; right: 0; z-index: 30; }
+        .status-bar .time { font-weight: 600; }
+        .status-bar .right-icons { display: flex; align-items: center; gap: 6px; }
+        .status-bar .signal-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+        .status-bar .signal-bar { width: 3px; background: #333; border-radius: 1px; }
+        .status-bar .battery { display: flex; align-items: center; gap: 2px; }
+        .status-bar .battery-icon { width: 20px; height: 10px; border: 1.5px solid #333; border-radius: 2px; position: relative; }
+        .status-bar .battery-icon::after { content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%); width: 2px; height: 5px; background: #333; border-radius: 0 1px 1px 0; }
+        .status-bar .battery-level { height: 6px; width: 14px; background: #333; border-radius: 1px; margin: 1px; }
+
+        .page-title {
+            position: absolute; top: 50px; left: 0; width: 100%;
+            text-align: center; font-family: sans-serif; font-weight: 800;
+            color: var(--kb-blue); font-size: 14px; letter-spacing: 1px; z-index: 20;
+        }
+
+        #canvas { width: 100%; height: 600px; position: relative; margin-top: 80px; }
+
+        .node {
+            position: absolute; width: 48px; height: 48px;
+            background: var(--kb-blue); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-family: sans-serif; font-weight: bold;
+            z-index: 10; cursor: pointer; transition: all 0.3s ease;
+        }
+        .node.focused { background: #fff; color: var(--kb-blue); border: 2px solid var(--kb-blue); }
+
+        .connector {
+            position: absolute; height: 2px; background: var(--line-grey);
+            transform-origin: left center; z-index: 1; transition: all 0.3s ease;
+        }
+        .connector.active { background: var(--kb-blue); height: 3px; box-shadow: 0 0 5px var(--kb-blue); }
+
+        .info-panel {
+            position: absolute; bottom: 0; width: 100%; height: 160px; /* 减小高度 */
+            background: white; border-top-left-radius: 30px; border-top-right-radius: 30px;
+            padding: 25px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            transform: translateY(100%); transition: 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="right-icons">
+            <svg class="signal-bars" width="16" height="14" viewBox="0 0 16 14" fill="#333">
+                <rect class="signal-bar" x="0" y="8" width="3" height="6" rx="1"/>
+                <rect class="signal-bar" x="4" y="5" width="3" height="9" rx="1"/>
+                <rect class="signal-bar" x="8" y="2" width="3" height="12" rx="1"/>
+                <rect class="signal-bar" x="12" y="0" width="3" height="14" rx="1"/>
+            </svg>
+            <svg width="16" height="14" viewBox="0 0 24 18" fill="none" stroke="#333" stroke-width="1.5">
+                <path d="M2 8 L8 8 L12 4 L16 8 L22 8"/>
+                <circle cx="12" cy="14" r="2" fill="#333" stroke="none"/>
+            </svg>
+            <div class="battery">
+                <div class="battery-icon"><div class="battery-level"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="page-title">知识星图 · KNOWLEDGE GRAPH</div>
+    <div id="canvas">
+        <div class="node" id="n1" style="top: 50px; left: 160px;">#AI</div>
+        <div class="node" id="n2" style="top: 150px; left: 80px;">#溯源</div>
+        <div class="node" id="n3" style="top: 150px; left: 240px;">#LLM</div>
+        <div class="node" id="n4" style="top: 300px; left: 160px;">#数据</div>
+        <div class="node" id="n5" style="top: 400px; left: 80px;">#区块链</div>
+        <div class="node" id="n6" style="top: 400px; left: 240px;">#农业</div>
+    </div>
+
+    <div class="info-panel" id="panel">
+        <div style="font-size: 0.7rem; color: var(--kb-blue);">溯源线索</div>
+        <div style="font-size: 1.1rem; margin-top: 5px; font-weight: bold;" id="title">选择一个知识点</div>
+        <p style="font-size: 0.85rem; color: #666; margin-top: 8px;">已为您筛选该概念的关联文献及逻辑引力线。</p>
+    </div>
+</div>
+
+<script>
+    // 定义节点与连线关系
+    const connections =[
+        {id: 'l1', nodes: ['n1', 'n2']}, {id: 'l2', nodes:['n1', 'n3']},
+        {id: 'l3', nodes: ['n2', 'n4']}, {id: 'l3', nodes: ['n3', 'n4']},
+        {id: 'l4', nodes: ['n4', 'n5']}, {id: 'l5', nodes:['n4', 'n6']}
+    ];
+
+    function renderLines() {
+        connections.forEach(conn => {
+            const n1 = document.getElementById(conn.nodes[0]);
+            const n2 = document.getElementById(conn.nodes[1]);
+            const x1 = n1.offsetLeft + 24; const y1 = n1.offsetTop + 24;
+            const x2 = n2.offsetLeft + 24; const y2 = n2.offsetTop + 24;
+            
+            const line = document.createElement('div');
+            line.className = 'connector';
+            line.dataset.n1 = conn.nodes[0]; line.dataset.n2 = conn.nodes[1];
+            line.style.width = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) + 'px';
+            line.style.left = x1 + 'px'; line.style.top = y1 + 'px';
+            line.style.transform = `rotate(${Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI}deg)`;
+            document.getElementById('canvas').appendChild(line);
+        });
+    }
+
+    renderLines();
+
+    document.querySelectorAll('.node').forEach(node => {
+        node.addEventListener('click', () => {
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('focused'));
+            node.classList.add('focused');
+            
+            // 联动连线：仅高亮该节点涉及的线
+            document.querySelectorAll('.connector').forEach(line => {
+                line.classList.toggle('active', line.dataset.n1 === node.id || line.dataset.n2 === node.id);
+            });
+            
+            document.getElementById('panel').style.transform = 'translateY(0)';
+            document.getElementById('title').innerText = '关联概念: ' + node.innerText;
+        });
+    });
+</script>
+</body>
+</html>

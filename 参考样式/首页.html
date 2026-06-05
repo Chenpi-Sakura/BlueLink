@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蓝链 App - 移动端界面重构</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'parchment-50': '#FDFBF7', // 极浅米白背景
+                        'parchment-100': '#F4EFE6', 
+                        'parchment-200': '#E8DFD0',
+                        'ink-900': '#2C2B29', // 柔和深灰
+                        'ink-600': '#66635D',
+                        'ink-400': '#A39F98',
+                        'brand-accent': '#002FA7', // 克莱因蓝
+                        'brand-accent-light': '#6B8DFF',
+                        'brand-accent-bg': 'rgba(0, 47, 167, 0.08)',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+                        'serif': ['"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+                    },
+                    borderRadius: {
+                        '2xl': '1.25rem',
+                        '3xl': '1.75rem',
+                        '4xl': '2.5rem',
+                    },
+                    boxShadow: {
+                        'soft': '0 8px 30px -4px rgba(44, 43, 41, 0.04)',
+                        'float': '0 20px 40px -10px rgba(0, 47, 167, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            background-color: #FFFFFF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 模拟手机容器 */
+        .mobile-container {
+            width: 100%;
+            max-width: 393px;
+            height: 854px;
+            max-height: 90vh;
+            background-color: #FDFBF7;
+            border-radius: 44px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: none;
+            border: 8px solid #000000;
+        }
+
+        .status-bar { height: 48px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; position: absolute; top: 0; left: 0; right: 0; z-index: 40; }
+        .status-bar .time { font-weight: 600; }
+        .status-bar .right-icons { display: flex; align-items: center; gap: 6px; }
+        .status-bar .signal-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+        .status-bar .signal-bar { width: 3px; background: #333; border-radius: 1px; }
+        .status-bar .battery { display: flex; align-items: center; gap: 2px; }
+        .status-bar .battery-icon { width: 20px; height: 10px; border: 1.5px solid #333; border-radius: 2px; position: relative; }
+        .status-bar .battery-icon::after { content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%); width: 2px; height: 5px; background: #333; border-radius: 0 1px 1px 0; }
+        .status-bar .battery-level { height: 6px; width: 14px; background: #333; border-radius: 1px; margin: 1px; }
+
+        /* 隐藏滚动条但保留滚动功能 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 雾面透视材质 */
+        .glass-panel {
+            background: rgba(253, 251, 247, 0.7); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        /* 砖石布局 (Masonry) 的 CSS 实现 */
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 12px;
+            padding: 0 16px 100px 16px; /* 底部留白给悬浮栏 */
+        }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 12px;
+            background-color: #ffffff; /* 卡片用纯白，与底色区分 */
+        }
+        
+        /* 避免首字下沉在卡片里太突兀，轻微调整 */
+        .serif-card p {
+            word-break: break-word;
+        }
+        
+        /* 简单动效 */
+        .press-effect:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 模拟手机外壳 -->
+    <div class="mobile-container relative flex flex-col">
+        
+        <div class="status-bar">
+            <span class="time">9:41</span>
+            <div class="right-icons">
+                <svg class="signal-bars" width="16" height="14" viewBox="0 0 16 14" fill="#333">
+                    <rect class="signal-bar" x="0" y="8" width="3" height="6" rx="1"/>
+                    <rect class="signal-bar" x="4" y="5" width="3" height="9" rx="1"/>
+                    <rect class="signal-bar" x="8" y="2" width="3" height="12" rx="1"/>
+                    <rect class="signal-bar" x="12" y="0" width="3" height="14" rx="1"/>
+                </svg>
+                <svg width="16" height="14" viewBox="0 0 24 18" fill="none" stroke="#333" stroke-width="1.5">
+                    <path d="M2 8 L8 8 L12 4 L16 8 L22 8"/>
+                    <circle cx="12" cy="14" r="2" fill="#333" stroke="none"/>
+                </svg>
+                <div class="battery">
+                    <div class="battery-icon"><div class="battery-level"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 装饰性光晕背景 (古典现代主义的温度) -->
+        <div class="absolute top-[-5%] right-[-10%] w-[60%] h-[30%] bg-brand-accent/5 rounded-full blur-[60px] pointer-events-none z-0"></div>
+
+        <!-- 顶部导航区 (雾面透视吸顶) -->
+        <header class="absolute top-0 w-full z-30 glass-panel pt-12 pb-3 px-4 border-b border-parchment-200/40">
+            <!-- 搜索框与用户信息行 -->
+            <div class="flex items-center gap-3">
+                <!-- 汉堡菜单 -->
+                <button class="p-2 -ml-2 text-ink-900 press-effect">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                
+                <!-- 搜索占位 (扁平无边框，极简) -->
+                <div class="flex-1 text-ink-400 font-sans text-[15px]">
+                    搜索或向 AI...
+                </div>
+
+                <!-- 操作按钮组 -->
+                <div class="flex items-center gap-1.5">
+                    <!-- 升级按钮 (摒弃亮蓝，改用深石青浅色背景) -->
+                    <button class="flex items-center gap-1 px-3 py-1.5 bg-brand-accent-bg text-brand-accent rounded-full font-sans text-xs font-semibold press-effect">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4L12 20M12 4L6 10M12 4L18 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>升级</span>
+                    </button>
+                    
+                    <!-- 归档/列表图标 -->
+                    <button class="p-1.5 text-ink-600 press-effect">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 6H20M4 10H20V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19V10H4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                            <path d="M9 14H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- 排序图标 -->
+                    <button class="p-1.5 text-ink-600 press-effect">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 8H13M4 16H9M17 4V20M17 4L14 7M17 4L20 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+
+                    <!-- 头像 (大圆角替代纯圆，增加复古现代感) -->
+                    <div class="w-8 h-8 rounded-xl bg-parchment-200 overflow-hidden ml-1 flex-shrink-0 border border-white">
+                        <img src="https://placehold.co/100x100/E8DFD0/2C2B29?text=AI" alt="Avatar" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容滚动区 -->
+        <main class="flex-1 overflow-y-auto hide-scrollbar pt-28 relative z-10">
+            <!-- 问候语 (衬线体，温润粗体) -->
+            <div class="px-5 pb-6">
+                <h1 class="font-serif text-3xl font-bold text-ink-900 tracking-wide">晚上好</h1>
+            </div>
+
+            <!-- 瀑布流卡片列表 (Masonry 布局) -->
+            <div class="masonry-grid font-serif text-ink-900">
+                
+                <!-- 卡片 1 (LangChain文档...) -->
+                <div class="masonry-item rounded-3xl p-5 shadow-soft border border-parchment-100/50 relative overflow-hidden group">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3 flex items-center justify-between">
+                        <span class="tracking-wider">5月9日 上午10:23</span>
+                    </div>
+                    <h3 class="font-serif font-bold text-lg leading-tight mb-3 text-ink-900">LangChain v0.2 核心概念解析</h3>
+                    <p class="text-[13px] text-ink-600 leading-relaxed">
+                        LangChain是一个基于语言模型的开发框架，核心组件包括Model I/O、Retrieval、Chains、Agents和Memory。最新版本对LCEL语法进行了重构，支持更灵活的流式输出。
+                    </p>
+                    <div class="inline-block px-2.5 py-1 bg-parchment-50 rounded-lg font-sans text-[11px] text-ink-400 mt-3">
+                        #LangChain
+                    </div>
+                </div>
+
+                <!-- 卡片 2 (RAG架构...) -->
+                <div class="masonry-item rounded-3xl p-5 shadow-soft border border-parchment-100/50 relative overflow-hidden">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3">
+                        <span class="tracking-wider">5月8日 下午3:15</span>
+                    </div>
+                    <h3 class="font-serif font-bold text-[17px] leading-tight mb-3 text-ink-900">RAG检索增强生成实战指南</h3>
+                    <div class="w-8 h-[1px] bg-parchment-200 mb-3"></div>
+                    <p class="text-[13px] text-ink-600 leading-relaxed mb-4">
+                        RAG通过检索外部知识库增强LLM的回答质量。关键步骤包括：文档切分策略、嵌入模型选择、向量数据库搭建、检索排序优化以及重排序(Reranker)机制。
+                    </p>
+                    <div class="inline-block px-2.5 py-1 bg-parchment-50 rounded-lg font-sans text-[11px] text-ink-400">
+                        #RAG
+                    </div>
+                </div>
+
+                <!-- 卡片 3 (向量数据库...) -->
+                <div class="masonry-item rounded-3xl p-5 shadow-soft border border-parchment-100/50">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3">
+                        <span class="tracking-wider">5月7日 下午8:42</span>
+                    </div>
+                    <h3 class="font-serif font-bold text-lg leading-tight mb-3 text-ink-900">向量数据库对比：Milvus vs Pinecone vs Chroma</h3>
+                    <p class="text-[13px] text-ink-600 leading-relaxed mb-4">
+                        Milvus适合大规模企业级部署，Pinecone提供托管服务降低运维成本，Chroma则是轻量级本地开发首选。选型需考虑数据规模、延迟要求和预算限制。
+                    </p>
+                    <div class="inline-block px-2.5 py-1 bg-parchment-50 rounded-lg font-sans text-[11px] text-ink-400">
+                        #向量数据库
+                    </div>
+                </div>
+
+                <!-- 卡片 4 (Prompt工程...) -->
+                <div class="masonry-item rounded-3xl p-5 shadow-soft border border-parchment-100/50">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3">
+                        <span class="tracking-wider">5月6日 上午11:30</span>
+                    </div>
+                    <h3 class="font-serif font-bold text-lg leading-tight mb-3 text-ink-900">Advanced Prompt Engineering技巧</h3>
+                    <div class="w-8 h-[1px] bg-parchment-200 mb-3"></div>
+                    <p class="text-[13px] text-ink-600 leading-relaxed">
+                        Chain-of-Thought prompting引导模型逐步推理，Few-Shot Learning通过示例提升效果，角色扮演提示词可增强特定场景表现力。结构化输出保证格式一致性。
+                    </p>
+                </div>
+
+                <!-- 卡片 5 (微调技术...) -->
+                <div class="masonry-item rounded-3xl p-5 shadow-soft border border-parchment-100/50">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3">
+                        <span class="tracking-wider">5月5日 下午2:18</span>
+                    </div>
+                    <h3 class="font-serif font-bold text-lg leading-tight mb-3 text-ink-900">LLM微调技术：LoRA与QLoRA原理</h3>
+                    <p class="text-[13px] text-ink-600 leading-relaxed">
+                        LoRA通过低秩矩阵分解减少微调参数量，QLoRA进一步引入4-bit量化大幅降低显存占用。开源工具如Axolotl和LLaMA-Factory简化了训练流程。
+                    </p>
+                    <div class="inline-block px-2.5 py-1 bg-parchment-50 rounded-lg font-sans text-[11px] text-ink-400 mt-3">
+                        #模型微调
+                    </div>
+                </div>
+
+                <!-- 卡片 6 (Agent框架...) -->
+                <div class="masonry-item rounded-3xl p-5 shadow-soft border border-parchment-100/50">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3">
+                        <span class="tracking-wider">5月4日 下午4:55</span>
+                    </div>
+                    <h3 class="font-serif font-bold text-[17px] leading-tight mb-3 text-ink-900">AI Agent开发框架对比分析</h3>
+                    <p class="text-[13px] text-ink-600 leading-relaxed">
+                        AutoGPT专注自主任务拆解，LangGraph提供状态机工作流，MetaGPT模拟多智能体协作。ReAct框架结合推理与行动，适合复杂决策场景。
+                    </p>
+                </div>
+                
+                <!-- 底部占位，为了能滚到底部看清最后一张卡片 -->
+                <div class="h-24"></div>
+
+            </div>
+        </main>
+
+        <!-- 底部悬浮输入面板 (玻璃胶囊) -->
+        <div class="absolute bottom-8 left-0 w-full px-5 z-40">
+            <!-- 胶囊容器，采用强烈的磨砂玻璃质感 -->
+            <div class="glass-pill rounded-full p-2 pl-4 flex items-center justify-between shadow-float">
+                
+                <!-- 附加功能：图片/文件入口 -->
+                <button class="p-2 text-ink-600 hover:text-brand-accent transition-colors press-effect">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 8V16M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+
+                <!-- 核心静态图标显示 -->
+                <div class="mx-2 relative">
+                    <div class="relative w-12 h-12 bg-parchment-100 rounded-full flex items-center justify-center shadow-sm border border-parchment-200 text-ink-400 z-10">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2V14C12 15.6569 10.6569 17 9 17H15C13.3431 17 12 15.6569 12 14V2Z" fill="currentColor" opacity="0.5"/>
+                            <rect x="9" y="3" width="6" height="12" rx="3" fill="currentColor" opacity="0.5"/>
+                            <path d="M5 11V12C5 15.866 8.13401 19 12 19V19C15.866 19 19 15.866 19 12V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                            <path d="M12 19V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                            <path d="M9 22H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 键盘入口 -->
+                <button class="p-2 text-ink-600 hover:text-brand-accent transition-colors press-effect">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="7" cy="9" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="9" r="1" fill="currentColor"/>
+                        <circle cx="17" cy="9" r="1" fill="currentColor"/>
+                        <circle cx="7" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="17" cy="12" r="1" fill="currentColor"/>
+                        <path d="M8 16H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 添加简单的滚动时顶部导航栏投影加深的逻辑
+        const mainScroll = document.querySelector('main');
+        const header = document.querySelector('header');
+
+        mainScroll.addEventListener('scroll', () => {
+            if (mainScroll.scrollTop > 10) {
+                header.style.boxShadow = '0 4px 20px -2px rgba(44, 43, 41, 0.05)';
+            } else {
+                header.style.boxShadow = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

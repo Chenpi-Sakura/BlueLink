@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BlueLink 手机端模拟</title>
+    <style>
+        :root {
+            --bg-color: #F9F7F2; /* 羊皮纸底色 */
+            --kb-blue: #002FA7;   /* 克莱因蓝 */
+            --text-main: #1A1A1A;
+            --text-muted: #8E9AAF;
+            --glass: rgba(249, 247, 242, 0.85);
+        }
+
+        /* 模拟手机物理外壳 */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #FFFFFF;
+            font-family: 'Georgia', serif;
+        }
+
+        .phone-frame {
+            width: 393px;
+            height: 854px;
+            background: var(--bg-color);
+            border-radius: 44px;
+            box-shadow: none;
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #333;
+        }
+
+        /* 顶部状态栏 */
+        .status-bar { height: 48px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; position: absolute; top: 0; left: 0; right: 0; z-index: 10; }
+        .status-bar .time { font-weight: 600; }
+        .status-bar .right-icons { display: flex; align-items: center; gap: 6px; }
+        .status-bar .signal-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+        .status-bar .signal-bar { width: 3px; background: #333; border-radius: 1px; }
+        .status-bar .battery { display: flex; align-items: center; gap: 2px; }
+        .status-bar .battery-icon { width: 20px; height: 10px; border: 1.5px solid #333; border-radius: 2px; position: relative; }
+        .status-bar .battery-icon::after { content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%); width: 2px; height: 5px; background: #333; border-radius: 0 1px 1px 0; }
+        .status-bar .battery-level { height: 6px; width: 14px; background: #333; border-radius: 1px; margin: 1px; }
+
+        .page-header { height: 44px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; position: absolute; top: 48px; left: 0; right: 0; z-index: 10; background: transparent; }
+        .page-header .title { color: var(--kb-blue); font-weight: 600; letter-spacing: 0.5px; }
+
+        /* 内容区 */
+        .content {
+            padding: 20px;
+            padding-top: 108px;
+            height: calc(100% - 120px);
+            overflow-y: auto;
+        }
+
+        .paragraph { margin-bottom: 24px; transition: opacity 0.4s ease; color: var(--text-main); }
+        .fade-out { opacity: 0.25; }
+
+        /* 聚光灯聚焦区 */
+        .highlight-section {
+            border-left: 4px solid var(--kb-blue);
+            padding: 16px;
+            background: rgba(0, 47, 167, 0.04);
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        /* 增量折叠条 */
+        .fold-strip {
+            background: #E8EBF8;
+            padding: 12px;
+            border-radius: 12px;
+            color: var(--kb-blue);
+            font-size: 13px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: sans-serif;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .fold-strip .arrow {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            margin-left: 6px;
+        }
+
+        .fold-strip.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        .folded-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .folded-content.expanded {
+            max-height: 200px;
+        }
+
+        /* 底部导航悬浮 */
+        .footer-nav {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 60px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <div class="status-bar">
+        <span class="time">9:41</span>
+        <div class="right-icons">
+            <svg class="signal-bars" width="16" height="14" viewBox="0 0 16 14" fill="#333">
+                <rect class="signal-bar" x="0" y="8" width="3" height="6" rx="1"/>
+                <rect class="signal-bar" x="4" y="5" width="3" height="9" rx="1"/>
+                <rect class="signal-bar" x="8" y="2" width="3" height="12" rx="1"/>
+                <rect class="signal-bar" x="12" y="0" width="3" height="14" rx="1"/>
+            </svg>
+            <svg width="16" height="14" viewBox="0 0 24 18" fill="none" stroke="#333" stroke-width="1.5">
+                <path d="M2 8 L8 8 L12 4 L16 8 L22 8"/>
+                <circle cx="12" cy="14" r="2" fill="#333" stroke="none"/>
+            </svg>
+            <div class="battery">
+                <div class="battery-icon"><div class="battery-level"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <span class="title">BLUELINK</span>
+        <span style="color: var(--text-muted); font-size: 12px;">信息增量理论</span>
+    </div>
+    
+    <div class="content" id="reader">
+        <p class="paragraph fade-out">在信息爆炸的时代，我们被海量的冗余数据包围。传统的阅读方式往往试图通过“全量阅读”来捕捉知识，但实际上，信息的价值密度远低于其载体体积。</p>
+        
+        <div class="highlight-section">
+            <span style="color:var(--kb-blue); font-size: 10px; font-family: sans-serif;">溯源锚点：信息认知溯源</span>
+            <div style="margin-top: 8px;"><strong>真正的高效，不在于你读了多少，而在于你是否抓住了“信息增量”。当AI能够精准识别已掌握的背景，过滤掉无用的背景噪音，剩下的全是干货。</strong></div>
+        </div>
+
+        <p class="paragraph fade-out">这种“聚光灯式”的阅读体验，正是蓝链的核心理念。它不干扰你的沉浸式阅读，但在你需要时，它会提供那根通往真相的引力线。</p>
+
+        <div class="fold-strip" id="foldStrip">
+            AI已折叠 350 字重复背景，点击查看增量 <span class="arrow">▼</span>
+        </div>
+        
+        <div class="folded-content" id="foldedContent">
+            <p class="paragraph fade-out">知识的掌握，必须是主动构建的。当线索呈现，剩下的理解与思考，必须由用户自己完成。</p>
+        </div>
+    </div>
+
+    <div class="footer-nav">
+        <div style="color: var(--kb-blue); font-size: 20px;">●</div>
+        <div style="font-size: 20px; opacity: 0.3;">▤</div>
+        <div style="font-size: 20px; opacity: 0.3;">✎</div>
+    </div>
+</div>
+
+<script>
+    // 折叠/展开功能
+    const foldStrip = document.getElementById('foldStrip');
+    const foldedContent = document.getElementById('foldedContent');
+
+    foldStrip.addEventListener('click', () => {
+        foldStrip.classList.toggle('expanded');
+        foldedContent.classList.toggle('expanded');
+        const arrow = foldStrip.querySelector('.arrow');
+        if (foldedContent.classList.contains('expanded')) {
+            foldStrip.innerHTML = '已展开 <span class="arrow">▼</span>';
+        } else {
+            foldStrip.innerHTML = 'AI已折叠 350 字重复背景，点击查看增量 <span class="arrow">▼</span>';
+        }
+    });
+
+    // 模拟点击页面空白解除聚光灯
+    document.getElementById('reader').addEventListener('click', (e) => {
+        if(e.target.className !== 'fold-strip') {
+            document.querySelectorAll('.paragraph').forEach(p => p.classList.remove('fade-out'));
+            const highlightSection = document.querySelector('.highlight-section');
+            highlightSection.style.background = 'transparent';
+            highlightSection.style.borderLeft = 'none';
+            highlightSection.style.padding = '0';
+            const sourceLabel = highlightSection.querySelector('span');
+            if (sourceLabel) sourceLabel.style.display = 'none';
+            const strongEl = highlightSection.querySelector('strong');
+            if (strongEl) {
+                strongEl.style.fontWeight = 'normal';
+                strongEl.style.color = 'var(--text-main)';
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

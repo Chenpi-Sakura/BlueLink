@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蓝链 BlueLink - 端侧AI认知溯源引擎</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'parchment-50': '#FDFBF7',
+                        'parchment-100': '#F4EFE6', 
+                        'parchment-200': '#E8DFD0',
+                        'ink-900': '#2C2B29',
+                        'ink-600': '#66635D',
+                        'ink-400': '#A39F98',
+                        'brand-accent': '#002FA7',
+                        'brand-accent-light': '#6B8DFF',
+                        'brand-accent-bg': 'rgba(0, 47, 167, 0.08)',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+                        'serif': ['"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+                    },
+                    borderRadius: {
+                        '2xl': '1.25rem',
+                        '3xl': '1.75rem',
+                        '4xl': '2.5rem',
+                    },
+                    boxShadow: {
+                        'soft': '0 8px 30px -4px rgba(44, 43, 41, 0.04)',
+                        'float': '0 20px 40px -10px rgba(0, 47, 167, 0.15)',
+                        'card': '0 4px 20px -2px rgba(44, 43, 41, 0.06)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        
+        body {
+            -webkit-font-smoothing: antialiased;
+            background-color: #F0EFEA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 393px;
+            height: 854px;
+            max-height: 90vh;
+            background-color: #FDFBF7;
+            border-radius: 44px;
+            overflow: hidden;
+            position: relative;
+            border: 8px solid #1a1a1a;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-bar { 
+            height: 48px; 
+            padding: 0 24px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            font-size: 14px; 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            z-index: 100; 
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .glass-panel {
+            background: rgba(253, 251, 247, 0.7); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .page.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .press-effect:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease;
+        }
+
+        .masonry-grid {
+            column-count: 2;
+            column-gap: 12px;
+            padding: 0 16px 100px 16px;
+        }
+        
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 12px;
+            background-color: #ffffff;
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(253, 251, 247, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 90;
+            padding-bottom: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item.active {
+            color: #002FA7;
+        }
+        
+        .nav-item:not(.active) {
+            color: #A39F98;
+        }
+
+        .connector {
+            position: absolute; 
+            height: 2px; 
+            background: #D1D1D1;
+            transform-origin: left center; 
+            z-index: 1; 
+            transition: all 0.3s ease;
+        }
+        
+        .connector.active { 
+            background: #002FA7; 
+            height: 3px; 
+            box-shadow: 0 0 8px rgba(0, 47, 167, 0.5); 
+        }
+
+        .knowledge-node {
+            position: absolute; 
+            width: 52px; 
+            height: 52px;
+            background: #002FA7; 
+            color: white;
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 11px; 
+            font-weight: 600;
+            z-index: 10; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .knowledge-node.focused { 
+            background: #fff; 
+            color: #002FA7; 
+            border: 2px solid #002FA7;
+            transform: scale(1.15);
+            box-shadow: 0 8px 20px rgba(0, 47, 167, 0.3);
+        }
+
+        .anchor-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .anchor-card:hover {
+            border-color: #002FA7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 47, 167, 0.15);
+        }
+
+        .spotlight-target {
+            border-left: 4px solid #002FA7;
+            padding: 16px;
+            background: rgba(0, 47, 167, 0.04);
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+            position: relative;
+            transition: all 0.4s ease;
+        }
+
+        .fade-paragraph { 
+            opacity: 0.25; 
+            transition: opacity 0.4s ease; 
+        }
+        
+        .fade-paragraph.full-opacity {
+            opacity: 1;
+        }
+
+        .fold-strip {
+            background: rgba(0, 47, 167, 0.08);
+            padding: 12px;
+            border-radius: 12px;
+            color: #002FA7;
+            font-size: 13px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .fold-strip:hover {
+            background: rgba(0, 47, 167, 0.12);
+        }
+
+        .folded-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .folded-content.expanded {
+            max-height: 500px;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #002FA7;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        .message-bubble {
+            max-width: 85%;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .gravity-line {
+            position: relative;
+        }
+        
+        .gravity-line::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: -20px;
+            width: 2px;
+            height: 20px;
+            background: linear-gradient(to bottom, transparent, #002FA7);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="app">
+        
+        <div class="status-bar">
+            <span class="time font-semibold text-ink-900">9:41</span>
+            <div class="right-icons flex items-center gap-1">
+                <svg width="16" height="14" viewBox="0 0 16 14" fill="#333">
+                    <rect x="0" y="8" width="3" height="6" rx="1"/>
+                    <rect x="4" y="5" width="3" height="9" rx="1"/>
+                    <rect x="8" y="2" width="3" height="12" rx="1"/>
+                    <rect x="12" y="0" width="3" height="14" rx="1"/>
+                </svg>
+                <svg width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="#333" stroke-width="1.5">
+                    <path d="M2 8 L8 8 L12 4 L16 8 L22 8"/>
+                    <circle cx="12" cy="14" r="2" fill="#333" stroke="none"/>
+                </svg>
+                <div class="flex items-center ml-1">
+                    <div class="w-5 h-2.5 border border-gray-700 rounded-sm relative">
+                        <div class="absolute inset-0.5 bg-gray-700 rounded-sm" style="width: 70%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-home" class="page active">
+            <div class="absolute top-[-5%] right-[-10%] w-[60%] h-[30%] bg-brand-accent/5 rounded-full blur-[60px] pointer-events-none z-0"></div>
+            
+            <header class="absolute top-0 w-full z-30 glass-panel pt-12 pb-3 px-4 border-b border-parchment-200/40">
+                <div class="flex items-center gap-3">
+                    <button class="p-2 -ml-2 text-ink-900 press-effect">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 6H20M4 12H20M4 18H14"/>
+                        </svg>
+                    </button>
+                    <div class="flex-1 text-ink-400 font-sans text-[15px]">
+                        搜索或向 AI 提问...
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button class="flex items-center gap-1 px-3 py-1.5 bg-brand-accent-bg text-brand-accent rounded-full font-sans text-xs font-semibold press-effect">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 4L12 20M12 4L6 10M12 4L18 10"/>
+                            </svg>
+                            <span>升级</span>
+                        </button>
+                        <button class="p-1.5 text-ink-600 press-effect">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+                                <path d="M4 6H20M4 10H20V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19V10H4Z"/>
+                                <path d="M9 14H15"/>
+                            </svg>
+                        </button>
+                        <div class="w-8 h-8 rounded-xl bg-parchment-200 overflow-hidden ml-1 flex-shrink-0 border border-white flex items-center justify-center">
+                            <span class="text-ink-600 text-xs font-semibold">AI</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto hide-scrollbar pt-28 relative z-10" id="home-scroll">
+                <div class="px-5 pb-6">
+                    <h1 class="font-serif text-3xl font-bold text-ink-900 tracking-wide">晚上好</h1>
+                </div>
+
+                <div class="masonry-grid font-serif text-ink-900" id="document-list">
+                </div>
+            </main>
+
+            <div class="absolute bottom-20 left-0 w-full px-5 z-40">
+                <div class="glass-pill rounded-full p-2 pl-4 flex items-center justify-between shadow-float">
+                    <button class="p-2 text-ink-600 hover:text-brand-accent transition-colors press-effect" onclick="navigateTo('chat')">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </button>
+                    <div class="mx-2">
+                        <div class="relative w-12 h-12 bg-parchment-100 rounded-full flex items-center justify-center shadow-sm border border-parchment-200 text-ink-400">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M12 2V14C12 15.6569 10.6569 17 9 17H15C13.3431 17 12 15.6569 12 14V2Z" fill="currentColor" opacity="0.3"/>
+                                <rect x="9" y="3" width="6" height="12" rx="3" fill="currentColor" opacity="0.3"/>
+                                <path d="M5 11V12C5 15.866 8.13401 19 12 19V19C15.866 19 19 15.866 19 12V11"/>
+                                <path d="M12 19V22"/>
+                                <path d="M9 22H15"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <button class="p-2 text-ink-600 hover:text-brand-accent transition-colors press-effect">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="4"/>
+                            <path d="M12 8V16M8 12H16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-chat" class="page">
+            <header class="absolute top-0 w-full z-30 glass-panel pt-12 pb-3 px-4 border-b border-parchment-200/40">
+                <div class="flex items-center gap-3">
+                    <button class="p-2 -ml-2 text-ink-900 press-effect" onclick="navigateTo('home')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <div class="flex-1">
+                        <h2 class="font-serif font-bold text-ink-900">AI 溯源助手</h2>
+                    </div>
+                    <button class="p-2 text-ink-600 press-effect">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto hide-scrollbar pt-20 pb-28 px-4" id="chat-container">
+                <div class="space-y-6" id="chat-messages">
+                </div>
+            </main>
+
+            <div class="absolute bottom-0 left-0 right-0 p-4 glass-panel border-t border-parchment-200/40">
+                <div class="flex items-center gap-3">
+                    <button class="p-2 text-ink-600 press-effect">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                    </button>
+                    <div class="flex-1 bg-white rounded-full px-4 py-3 text-sm text-ink-400 border border-parchment-200/60" id="chat-input" contenteditable="true" placeholder="输入你的疑问...">
+                    </div>
+                    <button class="w-10 h-10 rounded-full bg-brand-accent flex items-center justify-center text-white press-effect" onclick="sendMessage()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-reader" class="page">
+            <header class="absolute top-0 w-full z-30 glass-panel pt-12 pb-3 px-4 border-b border-parchment-200/40">
+                <div class="flex items-center gap-3">
+                    <button class="p-2 -ml-2 text-ink-900 press-effect" onclick="navigateTo('chat')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <div class="flex-1">
+                        <p class="text-[11px] text-brand-accent font-semibold tracking-wider">溯源阅读</p>
+                        <h2 class="font-serif font-bold text-ink-900 text-sm" id="reader-title">LLM 架构演进综述</h2>
+                    </div>
+                    <button class="p-2 text-ink-600 press-effect" onclick="navigateTo('graph')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="5" r="3"/>
+                            <circle cx="5" cy="19" r="3"/>
+                            <circle cx="19" cy="19" r="3"/>
+                            <path d="M12 8v8M8.5 16.5l3.5-2 3.5 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto hide-scrollbar pt-24 pb-8 px-5" id="reader-content">
+            </main>
+        </div>
+
+        <div id="page-graph" class="page">
+            <header class="absolute top-0 w-full z-30 glass-panel pt-12 pb-3 px-4 border-b border-parchment-200/40">
+                <div class="flex items-center gap-3">
+                    <button class="p-2 -ml-2 text-ink-900 press-effect" onclick="navigateTo('home')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <div class="flex-1 text-center">
+                        <p class="text-[11px] text-brand-accent font-semibold tracking-widest">KNOWLEDGE GRAPH</p>
+                        <h2 class="font-serif font-bold text-ink-900 text-sm">知识星图</h2>
+                    </div>
+                    <button class="p-2 text-ink-600 press-effect">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-hidden relative" id="graph-canvas">
+            </main>
+
+            <div class="absolute bottom-0 left-0 right-0 h-44 bg-white rounded-t-[30px] shadow-lg transform translate-y-full transition-transform duration-400 ease-out z-40" id="graph-panel">
+                <div class="w-12 h-1 bg-ink-400/30 rounded-full mx-auto mt-3 mb-4"></div>
+                <div class="px-6">
+                    <p class="text-[11px] text-brand-accent font-semibold tracking-wider mb-2" id="panel-tag">溯源线索</p>
+                    <h3 class="font-serif font-bold text-lg text-ink-900 mb-3" id="panel-title">选择一个知识点</h3>
+                    <p class="text-sm text-ink-600 leading-relaxed mb-4" id="panel-desc">点击图谱中的节点，查看相关文献与逻辑引力线。</p>
+                    <button class="w-full py-3 bg-brand-accent text-white rounded-2xl font-semibold text-sm press-effect" onclick="navigateTo('reader')">
+                        查看溯源原文 →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav" id="bottom-nav">
+            <div class="nav-item active" onclick="navigateTo('home')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span class="text-[10px] font-medium">首页</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('chat')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span class="text-[10px] font-medium">对话</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('graph')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="5" r="3"/>
+                    <circle cx="5" cy="19" r="3"/>
+                    <circle cx="19" cy="19" r="3"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8.5" y1="16.5" x2="15.5" y2="16.5"/>
+                </svg>
+                <span class="text-[10px] font-medium">图谱</span>
+            </div>
+            <div class="nav-item" onclick="navigateTo('reader')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <span class="text-[10px] font-medium">阅读</span>
+            </div>
+        </nav>
+
+    </div>
+
+    <script>
+        const documents = [
+            {
+                id: 1,
+                title: 'LangChain v0.2 核心概念解析',
+                excerpt: 'LangChain是一个基于语言模型的开发框架，核心组件包括Model I/O、Retrieval、Chains、Agents和Memory。最新版本对LCEL语法进行了重构，支持更灵活的流式输出。',
+                date: '5月9日 上午10:23',
+                tags: ['LangChain'],
+                category: 'tech'
+            },
+            {
+                id: 2,
+                title: 'RAG检索增强生成实战指南',
+                excerpt: 'RAG通过检索外部知识库增强LLM的回答质量。关键步骤包括：文档切分策略、嵌入模型选择、向量数据库搭建、检索排序优化以及重排序(Reranker)机制。',
+                date: '5月8日 下午3:15',
+                tags: ['RAG'],
+                category: 'tech'
+            },
+            {
+                id: 3,
+                title: '向量数据库对比：Milvus vs Pinecone vs Chroma',
+                excerpt: 'Milvus适合大规模企业级部署，Pinecone提供托管服务降低运维成本，Chroma则是轻量级本地开发首选。选型需考虑数据规模、延迟要求和预算限制。',
+                date: '5月7日 下午8:42',
+                tags: ['向量数据库'],
+                category: 'tech'
+            },
+            {
+                id: 4,
+                title: 'Advanced Prompt Engineering技巧',
+                excerpt: 'Chain-of-Thought prompting引导模型逐步推理，Few-Shot Learning通过示例提升效果，角色扮演提示词可增强特定场景表现力。结构化输出保证格式一致性。',
+                date: '5月6日 上午11:30',
+                tags: [],
+                category: 'tech'
+            },
+            {
+                id: 5,
+                title: 'LLM微调技术：LoRA与QLoRA原理',
+                excerpt: 'LoRA通过低秩矩阵分解减少微调参数量，QLoRA进一步引入4-bit量化大幅降低显存占用。开源工具如Axolotl和LLaMA-Factory简化了训练流程。',
+                date: '5月5日 下午2:18',
+                tags: ['模型微调'],
+                category: 'tech'
+            },
+            {
+                id: 6,
+                title: 'AI Agent开发框架对比分析',
+                excerpt: 'AutoGPT专注自主任务拆解，LangGraph提供状态机工作流，MetaGPT模拟多智能体协作。ReAct框架结合推理与行动，适合复杂决策场景。',
+                date: '5月4日 下午4:55',
+                tags: [],
+                category: 'tech'
+            }
+        ];
+
+        const chatHistory = [
+            {
+                type: 'user',
+                content: '如何理解微调技术（Fine-tuning）与 RAG 的边界？'
+            },
+            {
+                type: 'ai',
+                content: '微调改变的是模型的"表达习惯"，而 RAG 提供的是"事实依据"。微调无法解决实时知识更新问题，而 RAG 的局限在于检索的召回率。',
+                anchors: [
+                    {
+                        title: '《LLM 架构演进综述》第 4.2 节',
+                        subtitle: '对比分析微调与检索的权衡策略',
+                        documentId: 5
+                    }
+                ]
+            }
+        ];
+
+        const readerContent = {
+            title: 'LLM 架构演进综述',
+            paragraphs: [
+                {
+                    text: '在信息爆炸的时代，我们被海量的冗余数据包围。传统的阅读方式往往试图通过"全量阅读"来捕捉知识，但实际上，信息的价值密度远低于其载体体积。大语言模型的出现为我们提供了一种全新的可能性——让AI成为我们的知识引路人。',
+                    faded: true
+                },
+                {
+                    text: '微调（Fine-tuning）技术通过在预训练模型的基础上进行进一步训练，来适应特定的下游任务。这种方法本质上是在改变模型的"参数记忆"，让模型学会特定的表达风格和知识模式。然而，微调有着固有的局限性：它无法解决实时知识更新的问题，也难以追溯信息的来源。',
+                    faded: true
+                },
+                {
+                    type: 'highlight',
+                    anchor: '信息认知溯源',
+                    text: '真正的高效，不在于你读了多少，而在于你是否抓住了"信息增量"。当AI能够精准识别已掌握的背景，过滤掉无用的背景噪音，剩下的全是干货。RAG（检索增强生成）正是基于这一理念，它不依赖模型的参数记忆，而是通过实时检索外部知识库来提供事实依据。'
+                },
+                {
+                    text: '这种"聚光灯式"的阅读体验，正是蓝链的核心理念。它不干扰你的沉浸式阅读，但在你需要时，它会提供那根通往真相的引力线。微调与RAG并非对立关系，而是互补的技术方案。微调擅长塑造模型的行为习惯，而RAG负责提供准确的事实来源。',
+                    faded: true
+                },
+                {
+                    type: 'fold',
+                    label: 'AI已折叠 350 字重复背景，点击查看增量',
+                    content: '知识的掌握，必须是主动构建的。当线索呈现，剩下的理解与思考，必须由用户自己完成。蓝链的设计哲学正是基于这一点：AI是向导，而非答案的提供者。我们相信，真正的学习发生在用户与原文的直接对话之中。'
+                },
+                {
+                    text: '在实际应用中，我们建议根据场景选择合适的技术方案。对于需要特定风格输出的场景，可以结合轻量级的LoRA微调；对于需要准确事实依据的问答场景，则应优先使用RAG方案。最佳实践往往是将两者结合，用微调整体风格，用RAG保证事实准确性。',
+                    faded: true
+                }
+            ]
+        };
+
+        const knowledgeGraph = {
+            nodes: [
+                { id: 'ai', label: '#AI', x: 165, y: 80 },
+                { id: 'trace', label: '#溯源', x: 80, y: 180 },
+                { id: 'llm', label: '#LLM', x: 250, y: 180 },
+                { id: 'data', label: '#数据', x: 165, y: 300 },
+                { id: 'blockchain', label: '#区块链', x: 80, y: 420 },
+                { id: 'rag', label: '#RAG', x: 250, y: 420 }
+            ],
+            connections: [
+                ['ai', 'trace'], ['ai', 'llm'],
+                ['trace', 'data'], ['llm', 'data'],
+                ['data', 'blockchain'], ['data', 'rag']
+            ],
+            nodeInfo: {
+                'ai': { title: '人工智能基础', desc: '已关联 12 篇文献，核心概念包括机器学习、深度学习、神经网络等。' },
+                'trace': { title: '溯源技术', desc: '信息溯源是确保知识可信度的关键，包含 8 篇相关论文。' },
+                'llm': { title: '大语言模型', desc: 'GPT、LLaMA、Qwen 等主流大模型的技术原理与应用对比。' },
+                'data': { title: '数据工程', desc: '向量数据库、数据清洗、特征工程的最佳实践集合。' },
+                'blockchain': { title: '区块链与数据', desc: '去中心化数据存储与可信计算的交叉研究领域。' },
+                'rag': { title: '检索增强生成', desc: 'RAG技术详解，包含向量检索、重排序等关键技术。' }
+            }
+        };
+
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const navItems = document.querySelectorAll('.nav-item');
+            const pageMap = { 'home': 0, 'chat': 1, 'graph': 2, 'reader': 3 };
+            if (navItems[pageMap[page]]) {
+                navItems[pageMap[page]].classList.add('active');
+            }
+
+            if (page === 'graph') {
+                setTimeout(renderGraph, 100);
+            }
+        }
+
+        function renderDocumentList() {
+            const container = document.getElementById('document-list');
+            container.innerHTML = documents.map((doc, index) => `
+                <div class="masonry-item rounded-3xl p-5 shadow-card border border-parchment-100/50 relative overflow-hidden group cursor-pointer press-effect" onclick="openDocument(${doc.id})">
+                    <div class="font-sans text-[11px] text-ink-400 mb-3 flex items-center justify-between">
+                        <span class="tracking-wider">${doc.date}</span>
+                    </div>
+                    <h3 class="font-serif font-bold ${index % 2 === 0 ? 'text-lg' : 'text-[17px]'} leading-tight mb-3 text-ink-900">${doc.title}</h3>
+                    ${index % 2 === 1 ? '<div class="w-8 h-[1px] bg-parchment-200 mb-3"></div>' : ''}
+                    <p class="text-[13px] text-ink-600 leading-relaxed">${doc.excerpt}</p>
+                    ${doc.tags.length > 0 ? `
+                        <div class="inline-block px-2.5 py-1 bg-parchment-50 rounded-lg font-sans text-[11px] text-ink-400 mt-3">
+                            ${doc.tags.map(t => '#' + t).join(' ')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('') + '<div class="h-24"></div>';
+        }
+
+        function openDocument(id) {
+            navigateTo('reader');
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = chatHistory.map(msg => {
+                if (msg.type === 'user') {
+                    return `
+                        <div class="flex justify-end message-bubble">
+                            <div class="bg-brand-accent text-white p-4 rounded-2xl rounded-tr-none text-sm max-w-[85%] leading-relaxed">
+                                ${msg.content}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="space-y-4 message-bubble">
+                            <div class="bg-white p-4 rounded-2xl rounded-tl-none border border-black/5 shadow-sm text-sm text-ink-600 leading-relaxed max-w-[85%]">
+                                ${msg.content}
+                            </div>
+                            ${msg.anchors ? msg.anchors.map(anchor => `
+                                <div class="anchor-card p-4 rounded-2xl bg-white border border-brand-accent/20 shadow-lg" onclick="openFromAnchor(${anchor.documentId})">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="w-2 h-2 rounded-full bg-brand-accent"></span>
+                                        <span class="text-[10px] font-bold text-brand-accent uppercase tracking-wider">溯源引力线</span>
+                                    </div>
+                                    <p class="text-[13px] font-bold serif text-ink-900">${anchor.title}</p>
+                                    <p class="text-[11px] text-ink-400 mt-1">—— ${anchor.subtitle}</p>
+                                </div>
+                            `).join('') : ''}
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.innerText.trim();
+            if (!text) return;
+
+            chatHistory.push({ type: 'user', content: text });
+            input.innerText = '';
+            renderChatMessages();
+
+            setTimeout(() => {
+                const chatContainer = document.getElementById('chat-container');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+
+            setTimeout(() => {
+                chatHistory.push({
+                    type: 'ai',
+                    content: '这是一个很好的问题。让我为您定位相关的文献片段...',
+                    anchors: [{
+                        title: '《深度学习原理》第 3 章',
+                        subtitle: '神经网络基础与反向传播算法详解',
+                        documentId: 1
+                    }]
+                });
+                renderChatMessages();
+                setTimeout(() => {
+                    const chatContainer = document.getElementById('chat-container');
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 50);
+            }, 1500);
+        }
+
+        function openFromAnchor(docId) {
+            navigateTo('reader');
+        }
+
+        function renderReaderContent() {
+            const container = document.getElementById('reader-content');
+            container.innerHTML = `
+                <h1 class="font-serif text-2xl font-bold text-ink-900 mb-6">${readerContent.title}</h1>
+                ${readerContent.paragraphs.map((p, i) => {
+                    if (p.type === 'highlight') {
+                        return `
+                            <div class="spotlight-target" id="spotlight-${i}">
+                                <span class="text-brand-accent text-[10px] font-sans font-semibold tracking-wide">溯源锚点：${p.anchor}</span>
+                                <div class="mt-2">
+                                    <strong class="text-ink-900">${p.text}</strong>
+                                </div>
+                            </div>
+                        `;
+                    } else if (p.type === 'fold') {
+                        return `
+                            <div class="fold-strip" onclick="toggleFold(this)">
+                                ${p.label} <span class="arrow inline-block ml-1">▼</span>
+                            </div>
+                            <div class="folded-content">
+                                <p class="text-[15px] text-ink-600 leading-relaxed font-serif fade-paragraph">${p.content}</p>
+                            </div>
+                        `;
+                    } else {
+                        return `<p class="text-[15px] text-ink-600 leading-relaxed font-serif mb-5 fade-paragraph ${p.faded ? '' : 'full-opacity'}">${p.text}</p>`;
+                    }
+                }).join('')}
+                <div class="h-20"></div>
+            `;
+
+            container.onclick = (e) => {
+                if (!e.target.closest('.fold-strip') && !e.target.closest('.spotlight-target')) {
+                    clearSpotlight();
+                }
+            };
+        }
+
+        function toggleFold(element) {
+            const content = element.nextElementSibling;
+            const arrow = element.querySelector('.arrow');
+            content.classList.toggle('expanded');
+            arrow.style.transform = content.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0)';
+        }
+
+        function clearSpotlight() {
+            document.querySelectorAll('.fade-paragraph').forEach(p => {
+                p.classList.add('full-opacity');
+            });
+            const highlights = document.querySelectorAll('.spotlight-target');
+            highlights.forEach(h => {
+                h.style.background = 'transparent';
+                h.style.borderLeft = 'none';
+                h.style.padding = '0';
+                const label = h.querySelector('span');
+                if (label) label.style.display = 'none';
+            });
+        }
+
+        function renderGraph() {
+            const canvas = document.getElementById('graph-canvas');
+            const panel = document.getElementById('graph-panel');
+            
+            canvas.innerHTML = '';
+            
+            knowledgeGraph.connections.forEach(([from, to], idx) => {
+                const fromNode = knowledgeGraph.nodes.find(n => n.id === from);
+                const toNode = knowledgeGraph.nodes.find(n => n.id === to);
+                
+                const line = document.createElement('div');
+                line.className = 'connector';
+                line.dataset.from = from;
+                line.dataset.to = to;
+                
+                const x1 = fromNode.x + 26;
+                const y1 = fromNode.y + 26 + 60;
+                const x2 = toNode.x + 26;
+                const y2 = toNode.y + 26 + 60;
+                
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                
+                line.style.left = x1 + 'px';
+                line.style.top = y1 + 'px';
+                line.style.width = length + 'px';
+                line.style.transform = `rotate(${angle}deg)`;
+                
+                canvas.appendChild(line);
+            });
+            
+            knowledgeGraph.nodes.forEach(node => {
+                const el = document.createElement('div');
+                el.className = 'knowledge-node';
+                el.id = 'node-' + node.id;
+                el.style.left = node.x + 'px';
+                el.style.top = (node.y + 60) + 'px';
+                el.innerText = node.label;
+                el.onclick = () => focusNode(node.id);
+                canvas.appendChild(el);
+            });
+        }
+
+        function focusNode(nodeId) {
+            document.querySelectorAll('.knowledge-node').forEach(n => n.classList.remove('focused'));
+            document.getElementById('node-' + nodeId).classList.add('focused');
+            
+            document.querySelectorAll('.connector').forEach(line => {
+                if (line.dataset.from === nodeId || line.dataset.to === nodeId) {
+                    line.classList.add('active');
+                } else {
+                    line.classList.remove('active');
+                }
+            });
+            
+            const info = knowledgeGraph.nodeInfo[nodeId];
+            const panel = document.getElementById('graph-panel');
+            document.getElementById('panel-title').innerText = info.title;
+            document.getElementById('panel-desc').innerText = info.desc;
+            panel.style.transform = 'translateY(0)';
+        }
+
+        function init() {
+            renderDocumentList();
+            renderChatMessages();
+            renderReaderContent();
+            
+            const homeScroll = document.getElementById('home-scroll');
+            const header = document.querySelector('#page-home header');
+            homeScroll.addEventListener('scroll', () => {
+                header.style.boxShadow = homeScroll.scrollTop > 10 
+                    ? '0 4px 20px -2px rgba(44, 43, 41, 0.05)' 
+                    : 'none';
+            });
+
+            const chatInput = document.getElementById('chat-input');
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+</html>

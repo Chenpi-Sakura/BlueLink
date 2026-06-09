@@ -1,1 +1,10 @@
+# ====== 构建产物 ======
 /build
+/reports
+/test-results
+
+# ====== ProGuard 映射文件（发版时可临时取消忽略备份） ======
+# /build/outputs/mapping/
+
+# ====== 生成的代码 ======
+/build/generated/

@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">BlueLink</string>
+    <string name="app_name">蓝链 BlueLink</string>
+    <string name="tab_home">文库</string>
+    <string name="tab_chat">对话</string>
+    <string name="tab_graph">图谱</string>
+    <string name="tab_mine">我的</string>
 </resources>

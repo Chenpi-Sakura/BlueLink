@@ -1,15 +1,53 @@
-*.iml
+# ====== Gradle ======
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+**/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ====== IDE (Android Studio / IntelliJ) ======
+*.iml
+.idea/
+!.idea/.gitignore
+!.idea/codeStyles/
+!.idea/runConfigurations/
+!.idea/inspectionProfiles/
+
+# ====== 本地配置 ======
+local.properties
+
+# ====== OS 生成文件 ======
 .DS_Store
-/build
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ====== Android ======
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# ====== 签名 ======
+*.jks
+*.keystore
+!debug.keystore
+
+# ====== Kotlin ======
+.kotlin/
+
+# ====== 日志 & 临时文件 ======
+*.log
+*.tmp
+*.bak
+
+# ====== 测试报告 ======
+/app/reports/
+/test-results/
+
+# ====== 生成的代码（如有） ======
+# app/src/main/java/com/yjtzc/bluelink/generated/

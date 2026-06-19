@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.BlueLink" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+        启动主题（Compose 接管后的显示由 BlueLinkTheme 控制）。
+        Splash Screen 背景使用米白，与 App 主题保持一致。
+    -->
+    <style name="Theme.BlueLink" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#FAF7F2</item>
+        <item name="android:navigationBarColor">#FAF7F2</item>
+        <item name="android:windowBackground">#FAF7F2</item>
+    </style>
 </resources>

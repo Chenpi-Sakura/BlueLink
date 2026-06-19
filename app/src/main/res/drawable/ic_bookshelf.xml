@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <!-- 三本书 + 底层书架 -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M160,800L160,680L320,680L320,800L160,800ZM160,640L160,160L320,160L320,640L160,640ZM240,560L240,240L240,560Z M400,800L400,520L560,520L560,800L400,800ZM400,480L400,160L560,160L560,480L400,480ZM480,400L480,240L480,400Z M640,800L640,400L800,400L800,800L640,800ZM640,360L640,160L800,160L800,360L640,360ZM720,280L720,240L720,280Z M120,840L120,800L840,800L840,840L120,840Z" />
+</vector>

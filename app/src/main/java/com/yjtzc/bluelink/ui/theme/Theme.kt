@@ -3,7 +3,9 @@ package com.yjtzc.bluelink.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -14,52 +16,77 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
-// ====== 亮色主题（UI&UX §2.2.1 / §8.1） ======
+// ====== 亮色主题（对齐参考样式 Parchment + Klein Blue） ======
 
 private val BlueLinkLightColors = lightColorScheme(
+    // 主色 — 克莱因蓝
     primary = KleinBlue,
-    onPrimary = RiceWhite,
-    primaryContainer = KleinBluePale,
+    onPrimary = PureWhite,
+    primaryContainer = KleinBlueBg,
     onPrimaryContainer = KleinBlue,
-    secondary = RiceWarm,
-    onSecondary = DeepInk,
-    background = RiceWhite,
-    onBackground = DeepInk,
-    surface = RiceWhite,
-    onSurface = DeepInk,
-    surfaceVariant = MistGray,
-    onSurfaceVariant = MidGray,
+
+    // 次要 — 暖灰
+    secondary = Parchment100,
+    onSecondary = Ink900,
+
+    // 背景 — 羊皮纸白
+    background = Parchment50,
+    onBackground = Ink900,
+
+    // 表面 — 纯白卡片
+    surface = PureWhite,
+    onSurface = Ink900,
+    surfaceVariant = Parchment100,
+    onSurfaceVariant = Ink600,
+
+    // 错误
     error = Vermilion,
-    onError = RiceWhite,
-    outline = SandLine,
-    outlineVariant = SandLine,
+    onError = PureWhite,
+
+    // 边框
+    outline = Parchment200,
+    outlineVariant = Parchment100,
+
+    // 成功
     tertiary = SuccessGreen,
-    onTertiary = RiceWhite
+    onTertiary = PureWhite
 )
 
-// ====== 暗黑主题（UI&UX §2.2.2） ======
+// ====== 暗黑主题 ======
 
 private val BlueLinkDarkColors = darkColorScheme(
-    primary = KleinBluePale,
-    onPrimary = RiceWhite,
+    primary = KleinBlueLight,
+    onPrimary = PureWhite,
     primaryContainer = KleinBlue.copy(alpha = 0.3f),
-    onPrimaryContainer = KleinBluePale,
+    onPrimaryContainer = KleinBlueLight,
     secondary = DarkSurfaceVariant,
-    onSecondary = RiceWhite,
+    onSecondary = PureWhite,
     background = DarkBackground,
-    onBackground = RiceWhite,
+    onBackground = PureWhite,
     surface = DarkSurface,
-    onSurface = RiceWhite,
+    onSurface = PureWhite,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = LightGray,
     error = Vermilion,
-    onError = RiceWhite,
+    onError = PureWhite,
     outline = DarkOutline,
     outlineVariant = DarkOutline,
     tertiary = SuccessGreen,
-    onTertiary = RiceWhite
+    onTertiary = PureWhite
+)
+
+// ====== 圆角系统（对齐参考样式） ======
+// 参考：卡片 28dp(rounded-3xl), 消息气泡 20dp(rounded-2xl), 标签 8dp
+
+private val BlueLinkShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),      // 标签、折叠条
+    medium = RoundedCornerShape(12.dp),    // 锚点卡片、输入框
+    large = RoundedCornerShape(20.dp),     // 消息气泡、对话框
+    extraLarge = RoundedCornerShape(28.dp) // 卡片、弹窗
 )
 
 // ====== Theme Composable ======
@@ -67,11 +94,10 @@ private val BlueLinkDarkColors = darkColorScheme(
 @Composable
 fun BlueLinkTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,      // ← 关闭动态颜色，使用品牌色
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // Android 12+ 支持 Material You 动态取色
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -93,6 +119,7 @@ fun BlueLinkTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = BlueLinkTypography,
+        shapes = BlueLinkShapes,
         content = content
     )
 }

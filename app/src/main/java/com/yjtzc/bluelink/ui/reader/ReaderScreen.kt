@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,14 +19,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.data.local.db.SegmentEntity
+import com.yjtzc.bluelink.ui.theme.Ink600
+import com.yjtzc.bluelink.ui.theme.Ink900
 import com.yjtzc.bluelink.ui.theme.KleinBlue
+import com.yjtzc.bluelink.ui.theme.KleinBlueBg
 import com.yjtzc.bluelink.ui.theme.SerifFamily
 
 /**
- * 智能阅读器 — 聚光灯模式 & 增量折叠模式（UI&UX §4.4）
+ * 智能阅读器 — 对齐参考样式（#page-reader）
  */
 @Composable
 fun ReaderScreen(
@@ -50,7 +54,7 @@ fun ReaderScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 80.dp)
+        contentPadding = PaddingValues(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 80.dp)
     ) {
         items(segments, key = { it.id }) { seg ->
             val isTarget = seg.id == spotlightId
@@ -81,58 +85,73 @@ fun SegmentView(
     val alpha by animateFloatAsState(
         targetValue = when {
             isSpotlightTarget -> 1f
-            isDimmed -> 0.3f
+            isDimmed -> 0.25f
             else -> 1f
         },
-        animationSpec = tween(durationMillis = 250),
+        animationSpec = tween(durationMillis = 400),
         label = "segment-alpha"
     )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 6.dp)
     ) {
         if (isFolded) {
-            // 折叠提示条
+            // 折叠条（参考 .fold-strip）
             FoldBarView(
                 foldedCount = segment.textSnippet.length,
                 onClick = onToggleFold
             )
-        } else {
-            Row(
-                modifier = Modifier.graphicsLayer { this.alpha = alpha }
+        } else if (isSpotlightTarget) {
+            // 聚光灯目标（参考 .spotlight-target）
+            Surface(
+                color = KleinBlue.copy(alpha = 0.04f),
+                shape = RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onClickBlank() }
             ) {
-                if (isSpotlightTarget) {
-                    // 左侧克莱因蓝引力线
+                Row {
+                    // 左侧克莱因蓝边线
                     Box(
                         modifier = Modifier
-                            .width(2.dp)
-                            .height(60.dp)
+                            .width(4.dp)
+                            .fillMaxHeight()
                             .background(KleinBlue)
                     )
-                    Spacer(Modifier.width(8.dp))
-                }
-                Text(
-                    text = segment.textSnippet,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontFamily = SerifFamily
-                    ),
-                    color = if (isSpotlightTarget)
-                        MaterialTheme.colorScheme.onSurface
-                    else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    modifier = Modifier
-                        .clickable { if (isSpotlightTarget) onClickBlank() }
-                        .background(
-                            if (isSpotlightTarget)
-                                MaterialTheme.colorScheme.surface
-                            else Color.Transparent,
-                            RoundedCornerShape(8.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.padding(start = 0.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                        // "溯源锚点" 标签
+                        Text(
+                            "溯源锚点",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = KleinBlue,
+                            letterSpacing = 1.sp
                         )
-                        .padding(horizontal = 4.dp)
-                )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = segment.textSnippet,
+                            fontFamily = SerifFamily,
+                            fontSize = 15.sp,
+                            lineHeight = 24.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Ink900
+                        )
+                    }
+                }
             }
+        } else {
+            // 普通段落（参考 .fade-paragraph）
+            Text(
+                text = segment.textSnippet,
+                fontFamily = SerifFamily,
+                fontSize = 15.sp,
+                lineHeight = 24.sp,
+                color = Ink600,
+                modifier = Modifier.graphicsLayer { this.alpha = alpha }
+            )
         }
     }
 }
@@ -145,15 +164,10 @@ fun FoldBarView(
     var expanded by remember { mutableStateOf(false) }
 
     Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = Color.Transparent,
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-        ),
+        shape = MaterialTheme.shapes.small,
+        color = KleinBlueBg,
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
             .clickable {
                 expanded = !expanded
                 onClick()
@@ -161,23 +175,22 @@ fun FoldBarView(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Text(
                 text = if (expanded) "收起重复背景"
-                else "AI 已折叠 $foldedCount 字重复背景，点击展开",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f)
+                else "AI 已折叠 $foldedCount 字重复背景，点击查看增量",
+                fontSize = 13.sp,
+                color = KleinBlue
             )
-            Icon(
-                imageVector = if (expanded) Icons.Default.KeyboardArrowUp
-                else Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.rotate(if (expanded) 180f else 0f)
+            Spacer(Modifier.width(4.dp))
+            Text(
+                if (expanded) "▲" else "▼",
+                fontSize = 10.sp,
+                color = KleinBlue
             )
         }
     }

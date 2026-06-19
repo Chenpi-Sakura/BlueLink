@@ -20,7 +20,7 @@ class BlueLinkViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
         modelClass.isAssignableFrom(HomeViewModel::class.java) ->
-            HomeViewModel(container.documentRepository) as T
+            HomeViewModel(container.captureRepository) as T
 
         modelClass.isAssignableFrom(ChatViewModel::class.java) ->
             ChatViewModel(container.anchorRepository, container.feynmanRepository) as T

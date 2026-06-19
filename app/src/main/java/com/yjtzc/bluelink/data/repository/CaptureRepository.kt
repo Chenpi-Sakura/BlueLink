@@ -70,6 +70,18 @@ class CaptureRepository(
         return ciphertext.decodeToString()
     }
 
+    /**
+     * 更新灵感卡片内容（保留 ID 和原有属性）
+     */
+    suspend fun updateCardContent(card: InspirationCardEntity, newContent: String): InspirationCardEntity {
+        val ref = card.contentRef
+        val ciphertext = newContent.encodeToByteArray()
+        securePrefs.putCipherText(ref, ciphertext)
+        val updated = card.copy(contentSnippet = newContent.take(30))
+        inspirationDao.upsert(updated)
+        return updated
+    }
+
     suspend fun deleteCard(card: InspirationCardEntity) {
         securePrefs.removeCipherText(card.contentRef)
         inspirationDao.delete(card)

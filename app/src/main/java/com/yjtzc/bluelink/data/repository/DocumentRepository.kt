@@ -33,6 +33,8 @@ class DocumentRepository(
 
     fun observeSegments(docId: String): Flow<List<SegmentEntity>> = segmentDao.observeByDocId(docId)
 
+    suspend fun getSegmentById(id: String): SegmentEntity? = segmentDao.getById(id)
+
     // ====== 保存（加密原文 → SecurePrefs，Room 仅存 ref） ======
 
     suspend fun saveDocument(

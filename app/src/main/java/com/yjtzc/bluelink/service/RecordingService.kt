@@ -27,7 +27,7 @@ class RecordingService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, BlueLinkApplication.CHANNEL_RECORDING)
-            .setSmallIcon(R.drawable.ic_favorite)   // TODO: 替换为 ic_mic
+            .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle("蓝链正在录音")
             .setContentText("灵感语音录入中...")
             .setOngoing(true)

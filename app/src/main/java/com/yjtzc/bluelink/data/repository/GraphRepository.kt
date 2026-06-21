@@ -17,6 +17,11 @@ class GraphRepository(
 
     suspend fun getLocalEdges(): List<GraphEdgeEntity> = edgeDao.getAll()
 
+    suspend fun clearLocal() {
+        nodeDao.clearAll()
+        edgeDao.clearAll()
+    }
+
     /**
      * 从后端拉取全量图谱数据并缓存到 Room
      */

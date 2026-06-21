@@ -91,13 +91,21 @@ class GraphViewModel(
             _renderedEdgeCount.value = 0
             _scriptStatus.value = "idle"
 
-            // 先展示本地缓存
+            // Debug 模式跳过旧缓存，直接使用干净 demo graph
+            if (BuildConfig.DEBUG) {
+                graphRepository.clearLocal() // 清理旧缓存
+                showDemoGraph()
+                return@launch
+            }
+
+            // Release 模式从本地缓存加载
             val localData = runCatching {
                 GraphData(
                     nodes = graphRepository.getLocalNodes().map { it.toDomain() },
                     edges = graphRepository.getLocalEdges().map { it.toDomain() }
                 )
             }.getOrNull()
+
             if (localData != null && (localData.nodes.isNotEmpty() || localData.edges.isNotEmpty())) {
                 _graphState.value = UiState.Success(localData)
                 _dataSource.value = GraphDataSource.CACHE
@@ -112,30 +120,15 @@ class GraphViewModel(
                             edges = graphRepository.getLocalEdges().map { it.toDomain() }
                         )
                     }.onSuccess { data ->
-                        if (data.nodes.isNotEmpty() || !BuildConfig.DEBUG) {
+                        if (data.nodes.isNotEmpty()) {
                             _graphState.value = UiState.Success(data)
                             _dataSource.value = GraphDataSource.REMOTE
-                        } else {
-                            showDemoGraph()
                         }
                         if (data.nodes.none { it.id == _selectedNodeId.value }) {
                             _selectedNodeId.value = null
                         }
-                    }.onFailure { handleLoadFailure(localData, it) }
+                    }
                 }
-                .onFailure { handleLoadFailure(localData, it) }
-        }
-    }
-
-    private fun handleLoadFailure(localData: GraphData?, error: Throwable) {
-        _lastError.value = error.message ?: error::class.java.simpleName
-        if (localData == null || localData.nodes.isEmpty()) {
-            if (BuildConfig.DEBUG) {
-                showDemoGraph()
-            } else {
-                _dataSource.value = GraphDataSource.NONE
-                _graphState.value = UiState.Error(AppError.AIServiceError(error.message.orEmpty()))
-            }
         }
     }
 
@@ -181,11 +174,18 @@ class GraphViewModel(
             GraphNode("concept-info-growth", "信息增量", NodeType.CONCEPT, null),
             GraphNode("concept-cognition", "认知架构", NodeType.CONCEPT, null),
             GraphNode("concept-deep-work", "深度工作", NodeType.CONCEPT, null),
+            GraphNode("concept-attention", "注意力碎片化", NodeType.CONCEPT, null),
+            GraphNode("concept-digital-notes", "数字化笔记", NodeType.CONCEPT, null),
+            GraphNode("concept-algo-bias", "算法偏见", NodeType.CONCEPT, null),
             GraphNode("doc-deep-work", "《深度工作》", NodeType.DOCUMENT, "demo-doc-deep-work"),
             GraphNode("doc-feynman", "《费曼学习技巧》", NodeType.DOCUMENT, "demo-doc-feynman"),
             GraphNode("doc-second-brain", "《第二大脑》", NodeType.DOCUMENT, "demo-doc-second-brain"),
             GraphNode("doc-sapiens", "《人类简史》", NodeType.DOCUMENT, "demo-doc-sapiens"),
             GraphNode("doc-card-notes", "《卡片笔记写作法》", NodeType.DOCUMENT, "demo-doc-card-notes"),
+            GraphNode("doc-amusing", "《娱乐至死》", NodeType.DOCUMENT, "demo-doc-amusing"),
+            GraphNode("doc-poor-charlie", "《穷查理宝典》", NodeType.DOCUMENT, "demo-doc-poor-charlie"),
+            GraphNode("doc-critical", "《批判性思维》", NodeType.DOCUMENT, "demo-doc-critical"),
+            GraphNode("inspiration-07", "灵感 #07", NodeType.INSPIRATION, "demo-inspiration-07"),
             GraphNode("inspiration-12", "灵感 #12", NodeType.INSPIRATION, "demo-inspiration-12"),
             GraphNode("inspiration-21", "灵感 #21", NodeType.INSPIRATION, "demo-inspiration-21")
         ),
@@ -205,7 +205,17 @@ class GraphViewModel(
             GraphEdge("concept-feynman", "concept-deep-work", RelationType.SUPPORT, 0.73f),
             GraphEdge("concept-cognition", "concept-info-growth", RelationType.SUPPORT, 0.66f),
             GraphEdge("inspiration-12", "concept-cognition", RelationType.CHALLENGE, 0.48f),
-            GraphEdge("doc-card-notes", "concept-info-growth", RelationType.SUPPORT, 0.55f)
+            GraphEdge("doc-card-notes", "concept-info-growth", RelationType.SUPPORT, 0.55f),
+            GraphEdge("concept-attention", "concept-deep-work", RelationType.CHALLENGE, 0.80f),
+            GraphEdge("concept-attention", "doc-amusing", RelationType.CITE, 0.72f),
+            GraphEdge("concept-digital-notes", "doc-card-notes", RelationType.CITE, 0.85f),
+            GraphEdge("concept-digital-notes", "doc-second-brain", RelationType.SUPPLEMENT, 0.78f),
+            GraphEdge("concept-algo-bias", "doc-critical", RelationType.CITE, 0.70f),
+            GraphEdge("concept-algo-bias", "doc-poor-charlie", RelationType.SUPPLEMENT, 0.64f),
+            GraphEdge("concept-algo-bias", "doc-sapiens", RelationType.CHALLENGE, 0.55f),
+            GraphEdge("concept-info-growth", "concept-algo-bias", RelationType.SUPPORT, 0.60f),
+            GraphEdge("inspiration-07", "concept-feynman", RelationType.SUPPLEMENT, 0.50f),
+            GraphEdge("inspiration-07", "concept-attention", RelationType.SUPPORT, 0.45f)
         )
     )
 }

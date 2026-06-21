@@ -113,6 +113,7 @@ fun GraphScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var webView by remember { mutableStateOf<WebView?>(null) }
+    var graphPushed by remember { mutableStateOf(false) }
     var showDebug by remember { mutableStateOf(false) }
     var isWebViewReady by remember { mutableStateOf(false) }
     val view = LocalView.current
@@ -202,7 +203,7 @@ fun GraphScreen(
                             WebView(context).apply {
                                 WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
                                 isWebViewReady = false
-                                setBackgroundColor(android.graphics.Color.rgb(30, 30, 46))
+                                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                                 alpha = 1f
                                 visibility = android.view.View.VISIBLE
                                 settings.javaScriptEnabled = true
@@ -226,13 +227,9 @@ fun GraphScreen(
                                         onNodeClick = viewModel::onGraphNodeClicked,
                                         onReady = {
                                             isWebViewReady = true
+                                            graphPushed = true
                                             pushGraphData(this, graphJson)
-                                            // Direct update: bypass JS bridge for rendered count
                                             viewModel.onGraphRendered(state.data.nodes.size, state.data.edges.size)
-                                            evaluateJavascript(
-                                                "window.changeLayout('${viewModel.currentLayout.value.jsValue}')",
-                                                null
-                                            )
                                         },
                                         onGraphRendered = viewModel::onGraphRendered,
                                         onGraphError = viewModel::onGraphRenderError
@@ -245,9 +242,7 @@ fun GraphScreen(
                         },
                         update = { view ->
                             webView = view
-                            if (isWebViewReady) {
-                                pushGraphData(view, graphJson)
-                            }
+                            // 不重复推送：onReady 已调用 pushGraphData
                         },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -331,13 +326,13 @@ private fun GraphTopBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(66.dp)
-            .shadow(18.dp, RoundedCornerShape(24.dp)),
-        shape = RoundedCornerShape(24.dp),
+            .height(56.dp)
+            .shadow(12.dp, RoundedCornerShape(28.dp)),
+        shape = RoundedCornerShape(28.dp),
         color = Parchment50.copy(alpha = 0.94f)
     ) {
         Row(
-            modifier = Modifier.padding(start = 20.dp, end = 8.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -345,8 +340,8 @@ private fun GraphTopBar(
                 color = Ink900,
                 fontFamily = SerifFamily,
                 fontWeight = FontWeight.Medium,
-                fontSize = 22.sp,
-                letterSpacing = 0.3.sp,
+                fontSize = 20.sp,
+                letterSpacing = 0.2.sp,
                 modifier = Modifier.pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = { onDebugToggle() }

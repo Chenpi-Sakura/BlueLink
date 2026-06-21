@@ -53,7 +53,6 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onOpenDrawer: () -> Unit = {},
     onOpenInspiration: (cardId: String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -94,9 +93,6 @@ fun HomeScreen(
                             .windowInsetsTopHeight(WindowInsets.statusBars),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = onOpenDrawer) {
-                            Text("☰", fontSize = 20.sp, color = Ink900)
-                        }
                         Spacer(Modifier.width(4.dp))
                         OutlinedTextField(
                             value = searchQuery,

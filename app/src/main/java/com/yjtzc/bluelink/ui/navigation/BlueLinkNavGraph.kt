@@ -3,14 +3,12 @@ package com.yjtzc.bluelink.ui.navigation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,7 +32,6 @@ import com.yjtzc.bluelink.ui.theme.Parchment100
 import com.yjtzc.bluelink.ui.theme.Parchment50
 import com.yjtzc.bluelink.domain.model.toDomain
 import com.yjtzc.bluelink.ui.editor.InspirationEditorScreen
-import com.yjtzc.bluelink.ui.theme.SerifFamily
 import com.yjtzc.bluelink.util.LocalAppContainer
 import kotlinx.coroutines.launch
 
@@ -74,8 +71,6 @@ fun BlueLinkNavGraph() {
     val container = LocalAppContainer.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scopeDrawer = rememberCoroutineScope()
 
     // 书架用文档列表
     val documents by container.documentRepository.observeAll()
@@ -177,77 +172,8 @@ fun BlueLinkNavGraph() {
         return
     }
 
-    // ====== 侧滑抽屉 + 底部 Tab 导航 ======
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = Parchment50,
-                modifier = Modifier.width(280.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
-                        .windowInsetsTopHeight(WindowInsets.statusBars)
-                ) {
-                    // 头像
-                    Surface(
-                        shape = CircleShape,
-                        color = Parchment100,
-                        modifier = Modifier.size(64.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                "AI",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Ink600
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "用户",
-                        fontFamily = SerifFamily,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Ink900
-                    )
-                }
-
-                HorizontalDivider(color = Parchment100)
-                Spacer(Modifier.height(8.dp))
-
-                NavigationDrawerItem(
-                    icon = { Text("⚙", fontSize = 18.sp) },
-                    label = {
-                        Text("认知设置", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Ink900)
-                    },
-                    selected = false,
-                    onClick = {
-                        showSettings = true
-                        scopeDrawer.launch { drawerState.close() }
-                    },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
-                )
-
-                NavigationDrawerItem(
-                    icon = { Text("🔒", fontSize = 18.sp) },
-                    label = {
-                        Text("隐私和安全", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Ink900)
-                    },
-                    selected = false,
-                    onClick = {
-                        showSettings = true
-                        scopeDrawer.launch { drawerState.close() }
-                    },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
-                )
-            }
-        }
-    ) {
-        Scaffold(
+    // ====== 底部 Tab 导航（侧滑设置已移除，统一通过「我的」进入） ======
+    Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 NavigationBar(
@@ -294,9 +220,6 @@ fun BlueLinkNavGraph() {
                     viewModel = viewModel(
                         factory = BlueLinkViewModelFactory(container)
                     ),
-                    onOpenDrawer = {
-                        scopeDrawer.launch { drawerState.open() }
-                    },
                     onOpenInspiration = { cardId ->
                         editorCardId = cardId
                     },
@@ -337,4 +260,3 @@ fun BlueLinkNavGraph() {
             }
         }
     }
-}

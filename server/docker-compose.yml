@@ -5,12 +5,14 @@
 services:
   db:
     image: pgvector/pgvector:pg17
+    container_name: bluelink-db
     environment:
       POSTGRES_DB: bluelink
       POSTGRES_USER: bluelink
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bluelink}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "5432:5432"
     healthcheck:

@@ -18,12 +18,12 @@ CREATE TABLE IF NOT EXISTS documents (
 );
 CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);
 
--- 文档切片（文本加密存储）
+-- 文档切片（明文存储，不含加密）
 CREATE TABLE IF NOT EXISTS segments (
     id TEXT PRIMARY KEY,
     doc_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     index_num INTEGER NOT NULL,
-    text_encrypted BYTEA,
+    text TEXT NOT NULL DEFAULT '',
     summary TEXT DEFAULT '',
     is_folded BOOLEAN DEFAULT FALSE
 );

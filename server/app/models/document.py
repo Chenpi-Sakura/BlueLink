@@ -1,6 +1,6 @@
 """文档 & 切片 & 锚点 ORM 模型（V2.0 §6.3）"""
 
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, LargeBinary, Boolean, BigInteger
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, Text, Boolean, BigInteger
 from sqlalchemy.orm import relationship
 from app.models.database import Base
 
@@ -22,7 +22,7 @@ class Segment(Base):
     id = Column(String, primary_key=True)
     doc_id = Column(String, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
     index_num = Column(Integer, nullable=False)
-    text_encrypted = Column(LargeBinary, nullable=True)
+    text = Column(Text, nullable=False, default="")
     summary = Column(String, default="")
     is_folded = Column(Boolean, default=False)
     document = relationship("Document", back_populates="segments")

@@ -14,7 +14,8 @@ RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.li
         libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 Python 依赖（支持构建参数指定镜像源）
+# 安装 Python 依赖（利用 Docker 层缓存，requirements.txt 不变时不重装）
+COPY requirements.txt .
 ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install --no-cache-dir -r requirements.txt
 

@@ -22,8 +22,16 @@ class Settings:
     LLM_TIMEOUT_SEC: int = int(os.getenv("LLM_TIMEOUT_SEC", "30"))
 
     # ====== 数据库 & 存储 ======
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./bluelink.db")
-    VECTORS_DIR: str = os.getenv("VECTORS_DIR", "./vectors")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://bluelink:bluelink@localhost:5432/bluelink")
+
+    # PostgreSQL 连接池（仅 DATABASE_URL 为 postgresql:// 时生效）
+    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "10"))
+    DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "20"))
+
+    # pgvector 向量维度（与 embedding 模型输出一致）
+    VECTOR_DIMENSION: int = int(os.getenv("VECTOR_DIMENSION", "1024"))
+
+    VECTORS_DIR: str = os.getenv("VECTORS_DIR", "./vectors")       # 仅 SQLite 回退时使用
     UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", "./uploads")
 
     # ====== 安全 ======

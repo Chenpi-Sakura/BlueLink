@@ -8,14 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.models.database import Base, engine
+from app.models.database import init_db
 from app.api import documents, questions, feynman, graph, cards, sync, users
 
 logger = logging.getLogger("bluelink")
 
 
 def _init_db():
-    Base.metadata.create_all(bind=engine)
+    init_db()
     logger.info("数据库表已就绪")
 
 

@@ -4,10 +4,25 @@ openai==1.58.1
 python-multipart==0.0.20
 PyMuPDF==1.25.3
 python-docx==1.1.2
+
+# Database
 SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
+pgvector==0.3.6
+
+# Vector & ML
 numpy==2.2.1
 scikit-learn==1.6.1
+
+# Security
 cryptography==44.0.0
+
+# Config
 python-dotenv==1.0.1
+
+# Test
 pytest==8.3.4
 httpx==0.28.1
+
+# Migration (optional, for production schema upgrades)
+# alembic==1.14.0

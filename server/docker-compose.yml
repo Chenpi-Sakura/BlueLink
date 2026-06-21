@@ -25,7 +25,7 @@ services:
     build:
       context: .
       args:
-        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
     depends_on:
       db:
         condition: service_healthy

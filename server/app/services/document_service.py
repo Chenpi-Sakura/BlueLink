@@ -16,8 +16,10 @@ from app.vectors.base import create_vector_store
 
 logger = logging.getLogger("bluelink.document")
 
-# 最大切片字符数
-MAX_CHUNK_SIZE = 500
+# 切片参数
+MAX_CHUNK_SIZE = 2048       # 目标切片长度（字符）
+CHUNK_OVERLAP = 256          # 相邻切片重叠部分（字符）
+MERGE_THRESHOLD = 80         # 小于此长度的段落与下一段合并
 
 
 class DocumentService:
@@ -67,23 +69,68 @@ class DocumentService:
         return "\n\n".join(paragraphs)
 
     @staticmethod
-    def _chunk_by_paragraph(text: str, max_len: int = MAX_CHUNK_SIZE) -> list[dict]:
-        """按空行分段，每段不超过 max_len 字"""
-        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-        chunks: list[dict] = []
-        buf, idx = "", 0
+    def _chunk_by_paragraph(
+        text: str,
+        max_len: int = MAX_CHUNK_SIZE,
+        overlap: int = CHUNK_OVERLAP,
+        merge_threshold: int = MERGE_THRESHOLD,
+    ) -> list[dict]:
+        """滑动窗口切片，支持重叠
 
+        1. 按空行分段
+        2. 过短的段落与下一段合并
+        3. 目标 ≈ max_len 字符
+        4. 相邻切片之间保留 overlap 字符作为上下文
+
+        Args:
+            text: 全文
+            max_len: 目标切片长度
+            overlap: 前后重叠字符数
+            merge_threshold: 短段落合并阈值
+
+        Returns:
+            [{"index": int, "text": str}, ...]
+        """
+        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+
+        # 合并短段落
+        merged: list[str] = []
         for p in paragraphs:
+            if merged and len(p) < merge_threshold:
+                merged[-1] += "\n" + p
+            else:
+                merged.append(p)
+
+        # 滑动窗口切片
+        chunks: list[dict] = []
+        idx = 0
+        buf = ""
+
+        for p in merged:
+            # 加上当前段落后超过上限且已有内容 → 输出当前切片
             if len(buf) + len(p) > max_len and buf:
                 chunks.append({"index": idx, "text": buf.strip()})
                 idx += 1
-                buf = ""
-            buf += p + "\n"
+                # 保留尾部 overlap 字符作为下一个切片的开头上下文
+                buf = DocumentService._tail_context(buf, overlap) + "\n" + p + "\n"
+            else:
+                buf += p + "\n"
 
         if buf.strip():
             chunks.append({"index": idx, "text": buf.strip()})
 
         return chunks
+
+    @staticmethod
+    def _tail_context(text: str, overlap: int) -> str:
+        """取文本尾部 overlap 字符（在段落边界处截断）"""
+        if len(text) <= overlap or overlap <= 0:
+            return ""
+        tail = text[-overlap:]
+        nl = tail.find("\n")
+        if nl != -1:
+            return tail[nl + 1:]
+        return tail
 
     @staticmethod
     def save_document(

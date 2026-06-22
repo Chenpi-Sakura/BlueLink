@@ -128,6 +128,31 @@ class TestDocumentsAPI:
         assert "newContentRatio" in data
         assert 0.0 <= data["newContentRatio"] <= 1.0
 
+    def test_update_document(self, client: TestClient, monkeypatch):
+        """更新文档标题和隐私等级"""
+        from app.services.document_service import DocumentService as DS
+        class FakeLLM:
+            @staticmethod
+            def embed_texts(t): return [[0.1]*1024 for _ in t]
+            @staticmethod
+            def embed_text(t): return [0.1]*1024
+        monkeypatch.setattr(DS, "get_llm", lambda: FakeLLM())
+        from app.services.dedup_service import dedup as dd
+        monkeypatch.setattr(dd, "get_llm", lambda: FakeLLM())
+
+        headers = {"X-User-Id": "test-user-0000-0000-0000-000000000001"}
+        create = client.post("/api/v1/documents/upload",
+            files={"file": ("test.txt", b"hello world")},
+            data={"privacy_level": "CLOUD_OK"}, headers=headers)
+        doc_id = create.json()["id"]
+
+        resp = client.put(f"/api/v1/documents/{doc_id}", json={
+            "title": "新标题", "privacyLevel": "LOCAL_ONLY",
+        }, headers=headers)
+        assert resp.status_code == 200
+        assert resp.json()["title"] == "新标题"
+        assert resp.json()["privacyLevel"] == "LOCAL_ONLY"
+
     def test_upload_missing_user_id(self, client: TestClient):
         """缺少 X-User-Id 返回 422"""
         resp = client.post(

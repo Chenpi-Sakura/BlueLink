@@ -22,3 +22,13 @@ class InspirationDto(BaseModel):
     privacy_level: str
     tags: list[str]
     created_at: int
+
+
+class UpdateCardRequest(BaseModel):
+    """更新灵感卡片请求"""
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    content: str | None = None
+    type: str | None = None
+    privacy_level: str | None = None
+    tags: list[str] | None = None

@@ -50,3 +50,11 @@ class DeltaResponse(BaseModel):
 
     folded_ranges: list[FoldedRangeDto] = []
     new_content_ratio: float = 1.0
+
+
+class UpdateDocumentRequest(BaseModel):
+    """更新文档请求"""
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    title: str | None = None
+    privacy_level: str | None = None

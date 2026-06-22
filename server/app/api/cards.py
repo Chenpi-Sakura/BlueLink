@@ -14,7 +14,7 @@ from app.llm.provider import get_llm
 from app.models.database import get_db
 from app.models.document import InspirationCard
 from app.models.graph import GraphNode
-from app.schemas.card import CreateCardRequest, InspirationDto
+from app.schemas.card import CreateCardRequest, UpdateCardRequest, InspirationDto
 from app.services.graph_builder import GraphBuilder
 
 logger = logging.getLogger("bluelink.api.cards")
@@ -102,6 +102,41 @@ def list_cards(
         )
         for c in cards
     ]
+
+
+@router.put("/{card_id}", response_model=InspirationDto, response_model_by_alias=True)
+def update_card(
+    card_id: str,
+    request: UpdateCardRequest,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_user_id),
+) -> InspirationDto:
+    """更新灵感卡片内容或标签"""
+    card = db.query(InspirationCard).filter(
+        InspirationCard.id == card_id,
+        InspirationCard.user_id == user_id,
+    ).first()
+    if not card:
+        from fastapi import HTTPException
+        raise HTTPException(404, detail="卡片不存在")
+
+    if request.content is not None:
+        card.content = request.content
+    if request.type is not None:
+        card.type = request.type
+    if request.privacy_level is not None:
+        card.privacy_level = request.privacy_level
+    if request.tags is not None:
+        card.tags = ",".join(request.tags)
+    db.commit()
+    db.refresh(card)
+
+    return InspirationDto(
+        id=card.id, content=card.content, type=card.type,
+        privacy_level=card.privacy_level,
+        tags=card.tags.split(",") if card.tags else [],
+        created_at=card.created_at,
+    )
 
 
 @router.delete("/{card_id}", status_code=204)

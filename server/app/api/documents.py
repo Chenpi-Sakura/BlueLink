@@ -23,6 +23,7 @@ from app.schemas.document import (
     SegmentListDto,
     DeltaResponse,
     FoldedRangeDto,
+    UpdateDocumentRequest,
 )
 from app.services.document_service import DocumentService
 from app.services.dedup_service import DedupService
@@ -183,6 +184,35 @@ def compute_delta(
             FoldedRangeDto(**r) for r in result["folded_ranges"]
         ],
         new_content_ratio=result["new_content_ratio"],
+    )
+
+
+@router.put("/{doc_id}", response_model=DocumentDto, response_model_by_alias=True)
+def update_document(
+    doc_id: str,
+    request: UpdateDocumentRequest,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_user_id),
+) -> DocumentDto:
+    """更新文档信息（标题、隐私等级）"""
+    doc = db.query(Document).filter(
+        Document.id == doc_id, Document.user_id == user_id,
+    ).first()
+    if not doc:
+        from fastapi import HTTPException
+        raise HTTPException(404, detail="文档不存在")
+
+    if request.title is not None:
+        doc.title = request.title
+    if request.privacy_level is not None:
+        doc.privacy_level = request.privacy_level
+    db.commit()
+    db.refresh(doc)
+
+    return DocumentDto(
+        id=doc.id, title=doc.title, privacy_level=doc.privacy_level,
+        source=doc.source, created_at=doc.created_at,
+        concept_beacon=doc.concept_beacon,
     )
 
 

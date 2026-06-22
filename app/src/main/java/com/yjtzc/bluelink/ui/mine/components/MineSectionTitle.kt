@@ -25,6 +25,6 @@ fun MineSectionTitle(
         fontSize = 16.sp,
         fontWeight = FontWeight(760),
         fontFamily = FontFamily.Serif,
-        modifier = modifier.padding(start = 5.dp, top = 27.dp, bottom = 10.dp)
+        modifier = modifier.padding(start = 0.dp, top = 27.dp, bottom = 10.dp)
     )
 }

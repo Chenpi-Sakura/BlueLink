@@ -85,15 +85,13 @@ fun MineScreen(
             MineSectionTitle("认知设置")
             CognitiveSettingsPanel(
                 granularityIndex = granularityIndex,
-                directness = profile.directnessLevel,
                 exploreDepth = profile.exploreDepth,
                 companionStyleLabel = companionLabel(profile.companionStyle),
                 onGranularityChange = { idx ->
                     viewModel.setGranularity(
-                        when (idx) { 0 -> "PARAGRAPH"; 2 -> "SENTENCE"; else -> profile.defaultGranularity }
+                        when (idx) { 0 -> "PARAGRAPH"; 1 -> "PARAGRAPH"; else -> "SENTENCE" }
                     )
                 },
-                onDirectnessChange = viewModel::setDirectness,
                 onExploreDepthToggle = viewModel::toggleExploreDepth,
                 onClickCompanion = onNavigateToCognitive
             )
@@ -179,9 +177,9 @@ private fun HeroIdentityCard(onEditClick: () -> Unit) {
 
 @Composable
 private fun CognitiveSettingsPanel(
-    granularityIndex: Int, directness: Float, exploreDepth: Boolean,
+    granularityIndex: Int, exploreDepth: Boolean,
     companionStyleLabel: String,
-    onGranularityChange: (Int) -> Unit, onDirectnessChange: (Float) -> Unit,
+    onGranularityChange: (Int) -> Unit,
     onExploreDepthToggle: () -> Unit, onClickCompanion: () -> Unit
 ) {
     SettingsCard {
@@ -193,7 +191,7 @@ private fun CognitiveSettingsPanel(
         SettingRow(icon = Icons.Outlined.Tune, showDivider = true) {
             Text("提示明确度", style = rowTS)
             Spacer(Modifier.weight(1f))
-            MiniSlider(value = directness, onValueChange = onDirectnessChange)
+            Arrow()
         }
         SettingRow(icon = Icons.Outlined.Layers, showDivider = true) {
             Text("探索深度", style = rowTS)
@@ -305,22 +303,40 @@ private fun Arrow() {
 @Composable
 private fun GranularitySeg(selectedIndex: Int, onSelected: (Int) -> Unit) {
     val opts = listOf("精简", "适中", "详尽")
+    val shape = RoundedCornerShape(8.dp)
     Row(
-        modifier = Modifier.width(154.dp).height(30.dp).clip(RoundedCornerShape(8.dp))
-            .background(Color(0xC2FAF8F4)).padding(2.dp),
+        modifier = Modifier.width(154.dp).height(30.dp).clip(shape)
+            .background(Color(0xC2FAF8F4)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         opts.forEachIndexed { i, label ->
             val sel = i == selectedIndex
             Box(
-                modifier = Modifier.weight(1f).fillMaxHeight()
-                    .clip(RoundedCornerShape(if (sel) 6.dp else 0.dp))
-                    .then(if (sel) Modifier.background(Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))), RoundedCornerShape(6.dp)) else Modifier)
+                modifier = Modifier
+                    .weight(1f).fillMaxHeight()
                     .clickable { onSelected(i) },
                 contentAlignment = Alignment.Center
             ) {
-                Text(label, color = if (sel) Color.White else Color(0xFF20252E), fontSize = 12.sp,
-                    fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal, fontFamily = FontFamily.Serif)
+                Surface(
+                    modifier = Modifier.fillMaxSize().padding(2.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (sel) Color.Transparent else Color.Transparent
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(
+                                if (sel) Modifier.background(
+                                    Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
+                                    RoundedCornerShape(6.dp)
+                                ) else Modifier
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(label, color = if (sel) Color.White else Color(0xFF20252E), fontSize = 12.sp,
+                            fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal, fontFamily = FontFamily.Serif)
+                    }
+                }
             }
         }
     }

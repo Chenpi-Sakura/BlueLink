@@ -275,7 +275,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     onValueChange = { if (it.length <= 7) inputText = it },
                     placeholder = { Text("最多7字", fontSize = 14.sp) },
                     singleLine = true,
-                    modifier = Modifier.weight(1f).height(52.dp),
+                    modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = Color(0xFF10213B)),
                     colors = OutlinedTextFieldDefaults.colors(

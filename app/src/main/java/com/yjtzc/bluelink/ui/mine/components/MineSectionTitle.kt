@@ -1,14 +1,18 @@
 package com.yjtzc.bluelink.ui.mine.components
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
- * 我的模块 Section 标题组件
+ * 分区标题 — 对齐 HTML 原型
+ * 字号 16px, 字重 760, 字色 #0A2B5F, 衬线体
  */
 @Composable
 fun MineSectionTitle(
@@ -17,8 +21,10 @@ fun MineSectionTitle(
 ) {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(top = 24.dp, bottom = 8.dp, start = 4.dp, end = 4.dp)
+        color = Color(0xFF0A2B5F),
+        fontSize = 16.sp,
+        fontWeight = FontWeight(760),
+        fontFamily = FontFamily.Serif,
+        modifier = modifier.padding(start = 5.dp, top = 27.dp, bottom = 10.dp)
     )
 }

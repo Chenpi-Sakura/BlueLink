@@ -272,12 +272,12 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
             ) {
                 OutlinedTextField(
                     value = inputText,
-                    onValueChange = { inputText = it },
-                    placeholder = { Text("添加术语，如：操作系统", fontSize = 14.sp) },
+                    onValueChange = { if (it.length <= 7) inputText = it },
+                    placeholder = { Text("最多7字", fontSize = 14.sp) },
                     singleLine = true,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, color = Color(0xFF10213B)),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = Color(0xFF10213B)),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AccentBlue.copy(alpha = 0.55f),
                         unfocusedBorderColor = OffChipBorder

@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir --default-timeout=120 -r requirements.txt
 COPY . .
 
 # 非 root 用户运行
-RUN useradd -m -u 1000 bluelink && chown -R bluelink:bluelink /app
+RUN useradd -m -u 1000 bluelink && mkdir -p /app/uploads && chown -R bluelink:bluelink /app
 USER bluelink
 
 EXPOSE 8000

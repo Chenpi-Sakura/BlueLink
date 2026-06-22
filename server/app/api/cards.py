@@ -13,6 +13,7 @@ from app.core.auth import get_user_id
 from app.llm.provider import get_llm
 from app.models.database import get_db
 from app.models.document import InspirationCard
+from app.models.graph import GraphNode
 from app.schemas.card import CreateCardRequest, InspirationDto
 from app.services.graph_builder import GraphBuilder
 
@@ -78,3 +79,49 @@ def create_inspiration(
         tags=card.tags.split(",") if card.tags else [],
         created_at=card.created_at,
     )
+
+
+@router.get("", response_model=list[InspirationDto], response_model_by_alias=True)
+def list_cards(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_user_id),
+) -> list[InspirationDto]:
+    """获取用户所有灵感卡片"""
+    cards = (
+        db.query(InspirationCard)
+        .filter(InspirationCard.user_id == user_id)
+        .order_by(InspirationCard.created_at.desc())
+        .all()
+    )
+    return [
+        InspirationDto(
+            id=c.id, content=c.content, type=c.type,
+            privacy_level=c.privacy_level,
+            tags=c.tags.split(",") if c.tags else [],
+            created_at=c.created_at,
+        )
+        for c in cards
+    ]
+
+
+@router.delete("/{card_id}", status_code=204)
+def delete_card(
+    card_id: str,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_user_id),
+):
+    """删除灵感卡片及其图谱节点"""
+    card = db.query(InspirationCard).filter(
+        InspirationCard.id == card_id,
+        InspirationCard.user_id == user_id,
+    ).first()
+    if not card:
+        return
+
+    # 删除关联的图谱节点
+    db.query(GraphNode).filter(
+        GraphNode.ref_id == card_id, GraphNode.user_id == user_id,
+    ).delete()
+    db.delete(card)
+    db.commit()
+    logger.info("卡片已删除 user=%s card=%s", user_id, card_id)

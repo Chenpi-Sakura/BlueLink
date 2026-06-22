@@ -15,6 +15,7 @@ from app.core.auth import get_user_id
 from app.core.config import settings
 from app.models.database import get_db
 from app.models.document import Document, Segment
+from app.models.graph import GraphNode
 from app.schemas.document import (
     DocumentDto,
     DocumentListDto,
@@ -183,3 +184,34 @@ def compute_delta(
         ],
         new_content_ratio=result["new_content_ratio"],
     )
+
+
+@router.delete("/{doc_id}", status_code=204)
+def delete_document(
+    doc_id: str,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_user_id),
+):
+    """删除文档及其切片、向量和图谱节点"""
+    doc = db.query(Document).filter(
+        Document.id == doc_id, Document.user_id == user_id,
+    ).first()
+    if not doc:
+        return
+
+    # 删除图谱节点（级联删除边）
+    db.query(GraphNode).filter(
+        GraphNode.ref_id == doc_id, GraphNode.user_id == user_id,
+    ).delete()
+
+    # 删除向量
+    try:
+        from app.vectors.base import create_vector_store
+        create_vector_store().delete_doc_vectors(doc_id)
+    except Exception as e:
+        logger.warning("向量删除失败: %s", e)
+
+    # 删除文档（级联删除切片）
+    db.delete(doc)
+    db.commit()
+    logger.info("文档已删除 user=%s doc=%s", user_id, doc_id)

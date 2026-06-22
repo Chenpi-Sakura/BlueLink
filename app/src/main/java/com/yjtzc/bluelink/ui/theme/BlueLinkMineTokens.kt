@@ -54,13 +54,13 @@ object MineCard {
 
 // ====== 隐私与安全页 ======
 object MinePrivacy {
-    val HeroVerticalPadding = 20.dp
+    val HeroVerticalPadding = 16.dp
     val HeroHorizontalPadding = 18.dp
     val LevelCardPaddingHorizontal = 11.dp
     val LevelCardPaddingTop = 18.dp
-    val OptionHeight = 86.dp
+    val OptionHeight = 74.dp
     val OptionGap = 10.dp
-    val IconSize = 36.dp
+    val IconSize = 28.dp
     val RadioSize = 22.dp
     val RadioInnerSize = 10.dp
     val StatusRowHeight = 42.dp
@@ -114,9 +114,9 @@ object MineTypography {
     val TinyTextSize = 12.sp
     val ButtonTextSize = 18.sp
     val ExportTitleSize = 27.sp
-    val PrivacyHeroTitleSize = 16.5.sp
-    val PrivacyOptionTitleSize = 15.5.sp
-    val PrivacyOptionDescSize = 12.2.sp
+    val PrivacyHeroTitleSize = 15.sp
+    val PrivacyOptionTitleSize = 14.5.sp
+    val PrivacyOptionDescSize = 12.sp
     val PermissionNameSize = 18.sp
     val PermissionStatusSize = 15.sp
 }

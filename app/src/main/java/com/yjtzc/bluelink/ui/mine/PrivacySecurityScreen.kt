@@ -113,18 +113,18 @@ fun PrivacySecurityScreen(
 
         // ====== 权限管理入口 ======
         BlueLinkCard(
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 8.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp),
             modifier = Modifier.clickable(onClick = onNavigateToPermission)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().height(42.dp),
+                modifier = Modifier.fillMaxWidth().height(36.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Outlined.Lock, contentDescription = null,
-                    tint = MineColors.KleinBlue, modifier = Modifier.size(24.dp))
+                    tint = MineColors.KleinBlue, modifier = Modifier.size(22.dp))
                 Spacer(Modifier.width(13.dp))
-                Text("权限管理", fontSize = 15.5.sp, color = Color(0xFF202530),
-                    modifier = Modifier.weight(1f))
+                Text("权限管理", fontSize = 14.5.sp, color = MineColors.TextPrimary,
+                    fontFamily = FontFamily.Serif, modifier = Modifier.weight(1f))
                 Text("›", color = MineColors.KleinBlue, fontSize = 24.sp, fontWeight = FontWeight.Light)
             }
         }

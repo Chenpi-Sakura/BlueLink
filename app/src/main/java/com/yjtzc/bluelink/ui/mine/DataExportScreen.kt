@@ -262,38 +262,55 @@ private fun ExportContentSection(
             modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp))
 
         // 导出内容项
-        fun onTap(idx: Int) {
-            when (idx) {
-                0 -> onToggle(!exportDocuments, null, null)
-                1 -> onToggle(null, !exportInspirationCards, null)
-                2 -> onToggle(null, null, !exportSettings)
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggle(!exportDocuments, null, null) },
+            shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
+            border = BorderStroke(1.dp, Color(0xE6E5E0D8))
+        ) {
+            Row(modifier = Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(23.dp).clip(CircleShape)
+                        .background(if (exportDocuments) AccentBlue else Color.Transparent)
+                        .then(if (!exportDocuments) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
+                    contentAlignment = Alignment.Center
+                ) { if (exportDocuments) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.width(13.dp))
+                Text("文档与切片索引", fontSize = 14.5.sp, color = InkColor)
             }
         }
-        val items = listOf(
-            "文档与切片索引" to exportDocuments,
-            "灵感卡片" to exportInspirationCards,
-            "认知设置与隐私偏好" to exportSettings
-        )
-        items.forEachIndexed { idx, (label, checked) ->
-            Surface(
-                modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onTap(idx) },
-                shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
-                border = BorderStroke(1.dp, Color(0xE6E5E0D8))
-            ) {
-                Row(modifier = Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier.size(23.dp).clip(CircleShape)
-                            .background(if (checked) AccentBlue else Color.Transparent)
-                            .then(if (!checked) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (checked) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(Modifier.width(13.dp))
-                    Text(label, fontSize = 14.5.sp, color = InkColor)
-                }
+        Spacer(Modifier.height(10.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggle(null, !exportInspirationCards, null) },
+            shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
+            border = BorderStroke(1.dp, Color(0xE6E5E0D8))
+        ) {
+            Row(modifier = Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(23.dp).clip(CircleShape)
+                        .background(if (exportInspirationCards) AccentBlue else Color.Transparent)
+                        .then(if (!exportInspirationCards) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
+                    contentAlignment = Alignment.Center
+                ) { if (exportInspirationCards) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.width(13.dp))
+                Text("灵感卡片", fontSize = 14.5.sp, color = InkColor)
             }
-            Spacer(Modifier.height(10.dp))
+        }
+        Spacer(Modifier.height(10.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggle(null, null, !exportSettings) },
+            shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
+            border = BorderStroke(1.dp, Color(0xE6E5E0D8))
+        ) {
+            Row(modifier = Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(23.dp).clip(CircleShape)
+                        .background(if (exportSettings) AccentBlue else Color.Transparent)
+                        .then(if (!exportSettings) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
+                    contentAlignment = Alignment.Center
+                ) { if (exportSettings) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.width(13.dp))
+                Text("认知设置与隐私偏好", fontSize = 14.5.sp, color = InkColor)
+            }
         }
     }
 }

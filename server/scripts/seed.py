@@ -71,22 +71,24 @@ def seed():
         now = int(__import__("time").time() * 1000)
         logger.info("开始注入演示数据...")
 
-        # 1. 用 PDF 创建示例文档（如果存在）
-        pdf_path = Path(__file__).resolve().parent.parent / "resource" / "ai_agents_handbook.pdf"
-        if pdf_path.exists():
-            try:
-                chunks = DocumentService.parse_and_chunk(str(pdf_path))
-                doc = DocumentService.save_document(
-                    db=db,
-                    user_id=SEED_USER_ID,
-                    title=pdf_path.stem,
-                    source=str(pdf_path),
-                    chunks=chunks,
-                    privacy_level="CLOUD_OK",
-                )
-                logger.info("  ✅ 导入文档: %s (%d 切片)", doc.title, len(chunks))
-            except Exception as e:
-                logger.warning("  ⚠️ 文档导入失败（跳过）: %s", e)
+        # 1. 导入 resource/ 目录下所有 PDF
+        resource_dir = Path(__file__).resolve().parent.parent / "resource"
+        pdf_files = sorted(resource_dir.glob("*.pdf"))
+        if pdf_files:
+            for pdf_path in pdf_files:
+                try:
+                    chunks = DocumentService.parse_and_chunk(str(pdf_path))
+                    doc = DocumentService.save_document(
+                        db=db,
+                        user_id=SEED_USER_ID,
+                        title=pdf_path.stem,
+                        source=str(pdf_path),
+                        chunks=chunks,
+                        privacy_level="CLOUD_OK",
+                    )
+                    logger.info("  ✅ 导入文档: %s (%d 切片)", doc.title, len(chunks))
+                except Exception as e:
+                    logger.warning("  ⚠️ 文档导入失败（跳过 %s）: %s", pdf_path.name, e)
         else:
             logger.info("  ⏭️ 未找到 PDF 文件，跳过文档导入")
 

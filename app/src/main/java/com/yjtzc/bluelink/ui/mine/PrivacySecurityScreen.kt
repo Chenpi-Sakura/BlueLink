@@ -1,34 +1,35 @@
 package com.yjtzc.bluelink.ui.mine
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.DeleteForever
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.ConfirmPrivacyChangeDialog
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
-import com.yjtzc.bluelink.ui.mine.components.MineSectionTitle
 import com.yjtzc.bluelink.ui.mine.components.PrivacyLevelPickerSheet
-import com.yjtzc.bluelink.ui.theme.DangerRed
-import com.yjtzc.bluelink.ui.theme.Ink600
-import com.yjtzc.bluelink.ui.theme.Ink900
 import com.yjtzc.bluelink.ui.theme.KleinBlue
-import com.yjtzc.bluelink.ui.theme.Parchment100
-import com.yjtzc.bluelink.ui.theme.SerifFamily
+
+private val PageBg = Color(0xFFFAF7F2)
+private val CardBg = Color(0xCCFFFDF8)
+private val CardBorder = Color(0xEBE5E0D8)
+private val DividerColor = Color(0xB8D6CFC4)
+private val DangerColor = Color(0xFFC43129)
 
 @Composable
 fun PrivacySecurityScreen(
@@ -42,56 +43,67 @@ fun PrivacySecurityScreen(
     val showPicker by viewModel.showPrivacyLevelPicker.collectAsStateWithLifecycle()
     val showConfirmDialog by viewModel.showConfirmPrivacyDialog.collectAsStateWithLifecycle()
 
-    MineNavScaffold(
-        title = "隐私与安全",
-        onBack = onBack
-    ) {
+    MineNavScaffold(title = "隐私与安全", onBack = onBack) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             // 顶部信息卡
             item {
-                PrivacyStatusCard(
-                    mode = profile.privacyMode
-                )
-                Spacer(Modifier.height(32.dp))
+                HeroInfoCard(mode = profile.privacyMode, onClick = viewModel::showPrivacyLevelPicker)
+                Spacer(Modifier.height(22.dp))
             }
 
-            // 隐私等级
-            item { MineSectionTitle("隐私等级") }
-
+            // 三种隐私等级
             item {
-                PrivacyLevelCard(
-                    currentLevel = profile.privacyMode,
-                    onClick = viewModel::showPrivacyLevelPicker
-                )
-                Spacer(Modifier.height(32.dp))
+                BlockCard(title = "三种隐私等级") {
+                    Column {
+                        PrivacyOption("LOCAL_ONLY", "仅本地", "LOCAL_ONLY", "原文永不上云", profile.privacyMode, onClick = viewModel::showPrivacyLevelPicker)
+                        PrivacyOption("LOCAL_FIRST", "优先本地", "LOCAL_FIRST", "原文默认保留本机，必要时仅上传脱敏索引", profile.privacyMode, onClick = viewModel::showPrivacyLevelPicker)
+                        PrivacyOption("CLOUD_OK", "允许云端", "CLOUD_OK", "可用于跨设备同步", profile.privacyMode, onClick = viewModel::showPrivacyLevelPicker)
+                    }
+                }
+                Spacer(Modifier.height(22.dp))
             }
 
-            // 权限
-            item { MineSectionTitle("权限") }
-
+            // 权限状态
             item {
-                PermissionStatusCard(onClick = onNavigateToPermission)
-                Spacer(Modifier.height(32.dp))
+                BlockCard(title = "权限状态") {
+                    PermissionStateRow("相机", "已允许")
+                    PermissionStateRow("麦克风", "已允许")
+                    PermissionStateRow("通知", "已允许")
+                    PermissionStateRow("电池优化", "未开启", isGood = false)
+                }
+                Spacer(Modifier.height(22.dp))
             }
 
-            // 数据管理
-            item { MineSectionTitle("数据管理") }
-
+            // 底部操作
             item {
-                DataActionsCard(
-                    onClickExport = onNavigateToDataExport,
-                    onClickDelete = onNavigateToPermanentDelete
-                )
+                Column {
+                    Button(
+                        onClick = onNavigateToDataExport,
+                        modifier = Modifier.fillMaxWidth().height(58.dp),
+                        shape = RoundedCornerShape(40.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = KleinBlue
+                        )
+                    ) {
+                        Text("导出本地数据", fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.08.sp)
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    TextButton(
+                        onClick = onNavigateToPermanentDelete,
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text("永久删除所有数据", color = DangerColor, fontSize = 18.sp)
+                    }
+                }
                 Spacer(Modifier.height(80.dp))
             }
         }
     }
 
-    // BottomSheet
     if (showPicker) {
         PrivacyLevelPickerSheet(
             currentLevel = profile.privacyMode,
@@ -99,8 +111,6 @@ fun PrivacySecurityScreen(
             onDismiss = viewModel::hidePrivacyLevelPicker
         )
     }
-
-    // 二次确认 Dialog
     if (showConfirmDialog) {
         ConfirmPrivacyChangeDialog(
             onConfirm = viewModel::confirmPrivacyChangeToCloud,
@@ -110,238 +120,110 @@ fun PrivacySecurityScreen(
 }
 
 @Composable
-private fun PrivacyStatusCard(mode: String) {
+private fun HeroInfoCard(mode: String, onClick: () -> Unit) {
     val (label, desc) = when (mode) {
-        "LOCAL_ONLY" -> "仅本地" to "原文永不上云"
-        "LOCAL_FIRST" -> "优先本地" to "原文默认保留在本机，必要时仅上传脱敏索引"
-        "CLOUD_OK" -> "允许云端" to "可用于跨设备同步"
+        "LOCAL_ONLY" -> "仅本地 LOCAL_ONLY" to "原文永不上云"
+        "LOCAL_FIRST" -> "优先本地 LOCAL_FIRST" to "原文默认保留在本机，必要时仅上传脱敏索引"
+        "CLOUD_OK" -> "允许云端 CLOUD_OK" to "可用于跨设备同步"
         else -> mode to ""
     }
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = KleinBlue.copy(alpha = 0.06f),
-        border = BorderStroke(1.dp, Parchment100)
+        shape = RoundedCornerShape(25.dp),
+        color = CardBg,
+        border = BorderStroke(1.dp, CardBorder)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(22.dp, 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Shield,
-                contentDescription = null,
-                tint = KleinBlue,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(Modifier.width(14.dp))
+            // 大锁图标
+            Box(
+                modifier = Modifier.size(88.dp).clip(CircleShape)
+                    .background(KleinBlue.copy(alpha = 0.06f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("🔒", fontSize = 36.sp)
+            }
+            Spacer(Modifier.width(20.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "当前模式：$label",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = SerifFamily,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = KleinBlue,
-                    letterSpacing = 0.5.sp
+                    fontSize = 16.sp, fontWeight = FontWeight(600),
+                    fontFamily = FontFamily.Serif, color = KleinBlue
                 )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Ink600
-                )
+                Spacer(Modifier.height(4.dp))
+                Text(text = desc, fontSize = 14.sp, color = Color(0xFF666666))
             }
         }
     }
 }
 
 @Composable
-private fun PrivacyLevelCard(
-    currentLevel: String,
+private fun BlockCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(25.dp), color = CardBg, border = BorderStroke(1.dp, CardBorder)
+    ) {
+        Column(modifier = Modifier.padding(24.dp, 21.dp), content = content)
+    }
+}
+
+@Composable
+private fun PrivacyOption(
+    key: String, label: String, value: String, desc: String, current: String,
     onClick: () -> Unit
 ) {
-    val levels = listOf(
-        Triple("LOCAL_ONLY", "仅本地", "原文永不上云"),
-        Triple("LOCAL_FIRST", "优先本地", "原文默认保留本机，必要时仅上传脱敏索引"),
-        Triple("CLOUD_OK", "允许云端", "可用于跨设备同步")
-    )
-
+    val isSelected = current == key
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, Parchment100)
-    ) {
-        Column {
-            levels.forEachIndexed { index, (key, label, desc) ->
-                val isSelected = currentLevel == key
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onClick() }
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = isSelected,
-                        onClick = { onClick() },
-                        colors = RadioButtonDefaults.colors(selectedColor = KleinBlue)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontFamily = SerifFamily,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = if (isSelected) KleinBlue else Ink900
-                        )
-                        Text(
-                            text = desc,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Ink600
-                        )
-                    }
-                }
-                if (index < levels.lastIndex) {
-                    HorizontalDivider(
-                        color = Parchment100,
-                        thickness = 0.5.dp,
-                        modifier = Modifier.padding(start = 48.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PermissionStatusCard(onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, Parchment100)
+        modifier = Modifier.fillMaxWidth().height(84.dp).padding(top = 12.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = if (isSelected) Color(0xCEECF5FF) else Color(0x80FFFDF8),
+        border = BorderStroke(
+            if (isSelected) 1.5.dp else 1.dp,
+            if (isSelected) KleinBlue else CardBorder
+        )
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(start = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Lock,
-                contentDescription = null,
-                tint = KleinBlue,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "权限管理",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = SerifFamily,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = Ink900
-                )
-                Text(
-                    text = "相机 / 麦克风 / 通知 / 电池优化",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Ink600
-                )
+            Text(label, fontSize = 16.sp, color = Color(0xFF10213B))
+            Text(value, fontSize = 12.sp, color = KleinBlue, letterSpacing = 0.7.sp, fontFamily = FontFamily.Serif, modifier = Modifier.padding(start = 6.dp))
+            Spacer(Modifier.weight(1f))
+            Column(modifier = Modifier.padding(end = 18.dp)) {
+                Text(desc, fontSize = 13.sp, color = Color(0xFF6B6B6B))
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = KleinBlue,
-                modifier = Modifier.size(24.dp)
+            // Radio
+            Box(
+                modifier = Modifier.size(24.dp).padding(end = 18.dp).clip(CircleShape)
+                    .background(if (isSelected) KleinBlue else Color.Transparent)
+                    .then(
+                        if (isSelected) Modifier
+                        else Modifier.border(2.dp, Color(0xFFB5B0A8), CircleShape)
+                    )
             )
         }
     }
 }
 
 @Composable
-private fun DataActionsCard(
-    onClickExport: () -> Unit,
-    onClickDelete: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, Parchment100)
+private fun PermissionStateRow(name: String, state: String, isGood: Boolean = true) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(41.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onClickExport)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
+        Text(name, fontSize = 16.sp, color = Color(0xFF10213B))
+        Spacer(Modifier.weight(1f))
+        if (isGood) {
+            Surface(
+                shape = RoundedCornerShape(40.dp),
+                color = KleinBlue.copy(alpha = 0.08f)
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.FileDownload,
-                    contentDescription = null,
-                    tint = KleinBlue,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "导出本地数据",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontFamily = SerifFamily,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = Ink900
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = KleinBlue,
-                    modifier = Modifier.size(24.dp)
-                )
+                Text(state, color = KleinBlue, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
-            HorizontalDivider(color = Parchment100, thickness = 0.5.dp)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onClickDelete)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.DeleteForever,
-                    contentDescription = null,
-                    tint = DangerRed,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "永久删除所有数据",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontFamily = SerifFamily,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = DangerRed
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = DangerRed,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+        } else {
+            Text(state, color = Color(0xFF777777), fontSize = 15.sp)
         }
     }
+    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DividerColor))
 }

@@ -10,7 +10,6 @@ import pytest
 
 from app.vectors.base import SearchResult
 from app.vectors.numpy_store import NumpyVectorStore
-from app.vectors import create_vector_store
 
 
 # ===== Fixtures =====
@@ -106,12 +105,6 @@ class TestDelete:
 # ===== 工厂 =====
 
 class TestFactory:
-    def test_create_with_sqlite_url_returns_numpy(self, monkeypatch):
-        """sqlite DATABASE_URL 返回 NumpyVectorStore"""
-        monkeypatch.setattr("app.core.config.settings.DATABASE_URL", "sqlite:///./test.db")
-        store = create_vector_store()
-        assert isinstance(store, NumpyVectorStore)
-
     def test_result_dataclass(self):
         """SearchResult 数据类字段正确"""
         r = SearchResult(doc_id="d", segment_id="s", score=0.95)

@@ -1,7 +1,4 @@
-"""向量存储抽象接口 — 不绑定任何后端（Task 0）
-
-生产环境 → PgVectorStore（PostgreSQL + pgvector）
-本地开发 → NumpyVectorStore（numpy npy 文件回退）
+"""向量存储抽象接口 — PostgreSQL + pgvector（Task 0）
 
 用法：
     store = create_vector_store()
@@ -68,16 +65,6 @@ class VectorStore(ABC):
 
 
 def create_vector_store() -> VectorStore:
-    """根据 DATABASE_URL 自动选择向量存储实现
-
-    postgresql:// → PgVectorStore
-    其他（含 sqlite://）= NumpyVectorStore（开发/测试用）
-    """
-    from app.core.config import settings
-    from app.vectors.numpy_store import NumpyVectorStore
-
-    if settings.DATABASE_URL.startswith("postgresql"):
-        from app.vectors.pgvector_store import PgVectorStore
-        return PgVectorStore()
-
-    return NumpyVectorStore(storage_dir=settings.VECTORS_DIR)
+    """创建 PgVectorStore（PostgreSQL + pgvector）"""
+    from app.vectors.pgvector_store import PgVectorStore
+    return PgVectorStore()

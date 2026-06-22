@@ -31,7 +31,7 @@ class Settings:
     # pgvector 向量维度（与 embedding 模型输出一致）
     VECTOR_DIMENSION: int = int(os.getenv("VECTOR_DIMENSION", "1024"))
 
-    VECTORS_DIR: str = os.getenv("VECTORS_DIR", "./vectors")       # 仅 SQLite 回退时使用
+    VECTORS_DIR: str = os.getenv("VECTORS_DIR", "./vectors")
     UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", "./uploads")
 
     # ====== 安全 ======

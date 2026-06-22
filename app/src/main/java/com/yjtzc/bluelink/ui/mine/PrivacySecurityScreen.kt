@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkCard
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkCardTitle
-import com.yjtzc.bluelink.ui.mine.components.BlueLinkPermissionStatusRow
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkPrimaryButton
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkPrivacyOption
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkSubPageScaffold
@@ -112,29 +111,22 @@ fun PrivacySecurityScreen(
 
         Spacer(Modifier.height(MinePrivacy.SectionGap))
 
-        // ====== 权限状态 ======
-        BlueLinkCard(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 8.dp)) {
-            BlueLinkCardTitle("权限状态", modifier = Modifier.padding(start = 8.dp, bottom = 14.dp))
-            BlueLinkPermissionStatusRow(
-                label = "相机", status = "已允许", enabled = true,
-                icon = { Icon(Icons.Outlined.CameraAlt, contentDescription = null,
-                    tint = MineColors.KleinBlue, modifier = Modifier.size(MinePrivacy.IconSize)) }
-            )
-            BlueLinkPermissionStatusRow(
-                label = "麦克风", status = "已允许", enabled = true,
-                icon = { Icon(Icons.Outlined.Mic, contentDescription = null,
-                    tint = MineColors.KleinBlue, modifier = Modifier.size(MinePrivacy.IconSize)) }
-            )
-            BlueLinkPermissionStatusRow(
-                label = "通知", status = "已允许", enabled = true,
-                icon = { Icon(Icons.Outlined.Notifications, contentDescription = null,
-                    tint = MineColors.KleinBlue, modifier = Modifier.size(MinePrivacy.IconSize)) }
-            )
-            BlueLinkPermissionStatusRow(
-                label = "电池优化", status = "未开启", enabled = false,
-                icon = { Icon(Icons.Outlined.BatterySaver, contentDescription = null,
-                    tint = MineColors.KleinBlue, modifier = Modifier.size(MinePrivacy.IconSize)) }
-            )
+        // ====== 权限管理入口 ======
+        BlueLinkCard(
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 8.dp),
+            modifier = Modifier.clickable(onClick = onNavigateToPermission)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(42.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Outlined.Lock, contentDescription = null,
+                    tint = MineColors.KleinBlue, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(13.dp))
+                Text("权限管理", fontSize = 15.5.sp, color = Color(0xFF202530),
+                    modifier = Modifier.weight(1f))
+                Text("›", color = MineColors.KleinBlue, fontSize = 24.sp, fontWeight = FontWeight.Light)
+            }
         }
 
         Spacer(Modifier.height(MinePrivacy.SectionGap))

@@ -322,9 +322,9 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     onValueChange = { inputText = it },
                     placeholder = { Text("添加术语，如：操作系统", fontSize = 14.sp) },
                     singleLine = true,
-                    modifier = Modifier.weight(1f).height(38.dp),
+                    modifier = Modifier.weight(1f).height(44.dp),
                     shape = RoundedCornerShape(12.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, color = Color(0xFF10213B)),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AccentBlue.copy(alpha = 0.55f),
                         unfocusedBorderColor = OffChipBorder
@@ -345,18 +345,18 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
-                    modifier = Modifier.height(38.dp)
+                    modifier = Modifier.height(44.dp)
                 ) {
                     Text("添加", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Surface(
-                    modifier = Modifier.height(38.dp).clickable { showEditor = false; inputText = "" },
+                    modifier = Modifier.height(44.dp).clickable { showEditor = false; inputText = "" },
                     shape = RoundedCornerShape(12.dp),
                     color = Color.Transparent,
                     border = BorderStroke(1.dp, Color(0xCCD6CFC4))
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp)
+                        Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

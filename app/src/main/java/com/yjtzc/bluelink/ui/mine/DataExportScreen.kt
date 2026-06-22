@@ -178,6 +178,7 @@ private fun ExportMainCard(
 
             Text("导出内容将包含文档索引、\n灵感卡片、图谱节点、个人设置。",
                 fontSize = 14.5.sp, lineHeight = 24.sp, color = MidGray,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp))
 
             Spacer(Modifier.height(20.dp))
@@ -208,7 +209,8 @@ private fun ExportMainCard(
                     border = BorderStroke(1.dp, CardBorder)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("选择文档", fontSize = 14.5.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+                        Text("选择文档", fontSize = 16.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+                            fontFamily = FontFamily.Serif,
                             modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
                         if (documents.isEmpty()) {
                             Text("暂无文档", fontSize = 14.5.sp, color = MidGray)
@@ -255,7 +257,8 @@ private fun ExportContentSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分割线 + 标题
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DividerColor.copy(alpha = 0.55f)))
-        Text("导出内容", fontSize = 14.5.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+        Text("导出内容", fontSize = 16.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+            fontFamily = FontFamily.Serif,
             modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp))
 
         listOf(

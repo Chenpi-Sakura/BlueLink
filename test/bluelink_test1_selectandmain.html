@@ -93,6 +93,8 @@ svg{stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}.i 
 /* === Cognitive screen fine tuning V2: align with 设置-认知设置.png === */
 .cognitive.sub{
   padding-top:54px;
+  padding-left:24px;
+  padding-right:24px;
 }
 .cognitive .topline{
   height:84px;
@@ -154,9 +156,28 @@ svg{stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}.i 
 .cognitive .sub-slider{
   height:66px;
   margin-top:8px;
+  position:relative;
 }
 .cognitive .sub-slider input{
-  margin-top:4px;
+  -webkit-appearance:none;
+  appearance:none;
+  width:100%;
+  height:4px;
+  border-radius:8px;
+  background:#DEDCD8;
+  outline:none;
+  margin-top:8px;
+  cursor:pointer;
+  accent-color:#0758C7;
+}
+.cognitive .sub-slider input::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#0758C7;
+  cursor:pointer;
+  box-shadow:0 2px 5px rgba(0,47,167,.25);
 }
 .cognitive .sub-slider .labels{
   font-size:14px;

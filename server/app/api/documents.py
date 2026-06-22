@@ -32,6 +32,9 @@ from app.services.graph_builder import GraphBuilder
 logger = logging.getLogger("bluelink.api.documents")
 router = APIRouter(prefix="/api/v1/documents", tags=["文档"])
 
+# 上传限制
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
 # 确保上传目录存在
 UPLOAD_DIR = Path(settings.UPLOADS_DIR)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -48,10 +51,19 @@ def upload_document(
 
     接收 PDF / Word / Markdown / TXT 文件，解析切片后入库。
     """
-    # 保存上传文件到临时目录
-    ext = Path(file.filename or "file.txt").suffix
-    tmp_path = UPLOAD_DIR / f"{uuid.uuid4()}{ext}"
+    # 文件大小检查
     content = file.file.read()
+    if len(content) > MAX_FILE_SIZE:
+        from fastapi import HTTPException
+        raise HTTPException(413, detail=f"文件过大，最大支持 {MAX_FILE_SIZE // 1024 // 1024}MB")
+
+    # 扩展名校验
+    ext = Path(file.filename or "file.txt").suffix.lower()
+    if ext == ".doc":
+        from fastapi import HTTPException
+        raise HTTPException(400, detail="不支持的格式，请转换为 .docx 或 PDF")
+
+    tmp_path = UPLOAD_DIR / f"{uuid.uuid4()}{ext}"
     tmp_path.write_bytes(content)
 
     try:
@@ -63,7 +75,7 @@ def upload_document(
             db=db,
             user_id=user_id,
             title=file.filename or "未命名文档",
-            source=str(tmp_path),
+            source=file.filename or "未命名文档",
             chunks=chunks,
             privacy_level=privacy_level,
         )

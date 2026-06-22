@@ -4,7 +4,6 @@
 """
 
 import logging
-import os
 import uuid
 from pathlib import Path
 
@@ -187,7 +186,7 @@ class DocumentService:
         # 3. 先提交 DB 事务，确保 segments 已持久化（否则 VectorStore 外键约束会失败）
         db.commit()
 
-        # 4. 向量化并存入 VectorStore（分批，每次 ≤ 20 条）
+        # 4. 向量化并存入 VectorStore（分批，每次 ≤ 10 条）
         try:
             llm = get_llm()
             store = create_vector_store()

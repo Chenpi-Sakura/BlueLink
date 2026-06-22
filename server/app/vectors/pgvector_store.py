@@ -7,9 +7,8 @@
 from __future__ import annotations
 
 import numpy as np
-from sqlalchemy import Column, String, ForeignKey, create_engine
-from sqlalchemy.orm import Session
 from pgvector.sqlalchemy import Vector
+from sqlalchemy import Column, String, ForeignKey
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.models.database import Base, SessionLocal
@@ -57,18 +56,24 @@ class PgVectorStore(VectorStore):
         self,
         query_vector: list[float],
         top_k: int = 20,
+        doc_ids: list[str] | None = None,
     ) -> list[SearchResult]:
         """pgvector <-> 算子余弦相似度检索"""
         q_vec = np.array(query_vector, dtype=np.float32).reshape(1, -1)
 
         with SessionLocal() as session:
+            query = session.query(SegmentVector)
+
+            # 限定文档范围
+            if doc_ids:
+                query = query.filter(SegmentVector.doc_id.in_(doc_ids))
+
             rows = (
-                session.query(SegmentVector)
+                query
                 .order_by(SegmentVector.embedding.cosine_distance(query_vector))
                 .limit(top_k)
                 .all()
             )
-            # 计算实际余弦相似度（r.embedding 是 np.ndarray，非 pgvector 表达式）
             results = []
             for r in rows:
                 vec = np.array(r.embedding, dtype=np.float32).reshape(1, -1)

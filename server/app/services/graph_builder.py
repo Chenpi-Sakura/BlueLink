@@ -9,8 +9,7 @@
 
 import logging
 import uuid
-from threading import Timer
-from typing import Any
+from threading import Lock, Timer
 
 from sqlalchemy.orm import Session
 
@@ -23,6 +22,7 @@ logger = logging.getLogger("bluelink.graph")
 
 # 防抖计时器: {node_id: Timer}
 _discovery_timers: dict[str, Timer] = {}
+_discovery_lock = Lock()
 
 # 每批最多处理的已有节点数
 BATCH_SIZE = 30
@@ -114,23 +114,23 @@ class GraphBuilder:
     @staticmethod
     def schedule_discovery(node_id: str, user_id: str):
         """60 秒防抖排期关系发现"""
-        # 取消旧的计时器
-        old = _discovery_timers.get(node_id)
-        if old:
-            old.cancel()
-            logger.debug("取消 node=%s 的旧发现任务", node_id)
+        with _discovery_lock:
+            old = _discovery_timers.get(node_id)
+            if old:
+                old.cancel()
+                logger.debug("取消 node=%s 的旧发现任务", node_id)
 
-        t = Timer(60.0, GraphBuilder._run_discovery, args=[node_id, user_id])
-        t.daemon = True
-        _discovery_timers[node_id] = t
-        t.start()
+            t = Timer(60.0, GraphBuilder._run_discovery, args=[node_id, user_id])
+            t.daemon = True
+            _discovery_timers[node_id] = t
+            t.start()
         logger.info("排期关系发现 node=%s （60 秒后执行）", node_id)
 
     @staticmethod
     def _run_discovery(node_id: str, user_id: str):
         """定时器回调 — 执行增量关系发现"""
-        # 清理计时器引用
-        _discovery_timers.pop(node_id, None)
+        with _discovery_lock:
+            _discovery_timers.pop(node_id, None)
         logger.info("开始关系发现 node=%s", node_id)
 
         from app.models.database import SessionLocal

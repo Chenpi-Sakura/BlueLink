@@ -48,7 +48,12 @@ def delete_user_me(
             db.query(Document.id).filter(Document.user_id == user_id)
         )
     ).delete(synchronize_session=False)
-    db.query(Anchor).filter(Anchor.query_hash.isnot(None)).delete()
+    # 删除当前用户的锚点（通过关联的文档）
+    db.query(Anchor).filter(
+        Anchor.segment_id.in_(
+            db.query(Segment.id).join(Document).filter(Document.user_id == user_id)
+        )
+    ).delete(synchronize_session=False)
     db.query(Document).filter(Document.user_id == user_id).delete()
     db.query(InspirationCard).filter(InspirationCard.user_id == user_id).delete()
     db.commit()

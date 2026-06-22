@@ -46,12 +46,14 @@ class VectorStore(ABC):
         self,
         query_vector: list[float] | np.ndarray,
         top_k: int = 20,
+        doc_ids: list[str] | None = None,
     ) -> list[SearchResult]:
         """余弦相似度检索 top-k
 
         Args:
             query_vector: 查询向量
             top_k: 返回 top-k 结果
+            doc_ids: 限定检索的文档 ID 列表（可选）
 
         Returns:
             按相似度降序排列的检索结果

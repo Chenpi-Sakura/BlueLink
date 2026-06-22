@@ -4,6 +4,7 @@
 """
 
 import logging
+import time
 import uuid
 
 from fastapi import APIRouter, Depends
@@ -28,7 +29,7 @@ def create_inspiration(
     user_id: str = Depends(get_user_id),
 ) -> InspirationDto:
     """创建灵感卡片"""
-    now = int(__import__("time").time() * 1000)
+    now = int(time.time() * 1000)
     card = InspirationCard(
         id=str(uuid.uuid4()),
         user_id=user_id,

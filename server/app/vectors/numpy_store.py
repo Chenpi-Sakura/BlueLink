@@ -72,6 +72,7 @@ class NumpyVectorStore(VectorStore):
         self,
         query_vector: list[float],
         top_k: int = 20,
+        doc_ids: list[str] | None = None,
     ) -> list[SearchResult]:
         """遍历所有文档的向量文件，余弦相似度 top-k"""
         q_vec = np.array(query_vector, dtype=np.float32).reshape(1, -1)
@@ -79,6 +80,8 @@ class NumpyVectorStore(VectorStore):
 
         for npy_file in self._storage_dir.glob("*.npy"):
             doc_id = npy_file.stem
+            if doc_ids is not None and doc_id not in doc_ids:
+                continue
             loaded = self._load_doc(doc_id)
             if loaded is None:
                 continue

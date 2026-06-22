@@ -46,9 +46,9 @@ class AnchorEngine:
         logger.info("溯源提问: query=%s, granularity=%s", query, granularity)
         query_vector = get_llm().embed_text(query)
 
-        # 2. 向量检索公开文档切片
+        # 2. 向量检索公开文档切片（可选限定文档范围）
         store = create_vector_store()
-        search_results = store.search(query_vector, top_k=20)
+        search_results = store.search(query_vector, top_k=20, doc_ids=scope_doc_ids)
         logger.info("向量检索命中 %d 个切片", len(search_results))
 
         # 收集所有需要查询的 segment_id

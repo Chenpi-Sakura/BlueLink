@@ -43,7 +43,7 @@ class TestRealLLM:
                 "targetConcept": "深度工作",
                 "contextSegmentIds": [],
             },
-            headers={"X-User-Id": "integration-test-0000-0000-0000"},
+            headers={"X-User-Id": "integration-0000-0000-0000-00000001"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -57,7 +57,7 @@ class TestRealLLM:
         response = client.post(
             "/api/v1/questions/ask",
             json={"query": "什么是深度工作？"},
-            headers={"X-User-Id": "integration-test-0000-0000-0000"},
+            headers={"X-User-Id": "integration-0000-0000-0000-00000001"},
         )
         assert response.status_code == 200
         data = response.json()

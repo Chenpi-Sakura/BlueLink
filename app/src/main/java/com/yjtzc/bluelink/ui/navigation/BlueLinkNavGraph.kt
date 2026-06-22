@@ -25,6 +25,8 @@ import com.yjtzc.bluelink.ui.mine.AppearanceSettingsScreen
 import com.yjtzc.bluelink.ui.mine.CognitiveSettingsScreen
 import com.yjtzc.bluelink.ui.mine.MineScreen
 import com.yjtzc.bluelink.ui.mine.MineViewModel
+import com.yjtzc.bluelink.ui.mine.DataExportScreen
+import com.yjtzc.bluelink.ui.mine.PermanentDeleteScreen
 import com.yjtzc.bluelink.ui.mine.PermissionManagementScreen
 import com.yjtzc.bluelink.ui.mine.PrivacySecurityScreen
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
@@ -213,32 +215,20 @@ fun BlueLinkNavGraph() {
                 )
             }
             is MineRoute.DataExport -> {
-                MineNavScaffold(
-                    title = "数据导出",
+                DataExportScreen(
+                    viewModel = viewModel(
+                        factory = BlueLinkViewModelFactory(container)
+                    ),
                     onBack = onGoBack
-                ) {
-                    // TODO Phase 6: DataExportScreen
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("数据导出", style = MaterialTheme.typography.bodyLarge, color = Ink600)
-                    }
-                }
+                )
             }
             is MineRoute.PermanentDelete -> {
-                MineNavScaffold(
-                    title = "永久删除",
+                PermanentDeleteScreen(
+                    viewModel = viewModel(
+                        factory = BlueLinkViewModelFactory(container)
+                    ),
                     onBack = onGoBack
-                ) {
-                    // TODO Phase 6: PermanentDeleteScreen
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("永久删除", style = MaterialTheme.typography.bodyLarge, color = Ink600)
-                    }
-                }
+                )
             }
             null -> {}
         }

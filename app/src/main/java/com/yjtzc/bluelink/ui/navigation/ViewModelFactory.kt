@@ -9,6 +9,7 @@ import com.yjtzc.bluelink.ui.reader.ReaderViewModel
 import com.yjtzc.bluelink.ui.graph.GraphViewModel
 import com.yjtzc.bluelink.ui.capture.CaptureViewModel
 import com.yjtzc.bluelink.ui.mine.AppearanceViewModel
+import com.yjtzc.bluelink.ui.mine.DataManagementViewModel
 import com.yjtzc.bluelink.ui.mine.MineViewModel
 
 /**
@@ -40,6 +41,9 @@ class BlueLinkViewModelFactory(
 
         modelClass.isAssignableFrom(AppearanceViewModel::class.java) ->
             AppearanceViewModel(container.userPreferences) as T
+
+        modelClass.isAssignableFrom(DataManagementViewModel::class.java) ->
+            DataManagementViewModel(container.database, container.userPreferences) as T
 
         else -> error("Unknown ViewModel: ${modelClass.name}")
     }

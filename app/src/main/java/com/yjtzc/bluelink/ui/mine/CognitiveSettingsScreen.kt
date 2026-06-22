@@ -27,7 +27,9 @@ private val BlueTitle = Color(0xFF0A3F86)
 private val DescText = Color(0xFF707176)
 private val DeepText = Color(0xFF10213B)
 private val SelectedBlue = Color(0xFF064AA9)
+private val SelectedBorder = Color(0xAE0048B4)
 private val OffChipBorder = Color(0xE6D6CFC4)
+private val AccentBlue = Color(0xFF0758C7)
 
 private val ALL_TERMS = listOf("计算机", "认知科学", "论文阅读", "产品设计")
 
@@ -48,45 +50,52 @@ fun CognitiveSettingsScreen(
     MineNavScaffold(title = "认知设置", onBack = onBack, titleColor = BlueTitle, titleSize = 27.sp) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {
                 Text(
                     text = "调整蓝链提供线索的方式，让 AI 更像索引，而不是答案生成器。",
-                    fontSize = 16.sp,
-                    lineHeight = 27.sp,
+                    fontSize = 16.sp, lineHeight = 28.sp,
                     color = Color(0xFF66686D),
-                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 28.dp)
+                    modifier = Modifier.padding(bottom = 28.dp, start = 4.dp, end = 4.dp)
                 )
             }
 
             item {
-                BlockCard(title = "默认溯源粒度") {
+                BlockCard {
+                    CardTitle("默认溯源粒度")
                     GranularitySegWide(selected = profile.defaultGranularity, onSelect = viewModel::setGranularity)
                 }
             }
             item {
-                BlockCard(title = "提示明确度") {
+                BlockCard {
+                    CardTitle("提示明确度")
                     DirectnessSliderWide(value = profile.directnessLevel, onValueChange = viewModel::setDirectness)
                 }
             }
             item {
-                BlockCard(title = "探索深度") {
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        Text("开启后会优先显示关联争议和对应观点", fontSize = 14.5.sp, lineHeight = 24.sp, color = DescText, modifier = Modifier.weight(1f))
-                        Spacer(Modifier.width(8.dp))
+                BlockCard {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            CardTitle("探索深度")
+                            Spacer(Modifier.height(8.dp))
+                            Text("开启后会优先显示关联争议和对应观点", fontSize = 14.5.sp, lineHeight = 24.sp, color = DescText)
+                        }
+                        Spacer(Modifier.width(12.dp))
                         CognitiveSwitch(checked = profile.exploreDepth, onToggle = viewModel::toggleExploreDepth)
                     }
                 }
             }
             item {
-                BlockCard(title = "伴读风格") {
+                BlockCard {
+                    CardTitle("伴读风格")
                     ToneSegRow(selected = profile.companionStyle, onSelect = viewModel::setCompanionStyle)
                 }
             }
             item {
-                BlockCard(title = "术语偏好") {
+                BlockCard {
+                    CardTitle("术语偏好")
                     TerminologyChips(selectedTerms = selectedTerms, onTermsChanged = { tags ->
                         viewModel.setTerminologyTags(JSONArray(tags.toList()).toString())
                     })
@@ -97,16 +106,33 @@ fun CognitiveSettingsScreen(
     }
 }
 
+// ====== 卡片组件 ======
+
 @Composable
-private fun BlockCard(title: String, content: @Composable ColumnScope.() -> Unit) {
+private fun BlockCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp), color = CardBg, border = BorderStroke(1.dp, CardBorder)
+        shape = RoundedCornerShape(22.dp), color = CardBg,
+        border = BorderStroke(1.dp, CardBorder)
     ) {
-        Column(modifier = Modifier.padding(22.dp, 22.dp, 20.dp, 22.dp), content = content)
+        Column(modifier = Modifier.padding(20.dp), content = content)
     }
     Spacer(Modifier.height(22.dp))
 }
+
+@Composable
+private fun CardTitle(text: String) {
+    Text(
+        text = text,
+        fontSize = 18.5.sp, lineHeight = 26.sp,
+        fontWeight = FontWeight(740), color = BlueTitle,
+        fontFamily = FontFamily.Serif,
+        letterSpacing = (-0.02).sp,
+        modifier = Modifier.padding(bottom = 15.dp)
+    )
+}
+
+// ====== 默认溯源粒度 ======
 
 @Composable
 private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
@@ -120,12 +146,10 @@ private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
             Box(
                 modifier = Modifier.weight(1f).fillMaxHeight()
                     .clip(RoundedCornerShape(12.dp))
-                    .then(
-                        if (isSelected) Modifier.background(
-                            Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
-                            RoundedCornerShape(12.dp)
-                        ) else Modifier
-                    )
+                    .then(if (isSelected) Modifier.background(
+                        Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
+                        RoundedCornerShape(12.dp)
+                    ) else Modifier)
                     .clickable { onSelect(value) },
                 contentAlignment = Alignment.Center
             ) {
@@ -137,18 +161,31 @@ private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
     }
 }
 
+// ====== 提示明确度 ======
+
 @Composable
 private fun DirectnessSliderWide(value: Float, onValueChange: (Float) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().heightIn(min = 66.dp)) {
-        Slider(value = value, onValueChange = onValueChange, valueRange = 0f..1f,
-            colors = SliderDefaults.colors(thumbColor = Color(0xFF0758C7), activeTrackColor = Color(0xFF0758C7), inactiveTrackColor = Color(0xFFDEDCD8)),
-            modifier = Modifier.height(34.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Slider(
+            value = value, onValueChange = onValueChange, valueRange = 0f..1f,
+            colors = SliderDefaults.colors(
+                thumbColor = AccentBlue,
+                activeTrackColor = AccentBlue,
+                inactiveTrackColor = Color(0xFFDEDCD8)
+            ),
+            modifier = Modifier.fillMaxWidth().height(34.dp)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text("温和启发", fontSize = 14.sp, color = Color(0xFF666666))
             Text("直指核心", fontSize = 14.sp, color = Color(0xFF666666))
         }
     }
 }
+
+// ====== Switch ======
 
 @Composable
 private fun CognitiveSwitch(checked: Boolean, onToggle: () -> Unit) {
@@ -163,21 +200,24 @@ private fun CognitiveSwitch(checked: Boolean, onToggle: () -> Unit) {
     }
 }
 
+// ====== 伴读风格 ======
+
 @Composable
 private fun ToneSegRow(selected: String, onSelect: (String) -> Unit) {
     val options = listOf("温和启发" to "GENTLE", "直指核心" to "DIRECT")
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         options.forEach { (label, value) ->
             val isSelected = selected == value
-            val bgMod = if (isSelected) Modifier.background(
-                Brush.verticalGradient(listOf(Color(0xBDEEF6FF), Color(0xB3FFFDF8))),
-                RoundedCornerShape(12.dp)
-            ) else Modifier
             Surface(
-                modifier = Modifier.weight(1f).height(46.dp).then(bgMod).clickable { onSelect(value) },
+                modifier = Modifier.weight(1f).height(46.dp)
+                    .then(if (isSelected) Modifier.background(
+                        Brush.verticalGradient(listOf(Color(0xBDEEF6FF), Color(0xB3FFFDF8))),
+                        RoundedCornerShape(12.dp)
+                    ) else Modifier)
+                    .clickable { onSelect(value) },
                 shape = RoundedCornerShape(12.dp),
                 color = if (isSelected) Color.Transparent else Color(0x94FFFDF8),
-                border = BorderStroke(1.dp, if (isSelected) Color(0xEB0048B4) else Color(0xD1D9D3CA))
+                border = BorderStroke(1.dp, if (isSelected) SelectedBorder else Color(0xD1D9D3CA))
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(label, color = if (isSelected) SelectedBlue else Color(0xFF606164),
@@ -189,29 +229,51 @@ private fun ToneSegRow(selected: String, onSelect: (String) -> Unit) {
     }
 }
 
+// ====== 术语偏好（FlowRow 自动换行） ======
+
 @Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<String>) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    androidx.compose.foundation.layout.FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
         ALL_TERMS.forEach { tag ->
             val isSelected = tag in selectedTerms
             Surface(
                 modifier = Modifier.height(30.dp)
-                    .then(
-                        if (isSelected) Modifier.background(
-                            Brush.verticalGradient(listOf(Color(0xBDEEF6FF), Color(0xB3FFFDF8))),
-                            RoundedCornerShape(9.dp)
-                        ) else Modifier
-                    )
+                    .then(if (isSelected) Modifier.background(
+                        Brush.verticalGradient(listOf(Color(0xBDEEF6FF), Color(0xB3FFFDF8))),
+                        RoundedCornerShape(9.dp)
+                    ) else Modifier)
                     .clickable {
                         onTermsChanged(if (isSelected) selectedTerms - tag else selectedTerms + tag)
                     },
                 shape = RoundedCornerShape(9.dp),
                 color = if (isSelected) Color.Transparent else Color(0x40FFFFFF),
-                border = BorderStroke(1.dp, if (isSelected) Color(0xAE0048B4) else OffChipBorder)
+                border = BorderStroke(1.dp, if (isSelected) SelectedBorder else OffChipBorder)
             ) {
                 Text(tag, color = if (isSelected) SelectedBlue else Color(0xFF6B6B6B),
                     fontSize = 14.sp, fontWeight = if (isSelected) FontWeight(560) else FontWeight.Normal,
                     fontFamily = FontFamily.Serif, modifier = Modifier.padding(horizontal = 15.dp))
+            }
+        }
+        // + button
+        Surface(
+            modifier = Modifier.size(31.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = Color.Transparent,
+            border = BorderStroke(1.dp, Color(0x9E0048B4))
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(
+                    Brush.verticalGradient(listOf(Color(0xAEEEF6FF), Color(0xAFFFFDF8))),
+                    RoundedCornerShape(10.dp)
+                ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("＋", color = SelectedBlue, fontSize = 20.sp, fontWeight = FontWeight.Normal)
             }
         }
     }

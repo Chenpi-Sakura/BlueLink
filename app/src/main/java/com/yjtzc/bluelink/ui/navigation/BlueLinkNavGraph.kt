@@ -162,8 +162,13 @@ fun BlueLinkNavGraph() {
     // ====== 我的子页面覆盖层 ======
     if (mineRoute != null) {
         val onGoBack: () -> Unit = {
-            // 如果有 from 路由则返回对应页面，否则返回总览页
-            mineRoute = mineFromRoute
+            // 从深页面返回时使用 mineFromRoute，用完即重置
+            if (mineFromRoute != null) {
+                mineRoute = mineFromRoute
+                mineFromRoute = null
+            } else {
+                mineRoute = null
+            }
         }
 
         BackHandler { onGoBack() }

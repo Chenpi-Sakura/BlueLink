@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_user_id
+from app.llm.provider import get_llm
 from app.models.database import get_db
 from app.models.document import InspirationCard
 from app.schemas.card import CreateCardRequest, InspirationDto
@@ -39,6 +40,23 @@ def create_inspiration(
     db.add(card)
     db.commit()
     db.refresh(card)
+
+    # 如果没有提供 tags，自动从内容提取关键词
+    if not request.tags and len(card.content) > 5:
+        try:
+            result = get_llm().chat_json(
+                system_prompt="你是一个关键词提取助手。从内容提取 3-5 个关键词（词或短语），"
+                              "输出 JSON 格式：{\"keywords\": [\"词1\", \"词2\"]}",
+                user_prompt=card.content,
+                temperature=0.1,
+            )
+            kw = result.get("keywords", [])
+            if kw:
+                card.tags = ",".join(kw[:5])
+                db.commit()
+                logger.info("自动提取关键词 card=%s keywords=%s", card.id, card.tags)
+        except Exception as e:
+            logger.warning("关键词提取跳过: %s", e)
 
     # 创建图谱节点 + 排期关系发现
     try:

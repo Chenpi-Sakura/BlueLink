@@ -38,7 +38,7 @@ fun MineNavScaffold(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 // 返回按钮
@@ -58,7 +58,7 @@ fun MineNavScaffold(
                     fontSize = titleSize,
                     fontWeight = titleWeight,
                     fontFamily = FontFamily.Serif,
-                    modifier = Modifier.padding(start = 52.dp)
+                    modifier = Modifier.padding(start = 46.dp)
                 )
             }
 

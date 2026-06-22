@@ -50,18 +50,17 @@ fun BlueLinkSubPageScaffold(
             .background(MineColors.Rice)
             .systemBarsPadding()
     ) {
-        // 顶部栏
-        Box(
+        // 顶部栏（Row 布局，更可靠）
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(MinePage.TopBarHeight)
-                .padding(top = 26.dp),
-            contentAlignment = Alignment.CenterStart
+                .height(MinePage.TopBarHeight),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(MinePage.BackButtonSize)
-                    .clip(CircleShape)
+                    .size(48.dp)
+                    .padding(start = 8.dp)
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center
             ) {
@@ -73,14 +72,14 @@ fun BlueLinkSubPageScaffold(
                     fontFamily = FontFamily.Serif
                 )
             }
+            Spacer(Modifier.width(8.dp))
             Text(
                 text = title,
                 color = MineColors.Ink,
                 fontSize = MineTypography.PageTitleSize,
                 lineHeight = MineTypography.PageTitleLineHeight,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Serif,
-                modifier = Modifier.padding(start = MinePage.BackButtonSize + 10.dp)
+                fontFamily = FontFamily.Serif
             )
         }
 

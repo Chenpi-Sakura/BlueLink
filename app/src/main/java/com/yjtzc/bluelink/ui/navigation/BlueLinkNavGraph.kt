@@ -22,6 +22,7 @@ import com.yjtzc.bluelink.ui.chat.ChatScreen
 import com.yjtzc.bluelink.ui.graph.GraphScreen
 import com.yjtzc.bluelink.ui.home.HomeScreen
 import com.yjtzc.bluelink.ui.mine.AppearanceSettingsScreen
+import com.yjtzc.bluelink.ui.mine.CognitiveSettingsScreen
 import com.yjtzc.bluelink.ui.mine.MineScreen
 import com.yjtzc.bluelink.ui.mine.MineViewModel
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
@@ -177,18 +178,12 @@ fun BlueLinkNavGraph() {
                 )
             }
             is MineRoute.CognitiveSettings -> {
-                MineNavScaffold(
-                    title = "认知设置",
+                CognitiveSettingsScreen(
+                    viewModel = viewModel(
+                        factory = BlueLinkViewModelFactory(container)
+                    ),
                     onBack = onGoBack
-                ) {
-                    // TODO Phase 3: CognitiveSettingsScreen
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("认知设置", style = MaterialTheme.typography.bodyLarge, color = Ink600)
-                    }
-                }
+                )
             }
             is MineRoute.PrivacySecurity -> {
                 MineNavScaffold(

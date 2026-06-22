@@ -137,7 +137,10 @@ class DocumentService:
             db.add(seg)
         db.flush()
 
-        # 3. 向量化并存入 VectorStore
+        # 3. 先提交 DB 事务，确保 segments 已持久化（否则 VectorStore 外键约束会失败）
+        db.commit()
+
+        # 4. 向量化并存入 VectorStore
         try:
             texts = [s.text for s in segments]
             vectors = get_llm().embed_texts(texts)
@@ -146,10 +149,9 @@ class DocumentService:
             ]
             store = create_vector_store()
             store.save_segment_vectors(doc_id, segment_vectors)
+            logger.info("向量化成功: %d 个切片", len(vectors))
         except Exception as e:
             logger.warning("向量化失败（跳过）: %s", e)
-
-        db.commit()
         logger.info(
             "文档保存成功 user=%s doc=%s chunks=%d",
             user_id, doc_id, len(segments),

@@ -64,7 +64,7 @@ fun MineScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(RiceWhite),
-        contentPadding = PaddingValues(bottom = 120.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 120.dp)
     ) {
         item {
             Text(
@@ -74,7 +74,7 @@ fun MineScreen(
                 fontWeight = FontWeight(780),
                 fontFamily = FontFamily.Serif,
                 letterSpacing = (-1.2).sp,
-                modifier = Modifier.padding(start = 16.dp, top = 58.dp)
+                modifier = Modifier.padding(top = 58.dp)
             )
         }
         item {
@@ -122,7 +122,6 @@ private fun HeroIdentityCard(onEditClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
             .height(130.dp)
             .shadow(13.dp, RoundedCornerShape(26.dp), ambientColor = Color(0xFF192436), spotColor = Color(0xFF192436))
     ) {
@@ -261,7 +260,7 @@ private val rowTS = androidx.compose.ui.text.TextStyle(fontSize = 14.5.sp, color
 @Composable
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp), color = CardBg,
         shadowElevation = 0.dp, border = BorderStroke(1.dp, CardBorder)
     ) { Column(content = content) }

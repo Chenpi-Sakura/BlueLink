@@ -25,6 +25,7 @@ import com.yjtzc.bluelink.ui.mine.AppearanceSettingsScreen
 import com.yjtzc.bluelink.ui.mine.CognitiveSettingsScreen
 import com.yjtzc.bluelink.ui.mine.MineScreen
 import com.yjtzc.bluelink.ui.mine.MineViewModel
+import com.yjtzc.bluelink.ui.mine.PermissionManagementScreen
 import com.yjtzc.bluelink.ui.mine.PrivacySecurityScreen
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
 import com.yjtzc.bluelink.ui.reader.ReaderScreen
@@ -207,18 +208,9 @@ fun BlueLinkNavGraph() {
                 )
             }
             is MineRoute.PermissionManagement -> {
-                MineNavScaffold(
-                    title = "权限管理",
+                PermissionManagementScreen(
                     onBack = onGoBack
-                ) {
-                    // TODO Phase 5: PermissionManagementScreen
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("权限管理", style = MaterialTheme.typography.bodyLarge, color = Ink600)
-                    }
-                }
+                )
             }
             is MineRoute.DataExport -> {
                 MineNavScaffold(

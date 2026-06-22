@@ -268,7 +268,9 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            ALL_TERMS.forEach { tag ->
+            // 默认术语 + 用户自定义术语
+            val allVisibleTerms = (ALL_TERMS + (selectedTerms - ALL_TERMS.toSet()).toList()).distinct()
+            allVisibleTerms.forEach { tag ->
                 val isSelected = tag in selectedTerms
                 Surface(
                     modifier = Modifier.height(30.dp)

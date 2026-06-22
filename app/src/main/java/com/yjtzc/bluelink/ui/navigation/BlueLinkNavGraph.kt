@@ -25,6 +25,7 @@ import com.yjtzc.bluelink.ui.mine.AppearanceSettingsScreen
 import com.yjtzc.bluelink.ui.mine.CognitiveSettingsScreen
 import com.yjtzc.bluelink.ui.mine.MineScreen
 import com.yjtzc.bluelink.ui.mine.MineViewModel
+import com.yjtzc.bluelink.ui.mine.PrivacySecurityScreen
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
 import com.yjtzc.bluelink.ui.reader.ReaderScreen
 import com.yjtzc.bluelink.ui.reader.ReaderViewModel
@@ -186,18 +187,24 @@ fun BlueLinkNavGraph() {
                 )
             }
             is MineRoute.PrivacySecurity -> {
-                MineNavScaffold(
-                    title = "隐私与安全",
-                    onBack = onGoBack
-                ) {
-                    // TODO Phase 4: PrivacySecurityScreen
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("隐私与安全", style = MaterialTheme.typography.bodyLarge, color = Ink600)
+                PrivacySecurityScreen(
+                    viewModel = viewModel(
+                        factory = BlueLinkViewModelFactory(container)
+                    ),
+                    onBack = onGoBack,
+                    onNavigateToPermission = {
+                        mineFromRoute = MineRoute.PrivacySecurity
+                        mineRoute = MineRoute.PermissionManagement
+                    },
+                    onNavigateToDataExport = {
+                        mineFromRoute = MineRoute.PrivacySecurity
+                        mineRoute = MineRoute.DataExport
+                    },
+                    onNavigateToPermanentDelete = {
+                        mineFromRoute = MineRoute.PrivacySecurity
+                        mineRoute = MineRoute.PermanentDelete
                     }
-                }
+                )
             }
             is MineRoute.PermissionManagement -> {
                 MineNavScaffold(

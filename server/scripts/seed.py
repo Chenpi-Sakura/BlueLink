@@ -26,25 +26,33 @@ SAMPLE_CARDS = [
     ("知识图谱将碎片信息连接成网络", ["图谱", "知识管理"]),
 ]
 
-# 示例图谱节点
+# 示例图谱节点（固定 ID 便于关联）
+SEED_NODE_IDS = {
+    "deep_work_concept": str(uuid.uuid4()),
+    "feynman": str(uuid.uuid4()),
+    "info_delta": str(uuid.uuid4()),
+    "deep_work_doc": str(uuid.uuid4()),
+    "card_1": str(uuid.uuid4()),
+}
+
 SAMPLE_NODES = [
-    ("n1", "深度工作", "CONCEPT"),
-    ("n2", "费曼学习法", "CONCEPT"),
-    ("n3", "信息增量", "CONCEPT"),
-    ("n4", "Deep Work", "DOCUMENT"),
-    ("n5", "灵感卡片 #1", "INSPIRATION"),
+    (SEED_NODE_IDS["deep_work_concept"], "深度工作", "CONCEPT"),
+    (SEED_NODE_IDS["feynman"], "费曼学习法", "CONCEPT"),
+    (SEED_NODE_IDS["info_delta"], "信息增量", "CONCEPT"),
+    (SEED_NODE_IDS["deep_work_doc"], "Deep Work", "DOCUMENT"),
+    (SEED_NODE_IDS["card_1"], "灵感卡片 #1", "INSPIRATION"),
 ]
 
 # 示例图谱边
 SAMPLE_EDGES = [
-    ("n1", "n4", "CITE", 0.95),
-    ("n1", "n2", "SUPPLEMENT", 0.7),
-    ("n2", "n5", "SUPPORT", 0.85),
-    ("n3", "n1", "CHALLENGE", 0.6),
-    ("n3", "n5", "SUPPLEMENT", 0.75),
-    ("n4", "n1", "CITE", 0.9),
-    ("n2", "n1", "SUPPORT", 0.8),
-    ("n5", "n3", "SUPPORT", 0.7),
+    (SEED_NODE_IDS["deep_work_concept"], SEED_NODE_IDS["deep_work_doc"], "CITE", 0.95),
+    (SEED_NODE_IDS["deep_work_concept"], SEED_NODE_IDS["feynman"], "SUPPLEMENT", 0.7),
+    (SEED_NODE_IDS["feynman"], SEED_NODE_IDS["card_1"], "SUPPORT", 0.85),
+    (SEED_NODE_IDS["info_delta"], SEED_NODE_IDS["deep_work_concept"], "CHALLENGE", 0.6),
+    (SEED_NODE_IDS["info_delta"], SEED_NODE_IDS["card_1"], "SUPPLEMENT", 0.75),
+    (SEED_NODE_IDS["deep_work_doc"], SEED_NODE_IDS["deep_work_concept"], "CITE", 0.9),
+    (SEED_NODE_IDS["feynman"], SEED_NODE_IDS["deep_work_concept"], "SUPPORT", 0.8),
+    (SEED_NODE_IDS["card_1"], SEED_NODE_IDS["info_delta"], "SUPPORT", 0.7),
 ]
 
 

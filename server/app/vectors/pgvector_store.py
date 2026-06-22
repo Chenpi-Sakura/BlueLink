@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+import numpy as np
 from sqlalchemy import Column, String, ForeignKey, create_engine
 from sqlalchemy.orm import Session
 from pgvector.sqlalchemy import Vector
+from sklearn.metrics.pairwise import cosine_similarity
 
 from app.models.database import Base, SessionLocal
 from app.vectors.base import VectorStore, SearchResult
@@ -57,6 +59,8 @@ class PgVectorStore(VectorStore):
         top_k: int = 20,
     ) -> list[SearchResult]:
         """pgvector <-> 算子余弦相似度检索"""
+        q_vec = np.array(query_vector, dtype=np.float32).reshape(1, -1)
+
         with SessionLocal() as session:
             rows = (
                 session.query(SegmentVector)
@@ -64,14 +68,17 @@ class PgVectorStore(VectorStore):
                 .limit(top_k)
                 .all()
             )
-            return [
-                SearchResult(
+            # 计算实际余弦相似度（r.embedding 是 np.ndarray，非 pgvector 表达式）
+            results = []
+            for r in rows:
+                vec = np.array(r.embedding, dtype=np.float32).reshape(1, -1)
+                sim = float(cosine_similarity(q_vec, vec)[0][0])
+                results.append(SearchResult(
                     doc_id=r.doc_id,
                     segment_id=r.segment_id,
-                    score=1.0 - r.embedding.cosine_distance(query_vector),
-                )
-                for r in rows
-            ]
+                    score=sim,
+                ))
+            return results
 
     def delete_doc_vectors(self, doc_id: str) -> None:
         """删除文档所有向量"""

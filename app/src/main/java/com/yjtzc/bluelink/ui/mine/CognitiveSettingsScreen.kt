@@ -87,9 +87,9 @@ fun CognitiveSettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             CardTitle("探索深度")
                             Spacer(Modifier.height(8.dp))
-                            Text("开启后会优先显示关联争议和对应观点", fontSize = 14.5.sp, color = DescText)
+                            Text("开启后会优先显示关联争议和对应观点", fontSize = 14.5.sp, color = DescText, maxLines = 1)
                         }
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(8.dp))
                         CognitiveSwitch(checked = profile.exploreDepth, onToggle = viewModel::toggleExploreDepth)
                     }
                 }

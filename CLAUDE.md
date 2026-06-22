@@ -214,4 +214,21 @@ git push origin --delete feat/backend-dev   # 如果不需要了
 
 > Push：需要推时先问用户，不在循环中强制。**Commit 是循环终点，Push 是独立操作。**
 ```
-```
+
+---
+
+## 10. 后端开发踩坑记录
+
+> 已踩过的坑，避免重复。
+
+| # | 问题 | 解决方案 |
+|---|------|----------|
+| 1 | `.env` 含 API Key 被提交到 git | `.gitignore` 加 `.env`，`git rm --cached`；暴露的 key 去后台撤销 |
+| 2 | Dockerfile `pip install` 时 `requirements.txt` 还没复制 | 先 `COPY requirements.txt .` 再 pip，最后 `COPY . .` |
+| 3 | 国内服务器 pip/apt 下载慢 | 默认阿里云 pip 镜像 + 清华 apt 镜像 |
+| 4 | `tests/` 被 `.dockerignore` 排除导致容器里没测试 | 移除 `.dockerignore` 中的 `tests/` |
+| 5 | `pgvector.Vector(1024)` 类型 SQLite 不兼容 | **全栈只用 PostgreSQL，彻底移除 SQLite** |
+| 6 | Android camelCase ↔ Python snake_case 字段不一致 | Pydantic `alias_generator=to_camel` + `response_model_by_alias=True` |
+| 7 | `pytest-mock` 未预装 | 改用内置 `monkeypatch` |
+| 8 | FastAPI Header 校验缺参返回 422 不是 400 | 测试预期写 422 |
+| 9 | Debian trixie 无 `libgl1-mesa-glx` | 后端不需要 GL 渲染，直接移除该依赖 |

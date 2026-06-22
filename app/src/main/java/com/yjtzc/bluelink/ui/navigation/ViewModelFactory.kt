@@ -8,6 +8,7 @@ import com.yjtzc.bluelink.ui.home.HomeViewModel
 import com.yjtzc.bluelink.ui.reader.ReaderViewModel
 import com.yjtzc.bluelink.ui.graph.GraphViewModel
 import com.yjtzc.bluelink.ui.capture.CaptureViewModel
+import com.yjtzc.bluelink.ui.mine.AppearanceViewModel
 import com.yjtzc.bluelink.ui.mine.MineViewModel
 
 /**
@@ -36,6 +37,9 @@ class BlueLinkViewModelFactory(
 
         modelClass.isAssignableFrom(MineViewModel::class.java) ->
             MineViewModel(container.userPreferences, container.securePrefs) as T
+
+        modelClass.isAssignableFrom(AppearanceViewModel::class.java) ->
+            AppearanceViewModel(container.userPreferences) as T
 
         else -> error("Unknown ViewModel: ${modelClass.name}")
     }

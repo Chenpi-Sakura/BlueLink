@@ -83,6 +83,95 @@
     }
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
+    const RELATION_LABEL_MAP = {
+        SUPPORT: '支撑',
+        SUPPLEMENT: '补充',
+        CHALLENGE: '质疑',
+        CITE: '引用'
+    };
+    const RELATION_TEXT_COLOR_MAP = {
+        SUPPORT: 'rgba(110,210,120,0.75)',
+        SUPPLEMENT: 'rgba(90,150,255,0.75)',
+        CHALLENGE: 'rgba(255,130,135,0.75)',
+        CITE: 'rgba(180,190,210,0.65)'
+    };
+
+    function edgeStyleByType(type) {
+        switch (type) {
+            case 'SUPPORT':
+                return { color: 'rgba(90,200,110,0.65)', width: 1.4, type: 'dashed', opacity: 0.65, curveness: 0.04 };
+            case 'SUPPLEMENT':
+                return { color: 'rgba(80,140,255,0.65)', width: 1.5, type: 'solid', opacity: 0.70, curveness: 0.04 };
+            case 'CHALLENGE':
+                return { color: 'rgba(255,120,125,0.60)', width: 1.4, type: 'dashed', opacity: 0.60, curveness: 0.04 };
+            case 'CITE':
+            default:
+                return { color: 'rgba(180,190,210,0.50)', width: 1.2, type: 'dotted', opacity: 0.55, curveness: 0.04 };
+        }
+    }
+
+    function pickMainEdges(nodes, edges, maxEdges) {
+        maxEdges = maxEdges || 10;
+        var nodeById = {};
+        nodes.forEach(function (node) { nodeById[node.id] = node; });
+        var relationPriority = { SUPPORT: 4, SUPPLEMENT: 3, CHALLENGE: 2, CITE: 1 };
+        var dedupedByPair = {};
+
+        function edgeScore(edge) {
+            var source = edge.source || edge.sourceId;
+            var target = edge.target || edge.targetId;
+            var type = edge.relation || edge.relationType || 'CITE';
+            var coreBonus = (isCoreNode(source) || isCoreNode(target)) ? 100 : 0;
+            var confidence = Number(edge.confidence);
+            if (!isFinite(confidence)) confidence = 0.5;
+            return coreBonus + (relationPriority[type] || 0) * 10 + confidence;
+        }
+
+        edges.forEach(function (edge) {
+            var source = edge.source || edge.sourceId;
+            var target = edge.target || edge.targetId;
+            if (!nodeById[source] || !nodeById[target] || source === target) return;
+            var key = source < target ? source + '|' + target : target + '|' + source;
+            if (!dedupedByPair[key] || edgeScore(edge) > edgeScore(dedupedByPair[key])) {
+                dedupedByPair[key] = edge;
+            }
+        });
+
+        var candidates = Object.keys(dedupedByPair).map(function (key) { return dedupedByPair[key]; });
+        candidates.sort(function (a, b) { return edgeScore(b) - edgeScore(a); });
+
+        var selected = [];
+        var selectedKeys = {};
+        var degree = {};
+        function nodeLimit(id) {
+            var node = nodeById[id] || {};
+            if (isCoreNode(id)) return maxEdges;
+            if (node.type === 'DOCUMENT' || node.type === 'INSPIRATION') return 1;
+            return 2;
+        }
+        function tryAdd(edge) {
+            if (!edge || selected.length >= maxEdges) return false;
+            var source = edge.source || edge.sourceId;
+            var target = edge.target || edge.targetId;
+            var key = source < target ? source + '|' + target : target + '|' + source;
+            if (selectedKeys[key]) return false;
+            if ((degree[source] || 0) >= nodeLimit(source) || (degree[target] || 0) >= nodeLimit(target)) return false;
+            selectedKeys[key] = true;
+            degree[source] = (degree[source] || 0) + 1;
+            degree[target] = (degree[target] || 0) + 1;
+            selected.push(edge);
+            return true;
+        }
+
+        ['SUPPORT', 'SUPPLEMENT', 'CHALLENGE', 'CITE'].forEach(function (type) {
+            tryAdd(candidates.find(function (edge) {
+                return (edge.relation || edge.relationType || 'CITE') === type;
+            }));
+        });
+        candidates.forEach(tryAdd);
+        return selected.slice(0, maxEdges);
+    }
+
     // ── 核心子图筛选（最多 10 节点 + 10 边） ──
     function pickMainGraph(rawNodes, rawEdges, maxNodes) {
         maxNodes = maxNodes || 10;
@@ -146,14 +235,7 @@
         });
 
         // 最多 10 条边，优先与核心相连
-        if (filteredEdges.length > 10) {
-            filteredEdges.sort(function (a, b) {
-                var aC = coreIds.indexOf(a.source || a.sourceId) >= 0 || coreIds.indexOf(a.target || a.targetId) >= 0 ? 1 : 0;
-                var bC = coreIds.indexOf(b.source || b.sourceId) >= 0 || coreIds.indexOf(b.target || b.targetId) >= 0 ? 1 : 0;
-                return bC - aC;
-            });
-            filteredEdges = filteredEdges.slice(0, 10);
-        }
+        filteredEdges = pickMainEdges(ordered, filteredEdges, 10);
 
         return { nodes: ordered, edges: filteredEdges };
     }
@@ -246,13 +328,70 @@
             var rawName = n.name || n.label || '';
             switch (t) {
                 case 'DOCUMENT':
-                    return { id: n.id, name: rawName, value: rawName, category: 0, typeLabel: '文献', refId: n.refId, symbol: 'circle', symbolSize: 54, itemStyle: { color: '#DDE8FF', borderColor: '#F2F6FF', borderWidth: 2, opacity: 1 }, label: { show: true, formatter: documentLabel(rawName), position: 'inside', color: '#273142', fontSize: 10, fontWeight: 600, align: 'center', verticalAlign: 'middle', lineHeight: 13 } };
+                    return {
+                        id: n.id, name: rawName, value: rawName, category: 0, typeLabel: '文献',
+                        refId: n.refId, symbol: 'circle', symbolSize: 54,
+                        itemStyle: {
+                            color: '#E8F0FF', borderColor: '#F8FAFF', borderWidth: 1.5,
+                            shadowBlur: 12, shadowColor: 'rgba(200,225,255,0.35)', opacity: 1
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 11, shadowColor: 'rgba(220,235,255,0.34)',
+                                borderColor: '#FFFFFF', borderWidth: 2
+                            }
+                        },
+                        label: {
+                            show: true, formatter: documentLabel(rawName), position: 'inside',
+                            color: '#273142', fontSize: 10, fontWeight: 600,
+                            align: 'center', verticalAlign: 'middle', lineHeight: 13
+                        }
+                    };
                 case 'INSPIRATION':
-                    return { id: n.id, name: rawName, value: rawName, category: 1, typeLabel: '灵感', refId: n.refId, symbol: 'diamond', symbolSize: 54, itemStyle: { color: '#F0C674', borderColor: '#FFE08A', borderWidth: 2, opacity: 1 }, label: { show: true, formatter: inspirationLabel(rawName), position: 'inside', color: '#2C2614', fontSize: 10, fontWeight: 700, align: 'center', verticalAlign: 'middle', lineHeight: 12 } };
+                    return {
+                        id: n.id, name: rawName, value: rawName, category: 1, typeLabel: '灵感',
+                        refId: n.refId, symbol: 'diamond', symbolSize: 54,
+                        itemStyle: {
+                            color: '#E0B85A', borderColor: '#FFE08A', borderWidth: 1.8,
+                            shadowBlur: 22, shadowColor: 'rgba(255,214,102,0.65)', opacity: 1
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 28, shadowColor: 'rgba(255,224,138,0.85)',
+                                borderColor: '#FFF0B5', borderWidth: 2.4
+                            }
+                        },
+                        label: {
+                            show: true, formatter: inspirationLabel(rawName), position: 'inside',
+                            color: '#2C2614', fontSize: 10, fontWeight: 700,
+                            align: 'center', verticalAlign: 'middle', lineHeight: 12
+                        }
+                    };
                 default:
                     var isCore = isCoreNode(n.id);
                     var cs = conceptSize(rawName, isCore);
-                    return { id: n.id, name: rawName, value: rawName, category: 2, typeLabel: '概念', refId: n.refId, symbol: 'roundRect', symbolSize: [cs.width, cs.height], itemStyle: { color: '#002FA7', borderColor: '#5B8DEF', borderWidth: isCore ? 2.5 : 2, opacity: 1 }, label: { show: true, formatter: cs.display, position: 'inside', color: '#FAF7F2', fontSize: isCore ? 14 : 13, fontWeight: isCore ? 600 : 500, align: 'center', verticalAlign: 'middle', lineHeight: isCore ? 18 : 16 } };
+                    return {
+                        id: n.id, name: rawName, value: rawName, category: 2, typeLabel: '概念',
+                        refId: n.refId, symbol: 'roundRect', symbolSize: [cs.width, cs.height],
+                        itemStyle: {
+                            color: '#0B3FBF', borderColor: '#88BBFF', borderWidth: isCore ? 2.8 : 2.2,
+                            shadowBlur: isCore ? 30 : 18,
+                            shadowColor: 'rgba(80,150,255,0.7)', opacity: 1
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: isCore ? 36 : 24,
+                                shadowColor: 'rgba(100,180,255,0.85)',
+                                borderColor: '#B0D4FF', borderWidth: isCore ? 3.2 : 2.6
+                            }
+                        },
+                        label: {
+                            show: true, formatter: cs.display, position: 'inside',
+                            color: '#F7F9FF', fontSize: isCore ? 14 : 13,
+                            fontWeight: isCore ? 600 : 500, align: 'center',
+                            verticalAlign: 'middle', lineHeight: isCore ? 18 : 16
+                        }
+                    };
             }
         });
 
@@ -265,16 +404,26 @@
         }
 
         var links = displayEdges.map(function (e) {
-            var rel = e.relation || '';
-            var lineColor, lineType;
-            switch (rel) {
-                case 'SUPPORT':    lineColor = '#34A853'; lineType = 'dashed'; break;
-                case 'CHALLENGE':  lineColor = '#EA4335'; lineType = 'dashed'; break;
-                case 'SUPPLEMENT': lineColor = '#002FA7'; lineType = 'solid';  break;
-                case 'CITE':       lineColor = '#888888'; lineType = 'dotted'; break;
-                default:           lineColor = '#6B6B6B'; lineType = 'solid';
-            }
-            return { source: e.source || e.sourceId, target: e.target || e.targetId, lineStyle: { color: lineColor, type: lineType, width: 1.4, opacity: 0.58, curveness: 0.06 }, symbol: ['none', 'arrow'], symbolSize: 4 };
+            var rel = e.relation || e.relationType || 'CITE';
+            return {
+                source: e.source || e.sourceId,
+                target: e.target || e.targetId,
+                relationType: rel,
+                lineStyle: edgeStyleByType(rel),
+                label: {
+                    show: true,
+                    formatter: RELATION_LABEL_MAP[rel] || '',
+                    color: RELATION_TEXT_COLOR_MAP[rel] || '#C6CCD8',
+                    fontSize: 9,
+                    fontWeight: 400,
+                    backgroundColor: 'transparent',
+                    borderWidth: 0,
+                    padding: 0,
+                    opacity: 0.85
+                },
+                symbol: ['none', 'arrow'],
+                symbolSize: 4
+            };
         });
 
         var isForce = layout === 'force';
@@ -288,6 +437,7 @@
                 layout: isForce ? 'force' : 'none',
                 roam: true,
                 draggable: false,
+                scaleLimit: { min: 0.5, max: 1.8 },
                 animation: false,
                 animationDuration: 0,
                 animationDurationUpdate: 0,
@@ -301,15 +451,35 @@
                 force: isForce ? { repulsion: 400, edgeLength: [100, 180], gravity: 0.06, friction: 0.6 } : undefined,
                 label: { show: true, color: '#FAF7F2', fontSize: 11, position: 'inside' },
                 labelLayout: { hideOverlap: true },
-                edgeLabel: { show: false },
-                lineStyle: { curveness: 0.06, width: 1.4, opacity: 0.58 },
+                edgeLabel: {
+                    show: true,
+                    formatter: function (params) {
+                        return RELATION_LABEL_MAP[params.data.relationType] || '';
+                    },
+                    color: '#C6CCD8',
+                    fontSize: 10,
+                    fontWeight: 400,
+                    rotate: 0,
+                    backgroundColor: 'transparent',
+                    borderWidth: 0,
+                    padding: 0,
+                    opacity: 0.85
+                },
+                lineStyle: { curveness: 0.04, width: 1.2, opacity: 0.55 },
                 emphasis: {
                     focus: 'adjacency',
                     scale: true,
-                    itemStyle: { borderWidth: 3 },
                     label: { show: true, fontSize: 13, fontWeight: 'bold' },
-                    lineStyle: { width: 2.5 },
-                    edgeLabel: { show: true, fontSize: 9, backgroundColor: 'rgba(8,15,31,0.5)', padding: [2, 4], borderRadius: 4 }
+                    lineStyle: { width: 2.2 },
+                    edgeLabel: {
+                        show: true, fontSize: 10, fontWeight: 500,
+                        backgroundColor: 'transparent', borderWidth: 0, padding: 0
+                    }
+                },
+                blur: {
+                    itemStyle: { opacity: 0.55 },
+                    lineStyle: { opacity: 0.18 },
+                    label: { opacity: 0.45 }
                 }
             }]
         };
@@ -346,7 +516,7 @@
             // 主图筛选：只展示核心子图
             var mainGraph = pickMainGraph(rawNodes, rawEdges, 10);
             var displayNodes = mainGraph.nodes;
-            var displayEdges = mainGraph.edges;
+            var displayEdges = pickMainEdges(displayNodes, mainGraph.edges, 10);
 
             lastGraphData = data;
             if (rawNodes.length === 0) { lastGraphData = null; }
@@ -386,8 +556,10 @@
         if (!lastGraphData || !chart) return;
         chart.clear();
         currentLayout = 'star';
+        // 重置 zoom 和 center
+        chart.setOption({ series: [{ zoom: 1, center: null }] });
         window.updateGraph(lastGraphData);
-        setTimeout(function () { chart && chart.resize(); }, 100);
+        setTimeout(function () { chart && chart.resize(); }, 120);
     };
 
     window.focusNode = function (nodeId) {
@@ -405,6 +577,19 @@
         if (params.dataType === 'node' && window.BlueLinkBridge && params.data.id != null) {
             window.BlueLinkBridge.onNodeClick(String(params.data.id));
         }
+    });
+
+    // ====== 缩放时调整关系标签字号（保持视觉稳定） ======
+    chart && chart.on('graphRoam', function () {
+        if (!chart) return;
+        var opt = chart.getOption();
+        if (!opt || !opt.series || !opt.series[0]) return;
+        var zoom = (opt.series[0].zoom) || 1;
+        zoom = Math.max(0.5, Math.min(1.8, zoom));
+        var baseSize = 10;
+        var zoomedSize = Math.round(baseSize * (1 / zoom));
+        var finalSize = Math.max(7, Math.min(14, zoomedSize));
+        chart.setOption({ series: [{ edgeLabel: { fontSize: finalSize } }] });
     });
 
     // ====== 窗口自适应 ======

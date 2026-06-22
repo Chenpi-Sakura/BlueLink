@@ -21,6 +21,7 @@ import com.yjtzc.bluelink.ui.bookshelf.BookshelfScreen
 import com.yjtzc.bluelink.ui.chat.ChatScreen
 import com.yjtzc.bluelink.ui.graph.GraphScreen
 import com.yjtzc.bluelink.ui.home.HomeScreen
+import com.yjtzc.bluelink.ui.mine.AppearanceSettingsScreen
 import com.yjtzc.bluelink.ui.mine.MineScreen
 import com.yjtzc.bluelink.ui.mine.MineViewModel
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
@@ -168,18 +169,12 @@ fun BlueLinkNavGraph() {
 
         when (mineRoute) {
             is MineRoute.Appearance -> {
-                MineNavScaffold(
-                    title = "外观设置",
+                AppearanceSettingsScreen(
+                    viewModel = viewModel(
+                        factory = BlueLinkViewModelFactory(container)
+                    ),
                     onBack = onGoBack
-                ) {
-                    // TODO Phase 2: AppearanceSettingsScreen
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("外观设置", style = MaterialTheme.typography.bodyLarge, color = Ink600)
-                    }
-                }
+                )
             }
             is MineRoute.CognitiveSettings -> {
                 MineNavScaffold(

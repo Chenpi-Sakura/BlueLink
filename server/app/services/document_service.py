@@ -140,16 +140,22 @@ class DocumentService:
         # 3. 先提交 DB 事务，确保 segments 已持久化（否则 VectorStore 外键约束会失败）
         db.commit()
 
-        # 4. 向量化并存入 VectorStore
+        # 4. 向量化并存入 VectorStore（分批，每次 ≤ 20 条）
         try:
-            texts = [s.text for s in segments]
-            vectors = get_llm().embed_texts(texts)
-            segment_vectors = [
-                (s.id, vec) for s, vec in zip(segments, vectors)
-            ]
+            llm = get_llm()
             store = create_vector_store()
-            store.save_segment_vectors(doc_id, segment_vectors)
-            logger.info("向量化成功: %d 个切片", len(vectors))
+            batch_size = 20
+            total_vectors = 0
+            for i in range(0, len(segments), batch_size):
+                batch = segments[i:i + batch_size]
+                texts = [s.text for s in batch]
+                vectors = llm.embed_texts(texts)
+                segment_vectors = [
+                    (s.id, vec) for s, vec in zip(batch, vectors)
+                ]
+                store.save_segment_vectors(doc_id, segment_vectors)
+                total_vectors += len(vectors)
+            logger.info("向量化成功: %d 个切片", total_vectors)
         except Exception as e:
             logger.warning("向量化失败（跳过）: %s", e)
         logger.info(

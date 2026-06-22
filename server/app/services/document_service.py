@@ -144,7 +144,7 @@ class DocumentService:
         try:
             llm = get_llm()
             store = create_vector_store()
-            batch_size = 20
+            batch_size = 10
             total_vectors = 0
             for i in range(0, len(segments), batch_size):
                 batch = segments[i:i + batch_size]

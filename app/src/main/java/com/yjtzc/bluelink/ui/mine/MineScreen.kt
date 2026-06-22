@@ -182,12 +182,12 @@ private fun CognitiveSettingsPanel(
             Spacer(Modifier.width(4.dp))
             Arrow()
         }
-        SettingRow(icon = Icons.Outlined.Tune, showDivider = true) {
+        SettingRow(icon = Icons.Outlined.Tune, showDivider = true, onClick = onClickGranularity) {
             Text("提示明确度", style = rowTS)
             Spacer(Modifier.weight(1f))
             Arrow()
         }
-        SettingRow(icon = Icons.Outlined.Layers, showDivider = true) {
+        SettingRow(icon = Icons.Outlined.Layers, showDivider = true, onClick = onClickGranularity) {
             Text("探索深度", style = rowTS)
             Spacer(Modifier.weight(1f))
             MiniSwitch(checked = exploreDepth, onToggle = onExploreDepthToggle)

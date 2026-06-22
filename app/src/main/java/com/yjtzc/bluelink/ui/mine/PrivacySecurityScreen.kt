@@ -228,18 +228,6 @@ private fun PrivacyOption(key: String, label: String, value: String, desc: Strin
                 modifier = Modifier.fillMaxSize().padding(start = 15.dp, end = 15.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 图标
-                Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        when (key) {
-                            "LOCAL_ONLY" -> "🔒"
-                            "LOCAL_FIRST" -> "🛡"
-                            else -> "☁"
-                        },
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(Modifier.width(14.dp))
                 // 文字区
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -247,7 +235,7 @@ private fun PrivacyOption(key: String, label: String, value: String, desc: Strin
                         Text(value, fontSize = 12.sp, color = KleinBlue, fontFamily = FontFamily.Serif,
                             letterSpacing = 0.45.sp, modifier = Modifier.padding(start = 5.dp))
                     }
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(desc, fontSize = 12.2.sp, color = MidGray)
                 }
                 // Radio

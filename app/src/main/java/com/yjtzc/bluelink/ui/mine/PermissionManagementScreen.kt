@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,8 +74,8 @@ fun PermissionManagementScreen(
                     )) {
                         Text(
                             text = "为了保证灵感捕获、OCR 和同步提醒正常工作，\n请检查以下权限。",
-                            fontSize = 18.sp, lineHeight = 30.sp,
-                            color = Color(0xFF10213B), letterSpacing = 0.02.sp,
+                            fontSize = 14.5.sp, lineHeight = 24.sp,
+                            color = Color(0xFF10213B), fontFamily = FontFamily.Serif,
                             modifier = Modifier.padding(24.dp, 22.dp)
                         )
                     }
@@ -127,13 +128,13 @@ fun PermissionManagementScreen(
                                 color = AccentBlue.copy(alpha = 0.1f)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Text("i", color = AccentBlue, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Text("i", color = AccentBlue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                             Spacer(Modifier.width(12.dp))
                             Text(
                                 text = "Vivo / OriginOS 可能会限制后台同步，建议加入电池优化白名单。",
-                                fontSize = 15.sp, lineHeight = 22.sp,
+                                fontSize = 14.5.sp, lineHeight = 22.sp, fontFamily = FontFamily.Serif,
                                 color = Color(0xFF47688F)
                             )
                         }
@@ -148,19 +149,20 @@ fun PermissionManagementScreen(
 @Composable
 private fun PermItem(name: String, granted: Boolean, emoji: String, onActionClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(64.dp),
+        modifier = Modifier.fillMaxWidth().height(52.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 名称
         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(emoji, fontSize = 16.sp)
-            Spacer(Modifier.width(10.dp))
-            Text(name, fontSize = 18.sp, color = Color(0xFF10213B))
+            Text(emoji, fontSize = 13.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(name, fontSize = 14.5.sp, fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF10213B), fontFamily = FontFamily.Serif)
         }
         // 状态文字
         Text(
             text = if (granted) "已允许" else "未开启",
-            fontSize = 15.sp,
+            fontSize = 13.sp,
             color = if (granted) AccentBlue else GrayText,
             modifier = Modifier.width(64.dp)
         )
@@ -177,14 +179,14 @@ private fun PermItem(name: String, granted: Boolean, emoji: String, onActionClic
             ) {
                 Text(
                     text = if (name.contains("通知")) "开启" else "去设置",
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                     color = if (name.contains("通知")) Color.White else AccentBlue,
                     fontWeight = FontWeight.Medium
                 )
             }
         } else {
             Box(modifier = Modifier.height(34.dp).widthIn(min = 70.dp), contentAlignment = Alignment.Center) {
-                Text("已允许", fontSize = 15.sp, color = GrayText)
+                Text("已允许", fontSize = 13.sp, color = GrayText)
             }
         }
     }

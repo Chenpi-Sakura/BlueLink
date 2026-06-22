@@ -17,8 +17,8 @@ from app.vectors.base import create_vector_store
 logger = logging.getLogger("bluelink.document")
 
 # 切片参数
-MAX_CHUNK_SIZE = 2048       # 目标切片长度（字符）
-CHUNK_OVERLAP = 256          # 相邻切片重叠部分（字符）
+MAX_CHUNK_SIZE = 1024       # 目标切片长度（字符）
+CHUNK_OVERLAP = 256          # 相邻切片重叠部分（前后各 128，合计 256）
 MERGE_THRESHOLD = 80         # 小于此长度的段落与下一段合并
 
 

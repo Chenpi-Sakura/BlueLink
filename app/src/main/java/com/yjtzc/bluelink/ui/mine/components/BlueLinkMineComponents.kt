@@ -86,7 +86,7 @@ fun BlueLinkSubPageScaffold(
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = MinePage.HorizontalPadding),
             content = content

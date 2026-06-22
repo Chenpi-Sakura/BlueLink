@@ -13,6 +13,7 @@ from app.core.auth import get_user_id
 from app.models.database import get_db
 from app.models.document import InspirationCard
 from app.schemas.card import CreateCardRequest, InspirationDto
+from app.services.graph_builder import GraphBuilder
 
 logger = logging.getLogger("bluelink.api.cards")
 router = APIRouter(prefix="/api/v1/cards", tags=["灵感卡片"])
@@ -38,6 +39,17 @@ def create_inspiration(
     db.add(card)
     db.commit()
     db.refresh(card)
+
+    # 创建图谱节点 + 排期关系发现
+    try:
+        label = card.content[:30]
+        node = GraphBuilder.ensure_node(
+            db, user_id, card.id, label, "INSPIRATION",
+        )
+        db.commit()
+        GraphBuilder.schedule_discovery(node.id, user_id)
+    except Exception as e:
+        logger.warning("图谱节点创建失败（不影响创建卡片）: %s", e)
 
     logger.info("创建灵感卡片 user=%s card=%s", user_id, card.id)
     return InspirationDto(

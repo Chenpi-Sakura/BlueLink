@@ -25,6 +25,7 @@ from app.schemas.document import (
 )
 from app.services.document_service import DocumentService
 from app.services.dedup_service import DedupService
+from app.services.graph_builder import GraphBuilder
 
 logger = logging.getLogger("bluelink.api.documents")
 router = APIRouter(prefix="/api/v1/documents", tags=["文档"])
@@ -64,6 +65,16 @@ def upload_document(
             chunks=chunks,
             privacy_level=privacy_level,
         )
+
+        # 创建图谱节点 + 排期关系发现
+        try:
+            node = GraphBuilder.ensure_node(
+                db, user_id, doc.id, doc.title, "DOCUMENT",
+            )
+            db.commit()
+            GraphBuilder.schedule_discovery(node.id, user_id)
+        except Exception as e:
+            logger.warning("图谱节点创建失败（不影响上传）: %s", e)
 
         logger.info(
             "文档上传成功 user=%s doc=%s chunks=%d",

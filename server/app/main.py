@@ -19,6 +19,15 @@ def _init_db():
     logger.info("数据库表已就绪")
 
 
+def _seed_data():
+    """启动时注入演示数据"""
+    try:
+        from scripts.seed import seed
+        seed()
+    except Exception as e:
+        logger.warning("seed 跳过: %s", e)
+
+
 def _register_routers(app: FastAPI):
     app.include_router(documents.router)
     app.include_router(questions.router)
@@ -44,6 +53,7 @@ async def lifespan(app: FastAPI):
     logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO))
     logger.info("BlueLink 后端启动 — environment=%s", settings.ENV)
     _init_db()
+    _seed_data()
     yield
     logger.info("BlueLink 后端关闭")
 

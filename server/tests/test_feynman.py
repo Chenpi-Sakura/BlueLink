@@ -87,7 +87,7 @@ class TestFeynmanAPI:
         assert response.status_code == 200
 
     def test_evaluate_missing_user_id(self, client: TestClient, monkeypatch):
-        """缺少 X-User-Id 返回 400"""
+        """缺少 X-User-Id 返回 422（FastAPI 校验 Header 必填）"""
         _mock_feynman_response(monkeypatch)
 
         response = client.post(
@@ -98,7 +98,7 @@ class TestFeynmanAPI:
                 "contextSegmentIds": [],
             },
         )
-        assert response.status_code == 400
+        assert response.status_code == 422  # FastAPI dependency validation
 
     def test_evaluate_blank_explanation(self, client: TestClient):
         """空的 userExplanation 返回 422"""

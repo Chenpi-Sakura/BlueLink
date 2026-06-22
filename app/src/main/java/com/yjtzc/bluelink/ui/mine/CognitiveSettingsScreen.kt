@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
+import kotlinx.coroutines.delay
 import org.json.JSONArray
 
 private val CardBg = Color(0xCCFFFDF8)
@@ -257,47 +258,116 @@ private fun ToneSegRow(selected: String, onSelect: (String) -> Unit) {
 @Composable
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<String>) -> Unit) {
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        ALL_TERMS.forEach { tag ->
-            val isSelected = tag in selectedTerms
+    var showEditor by remember { mutableStateOf(false) }
+    var inputText by remember { mutableStateOf("") }
+    var toastMsg by remember { mutableStateOf<String?>(null) }
+
+    Column {
+        androidx.compose.foundation.layout.FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ALL_TERMS.forEach { tag ->
+                val isSelected = tag in selectedTerms
+                Surface(
+                    modifier = Modifier.height(30.dp)
+                        .then(if (isSelected) Modifier.background(
+                            Brush.verticalGradient(listOf(Color(0xBDEEF6FF), Color(0xB3FFFDF8))),
+                            RoundedCornerShape(9.dp)
+                        ) else Modifier)
+                        .clickable {
+                            onTermsChanged(if (isSelected) selectedTerms - tag else selectedTerms + tag)
+                        },
+                    shape = RoundedCornerShape(9.dp),
+                    color = if (isSelected) Color.Transparent else Color(0x40FFFFFF),
+                    border = BorderStroke(1.dp, if (isSelected) SelectedBorder else OffChipBorder)
+                ) {
+                    Text(tag, color = if (isSelected) SelectedBlue else Color(0xFF6B6B6B),
+                        fontSize = 14.sp, fontWeight = if (isSelected) FontWeight(560) else FontWeight.Normal,
+                        fontFamily = FontFamily.Serif, modifier = Modifier.padding(horizontal = 15.dp))
+                }
+            }
+            // + button
             Surface(
-                modifier = Modifier.height(30.dp)
-                    .then(if (isSelected) Modifier.background(
-                        Brush.verticalGradient(listOf(Color(0xBDEEF6FF), Color(0xB3FFFDF8))),
-                        RoundedCornerShape(9.dp)
-                    ) else Modifier)
-                    .clickable {
-                        onTermsChanged(if (isSelected) selectedTerms - tag else selectedTerms + tag)
-                    },
-                shape = RoundedCornerShape(9.dp),
-                color = if (isSelected) Color.Transparent else Color(0x40FFFFFF),
-                border = BorderStroke(1.dp, if (isSelected) SelectedBorder else OffChipBorder)
+                modifier = Modifier.size(31.dp).clickable { showEditor = true },
+                shape = RoundedCornerShape(10.dp),
+                color = Color.Transparent,
+                border = BorderStroke(1.dp, Color(0x9E0048B4))
             ) {
-                Text(tag, color = if (isSelected) SelectedBlue else Color(0xFF6B6B6B),
-                    fontSize = 14.sp, fontWeight = if (isSelected) FontWeight(560) else FontWeight.Normal,
-                    fontFamily = FontFamily.Serif, modifier = Modifier.padding(horizontal = 15.dp))
+                Box(
+                    modifier = Modifier.fillMaxSize().background(
+                        Brush.verticalGradient(listOf(Color(0xAEEEF6FF), Color(0xAFFFFDF8))),
+                        RoundedCornerShape(10.dp)
+                    ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("＋", color = SelectedBlue, fontSize = 20.sp)
+                }
             }
         }
-        // + button
-        Surface(
-            modifier = Modifier.size(31.dp),
-            shape = RoundedCornerShape(10.dp),
-            color = Color.Transparent,
-            border = BorderStroke(1.dp, Color(0x9E0048B4))
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(listOf(Color(0xAEEEF6FF), Color(0xAFFFFDF8))),
-                    RoundedCornerShape(10.dp)
-                ),
-                contentAlignment = Alignment.Center
+
+        // 输入编辑器
+        if (showEditor) {
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("＋", color = SelectedBlue, fontSize = 20.sp)
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    placeholder = { Text("添加术语，如：操作系统", fontSize = 14.sp) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f).height(38.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AccentBlue.copy(alpha = 0.55f),
+                        unfocusedBorderColor = OffChipBorder
+                    )
+                )
+                Button(
+                    onClick = {
+                        val trimmed = inputText.trim()
+                        if (trimmed.isEmpty()) return@Button
+                        val allTerms = ALL_TERMS.toSet() + selectedTerms
+                        if (trimmed in allTerms) {
+                            toastMsg = "该术语已存在"
+                            return@Button
+                        }
+                        onTermsChanged(selectedTerms + trimmed)
+                        inputText = ""
+                        showEditor = false
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Text("添加", fontSize = 14.sp)
+                }
+                TextButton(
+                    onClick = { showEditor = false; inputText = "" },
+                    modifier = Modifier.height(38.dp)
+                ) {
+                    Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp)
+                }
             }
+        }
+
+        // Toast
+        if (toastMsg != null) {
+            LaunchedEffect(toastMsg) {
+                kotlinx.coroutines.delay(1600)
+                toastMsg = null
+            }
+            Text(
+                text = toastMsg!!,
+                color = AccentBlue,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }

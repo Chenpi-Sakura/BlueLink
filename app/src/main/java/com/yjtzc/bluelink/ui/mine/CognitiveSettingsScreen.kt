@@ -345,13 +345,17 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
                     modifier = Modifier.height(38.dp)
                 ) {
-                    Text("添加", fontSize = 14.sp)
+                    Text("添加", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
-                TextButton(
-                    onClick = { showEditor = false; inputText = "" },
-                    modifier = Modifier.height(38.dp)
+                Surface(
+                    modifier = Modifier.height(38.dp).clickable { showEditor = false; inputText = "" },
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, Color(0xCCD6CFC4))
                 ) {
-                    Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp)
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp)
+                    }
                 }
             }
         }

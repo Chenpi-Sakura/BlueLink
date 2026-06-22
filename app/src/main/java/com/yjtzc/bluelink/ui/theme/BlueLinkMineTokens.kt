@@ -106,15 +106,15 @@ object MineExport {
 object MineTypography {
     val PageTitleSize = 27.sp
     val PageTitleLineHeight = 36.sp
-    val CardTitleSize = 20.sp
-    val CardTitleLineHeight = 28.sp
+    val CardTitleSize = 16.sp
+    val CardTitleLineHeight = 22.sp
     val BodySize = 15.sp
     val BodyLineHeight = 24.sp
     val SmallTextSize = 13.sp
     val TinyTextSize = 12.sp
     val ButtonTextSize = 18.sp
     val ExportTitleSize = 27.sp
-    val PrivacyHeroTitleSize = 15.sp
+    val PrivacyHeroTitleSize = 14.5.sp
     val PrivacyOptionTitleSize = 14.5.sp
     val PrivacyOptionDescSize = 12.sp
     val PermissionNameSize = 18.sp

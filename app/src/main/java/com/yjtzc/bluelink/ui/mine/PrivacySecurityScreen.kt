@@ -69,7 +69,7 @@ fun PrivacySecurityScreen(
                         fontFamily = FontFamily.Serif)
                 }
                 Text(heroLabel, color = MineColors.KleinBlue, fontFamily = FontFamily.Serif,
-                    fontSize = 16.sp, fontWeight = FontWeight(760), letterSpacing = 0.35.sp)
+                    fontSize = 14.5.sp, fontWeight = FontWeight(760), letterSpacing = 0.35.sp)
                 Spacer(Modifier.height(10.dp))
                 Text(heroDesc, fontSize = MineTypography.SmallTextSize,
                     lineHeight = 21.sp, color = Color(0xFF2F3136), fontFamily = FontFamily.Serif)

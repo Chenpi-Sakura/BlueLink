@@ -1,9 +1,12 @@
-"""文档相关 Pydantic Schema（对应 Android Dto.kt）"""
+"""文档相关 Pydantic Schema（对应 Android Dto.kt / V2.0 §7.2.1）"""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class DocumentDto(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     id: str
     title: str
     privacy_level: str = "LOCAL_FIRST"
@@ -13,11 +16,15 @@ class DocumentDto(BaseModel):
 
 
 class DocumentListDto(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     items: list[DocumentDto]
     next_cursor: str | None = None
 
 
 class SegmentDto(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     id: str
     index: int = 0
     summary: str = ""
@@ -25,15 +32,21 @@ class SegmentDto(BaseModel):
 
 
 class SegmentListDto(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     segments: list[SegmentDto]
 
 
 class FoldedRangeDto(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     segment_index_start: int
     segment_index_end: int
     reason: str = ""
 
 
 class DeltaResponse(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     folded_ranges: list[FoldedRangeDto] = []
     new_content_ratio: float = 1.0

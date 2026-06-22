@@ -37,8 +37,13 @@ def get_db():
 
 
 def init_db():
-    """创建所有表 + 启用 pgvector 扩展"""
+    """创建所有表 + 启用 pgvector 扩展 + 向量索引"""
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_segment_vectors_embedding "
+            "ON segment_vectors USING ivfflat (embedding vector_cosine_ops) "
+            "WITH (lists = 100)"
+        ))
         conn.commit()
     Base.metadata.create_all(bind=engine)

@@ -8,6 +8,27 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-integration",
+        action="store_true",
+        default=False,
+        help="运行需要真实 LLM API 调用的集成测试",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "integration: 需要真实 LLM API 的集成测试")
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--run-integration"):
+        skip_integration = pytest.mark.skip(reason="需加 --run-integration 参数运行")
+        for item in items:
+            if "integration" in item.keywords:
+                item.add_marker(skip_integration)
+
 from app.main import app
 from app.models.database import engine, Base, get_db
 

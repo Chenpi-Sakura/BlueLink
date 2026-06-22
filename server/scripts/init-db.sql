@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS segment_vectors (
     embedding vector(1024)
 );
 CREATE INDEX IF NOT EXISTS idx_segment_vectors_doc ON segment_vectors(doc_id);
+CREATE INDEX IF NOT EXISTS idx_segment_vectors_embedding
+    ON segment_vectors USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
 
 -- 锚点缓存
 CREATE TABLE IF NOT EXISTS anchors (

@@ -200,35 +200,41 @@ git push origin --delete feat/backend-dev   # 如果不需要了
 
 ---
 
-## 8. 开发循环（总结）
+## 8. 开发踩坑总结习惯
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  ① Plan     明确方案，用户批准                           │
-│  ② Code     写好注释，高内聚低耦合，20-30 行考虑拆分    │
-│  ③ Build    ./gradlew assembleDebug 必须通过             │
-│  ④ Review   大改动（5文件/100行/跨层/改API）→ SubAgent  │
-│  ⑤ Commit   小粒度 message 规范，build 通过才提          │
-│  ⑥ 回到 ①   进入下一个 Task                            │
-└─────────────────────────────────────────────────────────┘
+**每个 Task 或每次里程碑完成后，花 5 分钟记录踩过的坑：**
 
-> Push：需要推时先问用户，不在循环中强制。**Commit 是循环终点，Push 是独立操作。**
+```markdown
+### 踩坑记录（Task X）
+
+| # | 问题 | 原因 | 解决 |
+|---|------|------|------|
+| 1 | 编译报错 xxx | 漏了 yy 依赖 | 加依赖修复 |
+| 2 | 测试一直挂 | 环境变量没配 | 补充 setup 文档 |
 ```
+
+记录位置：`docs/backend/踩坑记录.md` 或追加到对应 Task 文档末尾。
+
+**目的：**
+- 同样的坑不踩第二次
+- 新成员快速了解常见问题
+- 评审演示前快速排查已知问题
 
 ---
 
-## 10. 后端开发踩坑记录
+## 9. 开发循环（总结）
 
-> 已踩过的坑，避免重复。
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ① Plan     明确方案，用户批准                               │
+│  ② Code     写好注释，高内聚低耦合，20-30 行考虑拆分        │
+│  ③ Build    ./gradlew assembleDebug 必须通过                 │
+│  ④ Review   大改动（5文件/100行/跨层/改API）→ SubAgent      │
+│  ⑤ Commit   小粒度 message 规范，build 通过才提              │
+│  ⑥ 总结     记录踩坑 + 经验沉淀到 docs/                     │
+│  ⑦ 回到 ①   进入下一个 Task                                │
+└─────────────────────────────────────────────────────────────┘
 
-| # | 问题 | 解决方案 |
-|---|------|----------|
-| 1 | `.env` 含 API Key 被提交到 git | `.gitignore` 加 `.env`，`git rm --cached`；暴露的 key 去后台撤销 |
-| 2 | Dockerfile `pip install` 时 `requirements.txt` 还没复制 | 先 `COPY requirements.txt .` 再 pip，最后 `COPY . .` |
-| 3 | 国内服务器 pip/apt 下载慢 | 默认阿里云 pip 镜像 + 清华 apt 镜像 |
-| 4 | `tests/` 被 `.dockerignore` 排除导致容器里没测试 | 移除 `.dockerignore` 中的 `tests/` |
-| 5 | `pgvector.Vector(1024)` 类型 SQLite 不兼容 | **全栈只用 PostgreSQL，彻底移除 SQLite** |
-| 6 | Android camelCase ↔ Python snake_case 字段不一致 | Pydantic `alias_generator=to_camel` + `response_model_by_alias=True` |
-| 7 | `pytest-mock` 未预装 | 改用内置 `monkeypatch` |
-| 8 | FastAPI Header 校验缺参返回 422 不是 400 | 测试预期写 422 |
-| 9 | Debian trixie 无 `libgl1-mesa-glx` | 后端不需要 GL 渲染，直接移除该依赖 |
+> Push：需要推时先问用户，不在循环中强制。**Commit 是循环终点，Push 是独立操作。**
+```
+```

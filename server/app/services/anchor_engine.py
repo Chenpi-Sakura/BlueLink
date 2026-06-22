@@ -8,6 +8,7 @@
 """
 
 import logging
+import uuid
 
 from sqlalchemy.orm import Session
 
@@ -90,5 +91,10 @@ class AnchorEngine:
             user_prompt=user_prompt,
             temperature=0.3,
         )
+
+        # 8. 补充 LLM 未返回的字段（如 anchor_id）
+        for i, anchor in enumerate(result.get("anchors", [])):
+            if not anchor.get("anchor_id"):
+                anchor["anchor_id"] = str(uuid.uuid4())
 
         return result

@@ -22,7 +22,7 @@ class AnchorDto(BaseModel):
     """锚点卡片"""
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
-    anchor_id: str
+    anchor_id: str = ""
     doc_title: str
     snippet: str
     segment_id: str

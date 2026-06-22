@@ -186,7 +186,10 @@ fun BlueLinkPrivacyOption(
                     contentAlignment = Alignment.Center
                 ) { icon() }
                 Spacer(Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = title,
@@ -203,13 +206,17 @@ fun BlueLinkPrivacyOption(
                             letterSpacing = 0.45.sp
                         )
                     }
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(5.dp))
                     Text(
                         text = desc,
                         fontSize = MineTypography.PrivacyOptionDescSize,
+                        lineHeight = 18.sp,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
                         color = Color(0xFF4F535B)
                     )
                 }
+                Spacer(Modifier.width(10.dp))
                 // 自定义 Radio
                 Box(
                     modifier = Modifier

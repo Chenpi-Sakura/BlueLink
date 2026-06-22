@@ -58,7 +58,7 @@ object MinePrivacy {
     val HeroHorizontalPadding = 18.dp
     val LevelCardPaddingHorizontal = 11.dp
     val LevelCardPaddingTop = 18.dp
-    val OptionHeight = 74.dp
+    val OptionHeight = 86.dp
     val OptionGap = 10.dp
     val IconSize = 36.dp
     val RadioSize = 22.dp

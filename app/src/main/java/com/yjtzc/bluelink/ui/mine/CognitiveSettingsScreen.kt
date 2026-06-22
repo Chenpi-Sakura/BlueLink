@@ -5,12 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -47,18 +49,23 @@ fun CognitiveSettingsScreen(
         } catch (_: Exception) { emptySet() }
     }
 
-    MineNavScaffold(title = "认知设置", onBack = onBack, titleColor = BlueTitle, titleSize = 27.sp) {
+    MineNavScaffold(
+        title = "认知设置", onBack = onBack,
+        titleColor = BlueTitle, titleSize = 30.sp,
+        titleWeight = FontWeight.Bold
+    ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
+            contentPadding = PaddingValues(horizontal = 28.dp, vertical = 0.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
+            // 说明文案（严格两行）
             item {
                 Text(
-                    text = "调整蓝链提供线索的方式，让 AI 更像索引，而不是答案生成器。",
-                    fontSize = 16.sp, lineHeight = 28.sp,
+                    text = "调整蓝链提供线索的方式\n让 AI 更像索引，而不是答案生成器",
+                    fontSize = 17.sp, lineHeight = 30.sp,
                     color = Color(0xFF66686D),
-                    modifier = Modifier.padding(bottom = 28.dp, start = 4.dp, end = 4.dp)
+                    modifier = Modifier.padding(bottom = 32.dp)
                 )
             }
 
@@ -117,7 +124,7 @@ private fun BlockCard(content: @Composable ColumnScope.() -> Unit) {
     ) {
         Column(modifier = Modifier.padding(20.dp), content = content)
     }
-    Spacer(Modifier.height(22.dp))
+    Spacer(Modifier.height(24.dp))
 }
 
 @Composable
@@ -136,11 +143,12 @@ private fun CardTitle(text: String) {
 
 @Composable
 private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
-    val options = listOf("文章级" to "PARAGRAPH", "句词级" to "SENTENCE")
     Row(
-        modifier = Modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(13.dp)),
+        modifier = Modifier.fillMaxWidth().height(52.dp)
+            .clip(RoundedCornerShape(13.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val options = listOf("文章级" to "PARAGRAPH", "句词级" to "SENTENCE")
         options.forEach { (label, value) ->
             val isSelected = selected == value
             Box(
@@ -163,6 +171,7 @@ private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
 
 // ====== 提示明确度 ======
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DirectnessSliderWide(value: Float, onValueChange: (Float) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().heightIn(min = 66.dp)) {
@@ -173,6 +182,14 @@ private fun DirectnessSliderWide(value: Float, onValueChange: (Float) -> Unit) {
                 activeTrackColor = AccentBlue,
                 inactiveTrackColor = Color(0xFFDEDCD8)
             ),
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clip(CircleShape)
+                        .background(AccentBlue)
+                )
+            },
             modifier = Modifier.fillMaxWidth().height(34.dp)
         )
         Row(
@@ -196,7 +213,7 @@ private fun CognitiveSwitch(checked: Boolean, onToggle: () -> Unit) {
         modifier = Modifier.width(42.dp).height(23.dp).clip(RoundedCornerShape(40.dp)).then(switchBg).clickable(onClick = onToggle),
         contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
     ) {
-        Box(modifier = Modifier.padding(2.dp).size(19.dp).clip(RoundedCornerShape(50)).background(Color(0xFFFAF7F2)))
+        Box(modifier = Modifier.padding(2.dp).size(19.dp).clip(CircleShape).background(Color(0xFFFAF7F2)))
     }
 }
 
@@ -204,8 +221,8 @@ private fun CognitiveSwitch(checked: Boolean, onToggle: () -> Unit) {
 
 @Composable
 private fun ToneSegRow(selected: String, onSelect: (String) -> Unit) {
-    val options = listOf("温和启发" to "GENTLE", "直指核心" to "DIRECT")
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        val options = listOf("温和启发" to "GENTLE", "直指核心" to "DIRECT")
         options.forEach { (label, value) ->
             val isSelected = selected == value
             Surface(
@@ -229,7 +246,7 @@ private fun ToneSegRow(selected: String, onSelect: (String) -> Unit) {
     }
 }
 
-// ====== 术语偏好（FlowRow 自动换行） ======
+// ====== 术语偏好 ======
 
 @Composable
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -273,7 +290,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                 ),
                 contentAlignment = Alignment.Center
             ) {
-                Text("＋", color = SelectedBlue, fontSize = 20.sp, fontWeight = FontWeight.Normal)
+                Text("＋", color = SelectedBlue, fontSize = 20.sp)
             }
         }
     }

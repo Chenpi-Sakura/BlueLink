@@ -23,26 +23,46 @@ fun MineNavScaffold(
     modifier: Modifier = Modifier,
     titleColor: Color = Color(0xFF082653),
     titleSize: TextUnit = 21.sp,
+    titleWeight: FontWeight = FontWeight(760),
     content: @Composable () -> Unit
 ) {
-    Box(modifier = modifier.fillMaxSize().background(Color(0xFFFAF7F2))) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFFAF7F2))
+            .systemBarsPadding()
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(top = 18.dp)) {
+            // 顶部栏：返回按钮 + 标题
             Box(
-                modifier = Modifier.fillMaxWidth().height(84.dp).padding(top = 24.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
+                // 返回按钮
                 Box(
-                    modifier = Modifier.size(38.dp).offset(x = 0.dp).clip(CircleShape).clickable(onClick = onBack),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = onBack),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("‹", color = Color(0xFF082653), fontSize = 24.sp, fontWeight = FontWeight.Light)
+                    Text("‹", color = Color(0xFF082653), fontSize = 28.sp, fontWeight = FontWeight.Light)
                 }
+                // 标题
                 Text(
                     text = title,
-                    color = titleColor, fontSize = titleSize,
-                    fontWeight = FontWeight(760), fontFamily = FontFamily.Serif,
-                    modifier = Modifier.padding(start = 48.dp).align(Alignment.CenterStart)
+                    color = titleColor,
+                    fontSize = titleSize,
+                    fontWeight = titleWeight,
+                    fontFamily = FontFamily.Serif,
+                    modifier = Modifier.padding(start = 64.dp)
                 )
             }
+
+            // 内容区
             Box(modifier = Modifier.fillMaxSize()) { content() }
         }
     }

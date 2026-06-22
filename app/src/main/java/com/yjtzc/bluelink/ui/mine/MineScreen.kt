@@ -283,7 +283,7 @@ private fun SettingRow(
             verticalAlignment = Alignment.CenterVertically,
             content = content
         )
-        Box(modifier = Modifier.padding(start = 19.dp).size(21.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.padding(start = 19.dp).size(21.dp).align(Alignment.CenterStart), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = if (isDanger) DangerColor else AccentBlue, modifier = Modifier.size(21.dp))
         }
         if (showDivider) {

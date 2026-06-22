@@ -204,6 +204,96 @@ svg{stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}.i 
   color:#064AA9 !important;
 }
 
+
+
+/* === Overview screen adjustment based on 设置-总览2.png === */
+.main .setting-card[data-action="to-cognitive"]{
+  padding-top:0;
+  padding-bottom:0;
+}
+.main .granularity-row{
+  height:61px;
+}
+.main .slider-row{
+  height:63px;
+  align-items:flex-start;
+  padding-top:15px;
+}
+.main .slider-row > span{
+  transform:translateY(2px);
+}
+.main .seg.main-granularity{
+  width:154px;
+  height:30px;
+  margin-left:auto;
+  border-radius:8px;
+  padding:2px;
+}
+.main .seg.main-granularity button{
+  appearance:none;
+  -webkit-appearance:none;
+  border:0;
+  background:transparent;
+  flex:1;
+  display:grid;
+  place-items:center;
+  min-width:0;
+  height:24px;
+  border-radius:6px;
+  color:#20252E;
+  font-size:12px;
+  line-height:1;
+  cursor:pointer;
+  padding:0;
+}
+.main .seg.main-granularity button.on{
+  background:linear-gradient(180deg,#075BC5,#003E9D);
+  color:#fff;
+  box-shadow:0 4px 9px rgba(0,47,167,.22);
+}
+.main .slider-row .slider-wrap{
+  position:absolute;
+  left:142px;
+  right:20px;
+  top:13px;
+  width:auto;
+  height:42px;
+  margin:0;
+}
+.main .slider-row .track,
+.main .slider-row .fill{
+  top:10px;
+  height:4px;
+}
+.main .slider-row .fill{
+  width:60%;
+}
+.main .slider-row .knob{
+  left:calc(60% - 7.5px);
+  top:2px;
+}
+.main .slider-row .ticks{
+  top:23px;
+}
+.main .slider-row .scale{
+  top:28px;
+  font-size:10px;
+}
+.main .setting-row .switch{
+  flex:0 0 auto;
+  margin-left:auto;
+}
+.main .setting-row .arrow{
+  flex:0 0 12px;
+  margin-left:12px;
+}
+.main .setting-row .current-tone{
+  margin-left:auto;
+  color:#606164;
+  font-size:14px;
+  white-space:nowrap;
+}
+
 </style>
 </head>
 <body>
@@ -220,10 +310,10 @@ svg{stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}.i 
       </section>
       <div class="section-title" data-action="to-cognitive">认知设置</div>
       <section class="card setting-card" data-action="to-cognitive">
-        <div class="setting-row"><svg class="i" viewBox="0 0 48 48"><circle cx="24" cy="24" r="10"/><circle cx="24" cy="24" r="3"/><path d="M24 3v8M24 37v8M3 24h8M37 24h8M8 8l6 6M34 34l6 6M40 8l-6 6M14 34l-6 6"/></svg><span>默认溯源粒度</span><div class="seg overview-granularity"><span data-overview-gran>精简</span><span data-overview-gran>适中</span><span data-overview-gran class="on">详尽</span></div><div class="divider"></div></div>
-        <div class="setting-row"><svg class="i" viewBox="0 0 48 48"><line x1="6" y1="13" x2="42" y2="13"/><circle cx="17" cy="13" r="4"/><line x1="6" y1="24" x2="42" y2="24"/><circle cx="31" cy="24" r="4"/><line x1="6" y1="35" x2="42" y2="35"/><circle cx="23" cy="35" r="4"/></svg><span>提示明确度</span><div class="slider-wrap"><div class="track"></div><div class="fill"></div><div class="knob"></div><div class="scale"><span>低</span><span>中</span><span>高</span></div></div><div class="divider"></div></div>
+        <div class="setting-row granularity-row"><svg class="i" viewBox="0 0 48 48"><circle cx="24" cy="24" r="10"/><circle cx="24" cy="24" r="3"/><path d="M24 3v8M24 37v8M3 24h8M37 24h8M8 8l6 6M34 34l6 6M40 8l-6 6M14 34l-6 6"/></svg><span>默认溯源粒度</span><div class="seg main-granularity" role="group" aria-label="默认溯源粒度"><button type="button" data-main-gran="simple">精简</button><button type="button" data-main-gran="normal">适中</button><button type="button" class="on" data-main-gran="detail">详尽</button></div><div class="divider"></div></div>
+        <div class="setting-row slider-row"><svg class="i" viewBox="0 0 48 48"><line x1="6" y1="13" x2="42" y2="13"/><circle cx="17" cy="13" r="4"/><line x1="6" y1="24" x2="42" y2="24"/><circle cx="31" cy="24" r="4"/><line x1="6" y1="35" x2="42" y2="35"/><circle cx="23" cy="35" r="4"/></svg><span>提示明确度</span><div class="slider-wrap"><div class="track"></div><div class="fill"></div><div class="knob"></div><div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="scale"><span>低</span><span>中</span><span>高</span></div></div><div class="divider"></div></div>
         <div class="setting-row"><svg class="i" viewBox="0 0 48 48"><path d="M24 5 6 15l18 10 18-10-18-10Z"/><path d="M6 24l18 10 18-10"/><path d="M6 33l18 10 18-10"/></svg><span>探索深度</span><div class="switch on"></div><div class="divider"></div></div>
-        <div class="setting-row" data-action="to-cognitive"><svg class="i" viewBox="0 0 48 48"><path d="M36 6C21 7 11 19 11 39"/><path d="M10 39c7-10 15-17 26-21"/><path d="M13 33c6 1 13 0 19-7"/></svg><span>伴读风格</span><span style="font-size:14px;color:#4B5363;font-family:serif;margin-left:auto">温和启发</span><div class="arrow" style="margin-left:6px"></div></div>
+        <div class="setting-row"><svg class="i" viewBox="0 0 48 48"><path d="M36 6C21 7 11 19 11 39"/><path d="M10 39c7-10 15-17 26-21"/><path d="M13 33c6 1 13 0 19-7"/></svg><span>伴读风格</span><span class="current-tone">温和启发</span><div class="arrow"></div></div>
       </section>
       <div class="section-title" data-action="to-privacy">隐私与安全</div>
       <section class="card setting-card">
@@ -301,7 +391,7 @@ function openSheet(level){state.pendingLevel=level||state.privacyLevel;document.
 function closeSheet(){document.getElementById('sheetOverlay').classList.remove('open')}
 function openRisk(){document.getElementById('riskOverlay').classList.add('open')}
 function closeRisk(){document.getElementById('riskOverlay').classList.remove('open')}
-document.addEventListener('click',e=>{const og=e.target.closest('[data-overview-gran]'); if(og){e.stopPropagation();const seg=og.closest('.overview-granularity');if(seg){seg.querySelectorAll('[data-overview-gran]').forEach(s=>s.classList.toggle('on',s===og));showToast('默认溯源粒度已保存');return;}} const a=e.target.closest('[data-action]'); if(a){e.stopPropagation(); const act=a.dataset.action; const from=a.dataset.from||'mine'; if(act==='to-cognitive')nav('cognitive'); if(act==='to-appearance')nav('appearance'); if(act==='to-privacy')nav('privacy'); if(act==='to-permission')nav('permission',from); if(act==='to-export')nav('export',from); if(act==='to-delete')nav('delete',from); return;} if(e.target.closest('[data-back]')){back();return;} const tab=e.target.closest('.nav'); if(tab){if(tab.dataset.tab==='mine')nav('mine'); else showToast('该 Demo 仅实现「我的」模块');return;} const sw=e.target.closest('.switch'); if(sw){sw.classList.toggle('on'); showToast('设置已保存');return;} const privacy=e.target.closest('.privacy-option'); if(privacy){openSheet(privacy.dataset.level);return;} const sheetOpt=e.target.closest('.sheet-option'); if(sheetOpt){state.pendingLevel=sheetOpt.dataset.sheetLevel;document.querySelectorAll('.sheet-option').forEach(o=>o.classList.toggle('selected',o===sheetOpt));return;} if(e.target.matches('[data-close-sheet]')) closeSheet(); const mode=e.target.closest('[data-mode]'); if(mode){document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===mode));showToast('外观模式已保存');} const gran=e.target.closest('[data-gran]'); if(gran){document.querySelectorAll('[data-gran]').forEach(b=>b.classList.toggle('active',b===gran));showToast('溯源粒度已保存');} const tone=e.target.closest('[data-tone]'); if(tone){document.querySelectorAll('[data-tone]').forEach(b=>b.classList.toggle('active',b===tone));showToast('伴读风格已保存');} const chip=e.target.closest('.chip'); if(chip){chip.classList.toggle('off');showToast('术语偏好已更新');} const perm=e.target.closest('[data-perm]'); if(perm){const item=perm.closest('.perm-item');item.querySelector('.state').textContent='已允许';item.querySelector('.state').classList.add('ok');perm.textContent='已允许';perm.classList.remove('primary');showToast('已模拟打开系统设置并刷新状态');} const scope=e.target.closest('[data-scope]'); if(scope){state.exportScope=scope.dataset.scope;document.querySelectorAll('[data-scope]').forEach(b=>b.classList.toggle('active',b===scope));document.getElementById('exportDocPicker').classList.toggle('active',state.exportScope==='selected');validateExport();} const ex=e.target.closest('[data-export]'); if(ex){ex.classList.toggle('checked');state.exportContent[ex.dataset.export]=ex.classList.contains('checked');validateExport();} const doc=e.target.closest('[data-doc]'); if(doc){doc.classList.toggle('checked'); if(doc.classList.contains('checked'))state.selectedDocs.add(doc.dataset.doc); else state.selectedDocs.delete(doc.dataset.doc);validateExport();} const delscope=e.target.closest('[data-del-scope]'); if(delscope){state.deleteScope=delscope.dataset.delScope;document.querySelectorAll('[data-del-scope]').forEach(b=>b.classList.toggle('active',b===delscope));showToast(state.deleteScope==='all'?'将删除全部本地数据':'将删除选中文档');validateDelete();}
+document.addEventListener('click',e=>{const mainGran=e.target.closest('[data-main-gran]'); if(mainGran){e.stopPropagation();e.preventDefault();document.querySelectorAll('[data-main-gran]').forEach(b=>b.classList.toggle('on',b===mainGran));showToast('默认溯源粒度已保存');return;}const a=e.target.closest('[data-action]'); if(a){e.stopPropagation(); const act=a.dataset.action; const from=a.dataset.from||'mine'; if(act==='to-cognitive')nav('cognitive'); if(act==='to-appearance')nav('appearance'); if(act==='to-privacy')nav('privacy'); if(act==='to-permission')nav('permission',from); if(act==='to-export')nav('export',from); if(act==='to-delete')nav('delete',from); return;} if(e.target.closest('[data-back]')){back();return;} const tab=e.target.closest('.nav'); if(tab){if(tab.dataset.tab==='mine')nav('mine'); else showToast('该 Demo 仅实现「我的」模块');return;} const sw=e.target.closest('.switch'); if(sw){sw.classList.toggle('on'); showToast('设置已保存');return;} const privacy=e.target.closest('.privacy-option'); if(privacy){openSheet(privacy.dataset.level);return;} const sheetOpt=e.target.closest('.sheet-option'); if(sheetOpt){state.pendingLevel=sheetOpt.dataset.sheetLevel;document.querySelectorAll('.sheet-option').forEach(o=>o.classList.toggle('selected',o===sheetOpt));return;} if(e.target.matches('[data-close-sheet]')) closeSheet(); const mode=e.target.closest('[data-mode]'); if(mode){document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===mode));showToast('外观模式已保存');} const gran=e.target.closest('[data-gran]'); if(gran){document.querySelectorAll('[data-gran]').forEach(b=>b.classList.toggle('active',b===gran));showToast('溯源粒度已保存');} const tone=e.target.closest('[data-tone]'); if(tone){document.querySelectorAll('[data-tone]').forEach(b=>b.classList.toggle('active',b===tone));showToast('伴读风格已保存');} const chip=e.target.closest('.chip'); if(chip){chip.classList.toggle('off');showToast('术语偏好已更新');} const perm=e.target.closest('[data-perm]'); if(perm){const item=perm.closest('.perm-item');item.querySelector('.state').textContent='已允许';item.querySelector('.state').classList.add('ok');perm.textContent='已允许';perm.classList.remove('primary');showToast('已模拟打开系统设置并刷新状态');} const scope=e.target.closest('[data-scope]'); if(scope){state.exportScope=scope.dataset.scope;document.querySelectorAll('[data-scope]').forEach(b=>b.classList.toggle('active',b===scope));document.getElementById('exportDocPicker').classList.toggle('active',state.exportScope==='selected');validateExport();} const ex=e.target.closest('[data-export]'); if(ex){ex.classList.toggle('checked');state.exportContent[ex.dataset.export]=ex.classList.contains('checked');validateExport();} const doc=e.target.closest('[data-doc]'); if(doc){doc.classList.toggle('checked'); if(doc.classList.contains('checked'))state.selectedDocs.add(doc.dataset.doc); else state.selectedDocs.delete(doc.dataset.doc);validateExport();} const delscope=e.target.closest('[data-del-scope]'); if(delscope){state.deleteScope=delscope.dataset.delScope;document.querySelectorAll('[data-del-scope]').forEach(b=>b.classList.toggle('active',b===delscope));showToast(state.deleteScope==='all'?'将删除全部本地数据':'将删除选中文档');validateDelete();}
 });
 document.getElementById('confirmLevel').addEventListener('click',()=>{if(state.pendingLevel==='CLOUD_OK' && state.privacyLevel!=='CLOUD_OK'){closeSheet();openRisk();}else{state.privacyLevel=state.pendingLevel;updatePrivacy();closeSheet();showToast('隐私等级已切换');}});
 document.getElementById('cancelRisk').addEventListener('click',()=>{closeRisk();showToast('已取消切换')});

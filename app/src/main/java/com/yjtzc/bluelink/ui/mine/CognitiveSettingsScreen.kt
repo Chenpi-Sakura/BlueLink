@@ -56,16 +56,16 @@ fun CognitiveSettingsScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 28.dp, vertical = 0.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             // 说明文案（严格两行）
             item {
                 Text(
                     text = "调整蓝链提供线索的方式\n让 AI 更像索引，而不是答案生成器",
-                    fontSize = 17.sp, lineHeight = 30.sp,
+                    fontSize = 16.sp, lineHeight = 26.sp,
                     color = Color(0xFF66686D),
-                    modifier = Modifier.padding(bottom = 32.dp)
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
             }
 
@@ -122,9 +122,9 @@ private fun BlockCard(content: @Composable ColumnScope.() -> Unit) {
         shape = RoundedCornerShape(22.dp), color = CardBg,
         border = BorderStroke(1.dp, CardBorder)
     ) {
-        Column(modifier = Modifier.padding(20.dp), content = content)
+        Column(modifier = Modifier.padding(16.dp), content = content)
     }
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(18.dp))
 }
 
 @Composable
@@ -135,7 +135,7 @@ private fun CardTitle(text: String) {
         fontWeight = FontWeight(740), color = BlueTitle,
         fontFamily = FontFamily.Serif,
         letterSpacing = (-0.02).sp,
-        modifier = Modifier.padding(bottom = 15.dp)
+        modifier = Modifier.padding(bottom = 12.dp)
     )
 }
 
@@ -143,27 +143,33 @@ private fun CardTitle(text: String) {
 
 @Composable
 private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(52.dp)
-            .clip(RoundedCornerShape(13.dp)),
-        verticalAlignment = Alignment.CenterVertically
+    val options = listOf("文章级" to "PARAGRAPH", "句词级" to "SENTENCE")
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(46.dp),
+        shape = RoundedCornerShape(13.dp),
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, Color(0xE6D9D3CA))
     ) {
-        val options = listOf("文章级" to "PARAGRAPH", "句词级" to "SENTENCE")
-        options.forEach { (label, value) ->
-            val isSelected = selected == value
-            Box(
-                modifier = Modifier.weight(1f).fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
-                    .then(if (isSelected) Modifier.background(
-                        Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
-                        RoundedCornerShape(12.dp)
-                    ) else Modifier)
-                    .clickable { onSelect(value) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(label, color = if (isSelected) Color.White else DeepText,
-                    fontSize = 16.5.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    fontFamily = FontFamily.Serif, letterSpacing = 0.02.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEach { (label, value) ->
+                val isSelected = selected == value
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .then(if (isSelected) Modifier.background(
+                            Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
+                            RoundedCornerShape(12.dp)
+                        ) else Modifier)
+                        .clickable { onSelect(value) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(label, color = if (isSelected) Color.White else DeepText,
+                        fontSize = 16.5.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        fontFamily = FontFamily.Serif, letterSpacing = 0.02.sp)
+                }
             }
         }
     }

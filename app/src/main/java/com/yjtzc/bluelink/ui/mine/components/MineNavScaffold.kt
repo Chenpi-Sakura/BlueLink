@@ -58,7 +58,7 @@ fun MineNavScaffold(
                     fontSize = titleSize,
                     fontWeight = titleWeight,
                     fontFamily = FontFamily.Serif,
-                    modifier = Modifier.padding(start = 64.dp)
+                    modifier = Modifier.padding(start = 52.dp)
                 )
             }
 

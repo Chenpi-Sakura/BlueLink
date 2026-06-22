@@ -66,7 +66,9 @@ fun DataExportScreen(
                     exportDocuments = state.exportDocuments,
                     exportInspirationCards = state.exportInspirationCards,
                     exportSettings = state.exportSettings,
-                    onToggle = { d, i, s -> viewModel.toggleExportContent(d, i, s) }
+                    onToggleDoc = viewModel::setExportDocuments,
+                    onToggleInsp = viewModel::setExportInspirationCards,
+                    onToggleSet = viewModel::setExportSettings
                 )
             }
 
@@ -252,7 +254,7 @@ private fun ExportMainCard(
 @Composable
 private fun ExportContentSection(
     exportDocuments: Boolean, exportInspirationCards: Boolean, exportSettings: Boolean,
-    onToggle: (Boolean?, Boolean?, Boolean?) -> Unit
+    onToggleDoc: (Boolean) -> Unit, onToggleInsp: (Boolean) -> Unit, onToggleSet: (Boolean) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分割线 + 标题
@@ -263,7 +265,7 @@ private fun ExportContentSection(
 
         // 导出内容项
         Surface(
-            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggle(!exportDocuments, null, null) },
+            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggleDoc(!exportDocuments) },
             shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
             border = BorderStroke(1.dp, Color(0xE6E5E0D8))
         ) {
@@ -280,7 +282,7 @@ private fun ExportContentSection(
         }
         Spacer(Modifier.height(10.dp))
         Surface(
-            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggle(null, !exportInspirationCards, null) },
+            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggleInsp(!exportInspirationCards) },
             shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
             border = BorderStroke(1.dp, Color(0xE6E5E0D8))
         ) {
@@ -297,7 +299,7 @@ private fun ExportContentSection(
         }
         Spacer(Modifier.height(10.dp))
         Surface(
-            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggle(null, null, !exportSettings) },
+            modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onToggleSet(!exportSettings) },
             shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
             border = BorderStroke(1.dp, Color(0xE6E5E0D8))
         ) {

@@ -76,16 +76,9 @@ class DataManagementViewModel(
         }
     }
 
-    fun toggleExportContent(document: Boolean? = null, inspiration: Boolean? = null, graph: Boolean? = null, settings: Boolean? = null) {
-        _exportState.update {
-            it.copy(
-                exportDocuments = document ?: it.exportDocuments,
-                exportInspirationCards = inspiration ?: it.exportInspirationCards,
-                exportGraph = graph ?: it.exportGraph,
-                exportSettings = settings ?: it.exportSettings
-            )
-        }
-    }
+    fun setExportDocuments(v: Boolean) { _exportState.update { it.copy(exportDocuments = v) } }
+    fun setExportInspirationCards(v: Boolean) { _exportState.update { it.copy(exportInspirationCards = v) } }
+    fun setExportSettings(v: Boolean) { _exportState.update { it.copy(exportSettings = v) } }
 
     fun performExport() {
         val s = _exportState.value

@@ -100,15 +100,25 @@ class TestGraphAPI:
 class TestGraphBuilder:
     """图谱节点创建与关系发现"""
 
+    def _clean_db(self):
+        db = SessionLocal()
+        try:
+            db.query(GraphEdge).delete()
+            db.query(GraphNode).delete()
+            db.commit()
+        finally:
+            db.close()
+
     def test_ensure_node_creates_new(self, client: TestClient):
         """ensure_node 创建新节点"""
+        self._clean_db()
         db = SessionLocal()
         try:
             node = GraphBuilder.ensure_node(
-                db, "test-user", "ref-001", "测试节点", "CONCEPT",
+                db, "test-builder", "ref-001", "测试节点", "CONCEPT",
             )
             assert node is not None
-            assert node.user_id == "test-user"
+            assert node.user_id == "test-builder"
             assert node.label == "测试节点"
             assert node.ref_id == "ref-001"
         finally:
@@ -116,10 +126,11 @@ class TestGraphBuilder:
 
     def test_ensure_node_idempotent(self, client: TestClient):
         """ensure_node 幂等，重复调用返回同一个节点"""
+        self._clean_db()
         db = SessionLocal()
         try:
-            n1 = GraphBuilder.ensure_node(db, "test-user", "ref-002", "节点A", "DOCUMENT")
-            n2 = GraphBuilder.ensure_node(db, "test-user", "ref-002", "节点A(更新)", "DOCUMENT")
+            n1 = GraphBuilder.ensure_node(db, "test-builder", "ref-002", "节点A", "DOCUMENT")
+            n2 = GraphBuilder.ensure_node(db, "test-builder", "ref-002", "节点A(更新)", "DOCUMENT")
             assert n1.id == n2.id
             assert n2.label == "节点A(更新)"  # label 被更新
         finally:
@@ -127,13 +138,13 @@ class TestGraphBuilder:
 
     def test_discover_relations_empty_db(self, client: TestClient):
         """没有其他节点时，发现关系不做任何事"""
+        self._clean_db()
         db = SessionLocal()
         try:
-            node = GraphBuilder.ensure_node(db, "test-user", "ref-003", "孤独节点", "CONCEPT")
+            node = GraphBuilder.ensure_node(db, "test-builder", "ref-003", "孤独节点", "CONCEPT")
             db.flush()
-            GraphBuilder.discover_relations(db, node.id, "test-user")
-            # 没有其他节点，不应该插入任何边
-            edges = db.query(GraphEdge).all()
-            assert len(edges) == 0
+            GraphBuilder.discover_relations(db, node.id, "test-builder")
+            edges = db.query(GraphEdge).count()
+            assert edges == 0
         finally:
             db.close()

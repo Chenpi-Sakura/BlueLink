@@ -12,6 +12,7 @@ from app.models.database import SessionLocal
 from app.models.document import Document, Segment, InspirationCard
 from app.models.graph import GraphNode, GraphEdge
 from app.services.document_service import DocumentService
+from app.services.graph_builder import GraphBuilder
 
 logger = logging.getLogger("bluelink.seed")
 
@@ -85,6 +86,9 @@ def seed():
                         source=str(pdf_path),
                         chunks=chunks,
                         privacy_level="CLOUD_OK",
+                    )
+                    GraphBuilder.ensure_node(
+                        db, SEED_USER_ID, doc.id, doc.title, "DOCUMENT",
                     )
                     logger.info("  ✅ 导入文档: %s (%d 切片)", doc.title, len(chunks))
                 except Exception as e:

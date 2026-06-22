@@ -58,9 +58,6 @@ fun MineScreen(
     onNavigateToPermanentDelete: () -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
-    val granularityIndex = when (profile.defaultGranularity) {
-        "PARAGRAPH" -> 0; "SENTENCE" -> 2; else -> 1
-    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().background(RiceWhite),
@@ -84,14 +81,10 @@ fun MineScreen(
         item {
             MineSectionTitle("认知设置")
             CognitiveSettingsPanel(
-                granularityIndex = granularityIndex,
+                granularityLabel = granularityLabel(profile.defaultGranularity),
                 exploreDepth = profile.exploreDepth,
                 companionStyleLabel = companionLabel(profile.companionStyle),
-                onGranularityChange = { idx ->
-                    viewModel.setGranularity(
-                        when (idx) { 0 -> "PARAGRAPH"; 1 -> "PARAGRAPH"; else -> "SENTENCE" }
-                    )
-                },
+                onClickGranularity = onNavigateToCognitive,
                 onExploreDepthToggle = viewModel::toggleExploreDepth,
                 onClickCompanion = onNavigateToCognitive
             )
@@ -176,16 +169,18 @@ private fun HeroIdentityCard(onEditClick: () -> Unit) {
 
 @Composable
 private fun CognitiveSettingsPanel(
-    granularityIndex: Int, exploreDepth: Boolean,
+    granularityLabel: String, exploreDepth: Boolean,
     companionStyleLabel: String,
-    onGranularityChange: (Int) -> Unit,
+    onClickGranularity: () -> Unit,
     onExploreDepthToggle: () -> Unit, onClickCompanion: () -> Unit
 ) {
     SettingsCard {
-        SettingRow(icon = Icons.Outlined.CenterFocusStrong, showDivider = true) {
+        SettingRow(icon = Icons.Outlined.CenterFocusStrong, showDivider = true, onClick = onClickGranularity) {
             Text("默认溯源粒度", style = rowTS)
             Spacer(Modifier.weight(1f))
-            GranularitySeg(selectedIndex = granularityIndex, onSelected = onGranularityChange)
+            Text(granularityLabel, color = Color(0xFF4B5363), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+            Spacer(Modifier.width(4.dp))
+            Arrow()
         }
         SettingRow(icon = Icons.Outlined.Tune, showDivider = true) {
             Text("提示明确度", style = rowTS)
@@ -386,6 +381,9 @@ private fun MiniSwitch(checked: Boolean, onToggle: () -> Unit) {
 // 辅助函数
 // ============================================================
 
+private fun granularityLabel(v: String) = when (v) {
+    "PARAGRAPH" -> "文章级"; "SENTENCE" -> "句词级"; else -> v
+}
 private fun companionLabel(v: String) = when (v) { "GENTLE" -> "温和启发"; "DIRECT" -> "直指核心"; else -> v }
 private fun privacyLabel(v: String) = when (v) {
     "LOCAL_ONLY" -> "仅本地 LOCAL_ONLY"; "LOCAL_FIRST" -> "优先本地 LOCAL_FIRST"; "CLOUD_OK" -> "允许云端 CLOUD_OK"; else -> v

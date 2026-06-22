@@ -261,15 +261,22 @@ private fun ExportContentSection(
             fontFamily = FontFamily.Serif,
             modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp))
 
-        // 导出内容项（分别切换各自状态）
-        val contentItems = listOf(
-            Triple("文档与切片索引", exportDocuments, { v: Boolean -> onToggle(v, null, null) }),
-            Triple("灵感卡片", exportInspirationCards, { v: Boolean -> onToggle(null, v, null) }),
-            Triple("认知设置与隐私偏好", exportSettings, { v: Boolean -> onToggle(null, null, v) })
+        // 导出内容项
+        fun onTap(idx: Int) {
+            when (idx) {
+                0 -> onToggle(!exportDocuments, null, null)
+                1 -> onToggle(null, !exportInspirationCards, null)
+                2 -> onToggle(null, null, !exportSettings)
+            }
+        }
+        val items = listOf(
+            "文档与切片索引" to exportDocuments,
+            "灵感卡片" to exportInspirationCards,
+            "认知设置与隐私偏好" to exportSettings
         )
-        contentItems.forEach { (label, checked, toggle) ->
+        items.forEachIndexed { idx, (label, checked) ->
             Surface(
-                modifier = Modifier.fillMaxWidth().height(62.dp).clickable { toggle(!checked) },
+                modifier = Modifier.fillMaxWidth().height(62.dp).clickable { onTap(idx) },
                 shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
                 border = BorderStroke(1.dp, Color(0xE6E5E0D8))
             ) {

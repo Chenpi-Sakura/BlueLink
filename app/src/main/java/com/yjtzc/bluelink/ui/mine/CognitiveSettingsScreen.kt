@@ -263,6 +263,58 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
     var toastMsg by remember { mutableStateOf<String?>(null) }
 
     Column {
+        // 输入编辑器（放在 chip 上方）
+        if (showEditor) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    placeholder = { Text("添加术语，如：操作系统", fontSize = 14.sp) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, color = Color(0xFF10213B)),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AccentBlue.copy(alpha = 0.55f),
+                        unfocusedBorderColor = OffChipBorder
+                    )
+                )
+                Button(
+                    onClick = {
+                        val trimmed = inputText.trim()
+                        if (trimmed.isEmpty()) return@Button
+                        val allTerms = ALL_TERMS.toSet() + selectedTerms
+                        if (trimmed in allTerms) {
+                            toastMsg = "该术语已存在"
+                            return@Button
+                        }
+                        onTermsChanged(selectedTerms + trimmed)
+                        inputText = ""
+                        showEditor = false
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
+                    modifier = Modifier.height(52.dp)
+                ) {
+                    Text("添加", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+                Surface(
+                    modifier = Modifier.height(52.dp).clickable { showEditor = false; inputText = "" },
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.dp, Color(0xCCD6CFC4))
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
         androidx.compose.foundation.layout.FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -305,59 +357,6 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     contentAlignment = Alignment.Center
                 ) {
                     Text("＋", color = SelectedBlue, fontSize = 20.sp)
-                }
-            }
-        }
-
-        // 输入编辑器
-        if (showEditor) {
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = { inputText = it },
-                    placeholder = { Text("添加术语，如：操作系统", fontSize = 14.sp) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f).height(44.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, color = Color(0xFF10213B)),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AccentBlue.copy(alpha = 0.55f),
-                        unfocusedBorderColor = OffChipBorder
-                    )
-                )
-                Button(
-                    onClick = {
-                        val trimmed = inputText.trim()
-                        if (trimmed.isEmpty()) return@Button
-                        val allTerms = ALL_TERMS.toSet() + selectedTerms
-                        if (trimmed in allTerms) {
-                            toastMsg = "该术语已存在"
-                            return@Button
-                        }
-                        onTermsChanged(selectedTerms + trimmed)
-                        inputText = ""
-                        showEditor = false
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
-                    modifier = Modifier.height(44.dp)
-                ) {
-                    Text("添加", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                }
-                Surface(
-                    modifier = Modifier.height(44.dp).clickable { showEditor = false; inputText = "" },
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.Transparent,
-                    border = BorderStroke(1.dp, Color(0xCCD6CFC4))
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    }
                 }
             }
         }

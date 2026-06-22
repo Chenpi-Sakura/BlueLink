@@ -158,7 +158,35 @@ feat: CaptureRepository 实现云端同步逻辑     ← 同步完成就提
 
 ---
 
-## 6. Push — 需要时经用户批准
+## 6. 分支策略
+
+**开发不要直接在 `backend` 上改，而是从它拉一条 `feat/xxx` 分支：**
+
+```bash
+# 从 backend 拉开发分支
+git checkout -b feat/backend-dev backend
+
+# 开发完成后合并回 backend
+git checkout backend
+git merge feat/backend-dev
+git push origin backend
+
+# 远程分支可保留或删除
+git push origin --delete feat/backend-dev   # 如果不需要了
+```
+
+**分支命名规则：**
+| 分支 | 用途 | 从哪拉 |
+|------|------|--------|
+| `backend` | 后端主分支，保持稳定 | — |
+| `feat/xxx` | 具体功能开发 | `backend` |
+| `fix/xxx` | 修 bug | `backend` |
+
+> 所有 push 仍遵循第 7 条规则——需用户批准。
+
+---
+
+## 7. Push — 需要时经用户批准
 
 **Push 不是每次循环的必经步骤。** 当需要推送到远程时，必须先问用户。
 
@@ -172,7 +200,7 @@ feat: CaptureRepository 实现云端同步逻辑     ← 同步完成就提
 
 ---
 
-## 7. 开发循环（总结）
+## 8. 开发循环（总结）
 
 ```
 ┌─────────────────────────────────────────────────────────┐

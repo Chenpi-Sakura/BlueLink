@@ -94,6 +94,9 @@ class MineViewModel(
 
     // ====== 隐私等级切换 ======
 
+    private val levelOrder = mapOf("LOCAL_ONLY" to 0, "LOCAL_FIRST" to 1, "CLOUD_OK" to 2)
+    private var pendingLevel: String? = null
+
     fun showPrivacyLevelPicker() {
         _showPrivacyLevelPicker.value = true
     }
@@ -105,22 +108,27 @@ class MineViewModel(
     fun onPrivacyLevelSelected(level: String) {
         _showPrivacyLevelPicker.value = false
         val current = _profile.value.privacyMode
+        val currentVal = levelOrder[current] ?: -1
+        val newVal = levelOrder[level] ?: -1
 
-        // 从低风险切到 CLOUD_OK 需要二次确认
-        if ((current == "LOCAL_ONLY" || current == "LOCAL_FIRST") && level == "CLOUD_OK") {
+        if (newVal > currentVal) {
+            // 升到更高等级 → 需要二次确认
+            pendingLevel = level
             _showConfirmPrivacyDialog.value = true
         } else {
+            // 降到更低或同级 → 直接切换
             setPrivacyMode(level)
         }
     }
 
     fun confirmPrivacyChangeToCloud() {
         _showConfirmPrivacyDialog.value = false
-        setPrivacyMode("CLOUD_OK")
+        setPrivacyMode(pendingLevel ?: "CLOUD_OK")
     }
 
     fun cancelPrivacyChange() {
         _showConfirmPrivacyDialog.value = false
+        pendingLevel = null
     }
 
     fun exportData() {

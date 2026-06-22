@@ -28,6 +28,19 @@ class Segment(Base):
     document = relationship("Document", back_populates="segments")
 
 
+class InspirationCard(Base):
+    """灵感卡片"""
+    __tablename__ = "inspiration_cards"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=False, index=True)
+    content = Column(Text, nullable=False, default="")
+    type = Column(String, nullable=False, default="TEXT")
+    privacy_level = Column(String, nullable=False, default="LOCAL_ONLY")
+    tags = Column(String, default="")
+    created_at = Column(BigInteger, nullable=False)
+
+
 class Anchor(Base):
     __tablename__ = "anchors"
     id = Column(String, primary_key=True)

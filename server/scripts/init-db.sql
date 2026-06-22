@@ -75,8 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_graph_edges_target ON graph_edges(target_id);
 CREATE TABLE IF NOT EXISTS inspiration_cards (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    content TEXT NOT NULL,
-    content_encrypted BYTEA,
+    content TEXT NOT NULL DEFAULT '',
     type TEXT NOT NULL DEFAULT 'TEXT',
     privacy_level TEXT NOT NULL DEFAULT 'LOCAL_ONLY',
     tags TEXT DEFAULT '',

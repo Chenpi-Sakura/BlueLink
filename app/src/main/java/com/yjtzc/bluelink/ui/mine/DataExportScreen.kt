@@ -135,7 +135,7 @@ fun DataExportScreen(
                     border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.72f))
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("取消", color = AccentBlue, fontSize = 18.sp, fontWeight = FontWeight(650))
+                        Text("取消", color = AccentBlue, fontSize = 14.5.sp, fontWeight = FontWeight(650))
                     }
                 }
 
@@ -177,7 +177,7 @@ private fun ExportMainCard(
             }
 
             Text("导出内容将包含文档索引、\n灵感卡片、图谱节点、个人设置。",
-                fontSize = 17.sp, lineHeight = 31.sp, color = MidGray,
+                fontSize = 14.5.sp, lineHeight = 24.sp, color = MidGray,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp))
 
             Spacer(Modifier.height(20.dp))
@@ -193,7 +193,7 @@ private fun ExportMainCard(
                         border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.25f))
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(label, color = if (sel) Color.White else AccentBlue, fontSize = 14.sp)
+                            Text(label, color = if (sel) Color.White else AccentBlue, fontSize = 14.5.sp)
                         }
                     }
                 }
@@ -208,10 +208,10 @@ private fun ExportMainCard(
                     border = BorderStroke(1.dp, CardBorder)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("选择文档", fontSize = 14.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+                        Text("选择文档", fontSize = 14.5.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
                             modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
                         if (documents.isEmpty()) {
-                            Text("暂无文档", fontSize = 14.sp, color = MidGray)
+                            Text("暂无文档", fontSize = 14.5.sp, color = MidGray)
                         } else {
                             documents.forEachIndexed { idx, doc ->
                                 Row(
@@ -228,7 +228,7 @@ private fun ExportMainCard(
                                     }
                                     Spacer(Modifier.width(13.dp))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp, lineHeight = 16.sp, color = InkColor)
+                                        Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.5.sp, lineHeight = 20.sp, color = InkColor)
                                         Spacer(Modifier.height(4.dp))
                                         Text("文档", fontSize = 11.sp, color = Color(0xFF777777))
                                     }
@@ -255,7 +255,7 @@ private fun ExportContentSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分割线 + 标题
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DividerColor.copy(alpha = 0.55f)))
-        Text("导出内容", fontSize = 14.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+        Text("导出内容", fontSize = 14.5.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
             modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp))
 
         listOf(
@@ -278,7 +278,7 @@ private fun ExportContentSection(
                         if (checked) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(Modifier.width(13.dp))
-                    Text(label, fontSize = 16.sp, color = InkColor)
+                    Text(label, fontSize = 14.5.sp, color = InkColor)
                 }
             }
             Spacer(Modifier.height(10.dp))
@@ -298,7 +298,7 @@ private fun WarningBox() {
             Text("⚠", fontSize = 16.sp)
             Spacer(Modifier.width(12.dp))
             Text("导出文件可能包含明文内容，请妥善保存。",
-                fontSize = 15.sp, lineHeight = 22.sp, color = ErrorColor)
+                fontSize = 14.5.sp, lineHeight = 22.sp, color = ErrorColor)
         }
     }
 }

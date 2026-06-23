@@ -60,3 +60,7 @@ server/uploads/
 # ====== 生成的代码（如有） ======
 # app/src/main/java/com/yjtzc/bluelink/generated/
 server/resource/
+
+# Python
+**/__pycache__/
+*.pyc

@@ -43,7 +43,7 @@ class BlueLinkViewModelFactory(
             AppearanceViewModel(container.userPreferences) as T
 
         modelClass.isAssignableFrom(DataManagementViewModel::class.java) ->
-            DataManagementViewModel(container.database, container.userPreferences) as T
+            DataManagementViewModel(container.database, container.userPreferences, container.securePrefs) as T
 
         else -> error("Unknown ViewModel: ${modelClass.name}")
     }

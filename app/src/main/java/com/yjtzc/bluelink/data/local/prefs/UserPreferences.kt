@@ -77,6 +77,10 @@ class UserPreferences(private val context: Context) {
         dataStore.edit { it[KEY_ONBOARDING_DONE] = true }
     }
 
+    suspend fun clearAll() {
+        dataStore.edit { it.clear() }
+    }
+
     // ====== 外观设置 ======
 
     val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }

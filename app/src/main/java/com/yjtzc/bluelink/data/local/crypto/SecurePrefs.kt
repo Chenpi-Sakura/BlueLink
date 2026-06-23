@@ -48,6 +48,10 @@ class SecurePrefs(context: Context) {
     fun removeCipherText(key: String) =
         prefs.edit().remove(key).apply()
 
+    fun clearAll() {
+        prefs.edit().clear().apply()
+    }
+
     // ====== V2.1 命名空间工具 ======
 
     object Keys {

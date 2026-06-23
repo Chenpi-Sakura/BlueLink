@@ -201,13 +201,31 @@ private fun DeleteTargetCard(scope: ItemScope) {
         border = BorderStroke(1.dp, CardBorder)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            items.forEachIndexed { index, item ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("•", color = DangerRed, fontSize = scaledFontSize(12.sp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(item, fontSize = scaledFontSize(12.sp), color = TextSecondary)
+            // 两列布局
+            val mid = (items.size + 1) / 2
+            val leftCol = items.take(mid)
+            val rightCol = items.drop(mid)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    leftCol.forEach { item ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("•", color = DangerRed, fontSize = scaledFontSize(12.sp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(item, fontSize = scaledFontSize(12.sp), color = TextSecondary)
+                        }
+                        if (item != leftCol.last()) Spacer(Modifier.height(6.dp))
+                    }
                 }
-                if (index < items.lastIndex) Spacer(Modifier.height(4.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    rightCol.forEach { item ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("•", color = DangerRed, fontSize = scaledFontSize(12.sp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(item, fontSize = scaledFontSize(12.sp), color = TextSecondary)
+                        }
+                        if (item != rightCol.last()) Spacer(Modifier.height(6.dp))
+                    }
+                }
             }
         }
     }

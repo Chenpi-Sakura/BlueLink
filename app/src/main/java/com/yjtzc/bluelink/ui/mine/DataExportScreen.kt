@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -50,6 +51,20 @@ fun DataExportScreen(
             com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "rag-notes", title = "RAG 知识库方案", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
             com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "sleep-platform", title = "Sleep Platform 睡眠平台材料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST)
         )
+    }
+
+    val context = LocalContext.current
+
+    // 导出完成 → 写文件
+    LaunchedEffect(state.exportDone, state.exportJson) {
+        if (state.exportDone && state.exportJson != null) {
+            try {
+                val dateStr = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(java.util.Date())
+                val dir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS)
+                val file = java.io.File(dir, "bluelink_export_$dateStr.json")
+                file.writeText(state.exportJson!!)
+            } catch (_: Exception) {}
+        }
     }
 
     MineNavScaffold(title = "数据导出", onBack = onBack, titleWeight = FontWeight(760)) {

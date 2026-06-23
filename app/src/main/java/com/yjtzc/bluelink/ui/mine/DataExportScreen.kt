@@ -159,29 +159,16 @@ private fun ExportMainCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp), color = CardBg, border = BorderStroke(1.dp, CardBorder)
     ) {
-        Column(modifier = Modifier.padding(25.dp, 32.dp, 25.dp, 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            // 标题区域
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                Surface(modifier = Modifier.size(58.dp), shape = CircleShape, color = Color(0xFFF0EFED)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("📄", fontSize = 28.sp)
-                    }
-                }
-                Text("导出本地知识库", fontSize = 27.sp, color = BlueTitle, fontWeight = FontWeight.Bold)
-            }
-
-            // 装饰线
-            Box(modifier = Modifier.padding(vertical = 24.dp).width(150.dp).height(1.dp)) {
-                Box(modifier = Modifier.fillMaxSize().background(Color(0xE0DDD4CA)))
-                Box(
-                    modifier = Modifier.size(8.dp).rotate(45f).border(2.dp, Color(0xFFDDD4CA)).align(Alignment.Center)
-                )
-            }
-
-            Text("导出内容将包含文档索引、\n灵感卡片、图谱节点、个人设置。",
+        Column(
+            modifier = Modifier.padding(25.dp, 28.dp, 25.dp, 28.dp).heightIn(min = 104.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "导出本地知识库\n导出内容将包含文档索引、灵感卡片、图谱节点、个人设置。",
                 fontSize = 14.5.sp, lineHeight = 24.sp, color = MidGray,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp))
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
 
             Spacer(Modifier.height(20.dp))
 

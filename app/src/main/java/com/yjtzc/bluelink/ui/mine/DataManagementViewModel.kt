@@ -22,7 +22,7 @@ data class ExportUiState(
     val errorMessage: String? = null
 ) {
     val hasSelectedAnyContent: Boolean
-        get() = exportDocuments || exportInspirationCards || exportGraph || exportSettings
+        get() = exportDocuments || exportInspirationCards || exportSettings
 
     val hasValidDocumentScope: Boolean
         get() = scope == ItemScope.ALL || selectedDocumentIds.isNotEmpty()

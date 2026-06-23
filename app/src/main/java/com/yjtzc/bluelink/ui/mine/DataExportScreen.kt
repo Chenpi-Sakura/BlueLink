@@ -319,9 +319,6 @@ private fun DocumentPickerSection(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                val allActive = selectedAlpha == "all"
-                // 全部
-                FilterCapsule("全部", allActive) { selectedAlpha = "all" }
                 letters.forEach { letter ->
                     val active = selectedAlpha == letter
                     FilterCapsule(letter, active) {

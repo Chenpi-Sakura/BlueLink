@@ -22,7 +22,8 @@ data class ExportUiState(
     val exportSettings: Boolean = true,
     val isExporting: Boolean = false,
     val exportDone: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val exportJson: String? = null
 ) {
     val hasSelectedAnyContent: Boolean
         get() = exportDocuments || exportInspirationCards || exportSettings
@@ -91,13 +92,101 @@ class DataManagementViewModel(
         _exportState.update { it.copy(isExporting = true, errorMessage = null) }
         viewModelScope.launch {
             try {
-                // TODO: actual export logic
-                kotlinx.coroutines.delay(500)
-                _exportState.update { it.copy(isExporting = false, exportDone = true) }
+                val json = assembleExportJson(s)
+                _exportState.update { it.copy(isExporting = false, exportDone = true, exportJson = json) }
             } catch (e: Exception) {
                 _exportState.update { it.copy(isExporting = false, errorMessage = e.message) }
             }
         }
+    }
+
+    private suspend fun assembleExportJson(s: ExportUiState): String {
+        val root = org.json.JSONObject()
+
+        root.put("version", "2.1")
+        root.put("exportedAt", System.currentTimeMillis())
+        root.put("exportScope", s.scope.name)
+        root.put("selectedDocumentIds", org.json.JSONArray(s.selectedDocumentIds.toList()))
+
+        // identity
+        root.put("identity", org.json.JSONObject().apply {
+            put("userId", userPreferences.userId.first() ?: "")
+            put("mode", userPreferences.privacyMode.first())
+        })
+
+        // documents + segments
+        if (s.exportDocuments) {
+            val docsJson = org.json.JSONArray()
+            val segsJson = org.json.JSONArray()
+            val allDocs = database.documentDao().observeAll().first()
+            val docs = if (s.scope == ItemScope.ALL) allDocs
+                       else allDocs.filter { it.id in s.selectedDocumentIds }
+            for (doc in docs) {
+                docsJson.put(org.json.JSONObject().apply {
+                    put("id", doc.id); put("title", doc.title)
+                    put("privacyLevel", doc.privacyLevel.name)
+                    put("createdAt", doc.createdAt)
+                })
+                val segs = database.segmentDao().getByDocId(doc.id)
+                for (seg in segs) {
+                    segsJson.put(org.json.JSONObject().apply {
+                        put("id", seg.id); put("docId", seg.docId)
+                        put("indexInDoc", seg.indexInDoc)
+                        put("textSnippet", seg.textSnippet)
+                    })
+                }
+            }
+            root.put("documents", docsJson)
+            root.put("segments", segsJson)
+        }
+
+        // inspiration cards
+        if (s.exportInspirationCards) {
+            val cards = database.inspirationDao().observeAll().first()
+            root.put("inspirationCards", org.json.JSONArray(cards.map { card ->
+                org.json.JSONObject().apply {
+                    put("id", card.id); put("type", card.type.name)
+                    put("contentSnippet", card.contentSnippet)
+                    put("privacyLevel", card.privacyLevel.name)
+                    put("createdAt", card.createdAt)
+                }
+            }))
+        }
+
+        // graph
+        if (s.exportGraph) {
+            root.put("graph", org.json.JSONObject().apply {
+                put("nodes", org.json.JSONArray(database.graphNodeDao().getAll().map {
+                    org.json.JSONObject().apply { put("id", it.id); put("label", it.label); put("type", it.type.name) }
+                }))
+                put("edges", org.json.JSONArray(database.graphEdgeDao().getAll().map {
+                    org.json.JSONObject().apply { put("sourceId", it.sourceId); put("targetId", it.targetId); put("relation", it.relation.name) }
+                }))
+            })
+        }
+
+        // settings
+        if (s.exportSettings) {
+            root.put("settings", org.json.JSONObject().apply {
+                put("appearance", org.json.JSONObject().apply {
+                    put("themeMode", userPreferences.themeMode.first())
+                    put("dynamicColor", userPreferences.dynamicColor.first())
+                    put("fontScale", userPreferences.fontScale.first())
+                    put("highContrast", userPreferences.highContrast.first())
+                })
+                put("cognitive", org.json.JSONObject().apply {
+                    put("defaultGranularity", userPreferences.defaultGranularity.first())
+                    put("directnessLevel", userPreferences.directnessLevel.first())
+                    put("exploreDepth", userPreferences.exploreDepth.first())
+                    put("companionStyle", userPreferences.companionStyle.first())
+                })
+                put("privacy", org.json.JSONObject().apply {
+                    put("level", userPreferences.privacyMode.first())
+                })
+            })
+        }
+
+        return root.toString(2)
     }
 
     // ====== Delete ======

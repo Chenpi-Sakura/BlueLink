@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yjtzc.bluelink.ui.mine.DocumentPickerSection
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
 import com.yjtzc.bluelink.ui.mine.components.MineSectionTitle
 import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
@@ -52,7 +53,7 @@ fun PermanentDeleteScreen(
 
             if (state.scope == ItemScope.SELECTED) {
                 item { MineSectionTitle("选择文档删除") }
-                item { DeleteDocumentSelectorCard(documents = documents, selectedIds = state.selectedDocumentIds, onToggle = viewModel::toggleDeleteDocument) }
+                item { DocumentPickerSection(documents = documents, selectedIds = state.selectedDocumentIds, onToggleDoc = viewModel::toggleDeleteDocument) }
             }
 
             item { MineSectionTitle("将删除") }
@@ -145,45 +146,6 @@ private fun ScopeRow(title: String, desc: String, selected: Boolean, onClick: ()
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontSize = scaledFontSize(14.5.sp), color = TextPrimary, fontFamily = FontFamily.Serif)
             Text(desc, fontSize = scaledFontSize(12.sp), color = TextSecondary)
-        }
-    }
-}
-
-@Composable
-private fun DeleteDocumentSelectorCard(
-    documents: List<com.yjtzc.bluelink.data.local.db.DocumentEntity>,
-    selectedIds: Set<String>,
-    onToggle: (String) -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(18.dp), color = CardBg,
-        border = BorderStroke(1.dp, CardBorder)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("选择文档", fontSize = scaledFontSize(14.sp), fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86),
-                modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
-            if (documents.isEmpty()) {
-                Text("暂无文档", fontSize = scaledFontSize(14.sp), color = TextSecondary)
-            } else {
-                documents.forEach { doc ->
-                    val checked = doc.id in selectedIds
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(50.dp).clickable { onToggle(doc.id) },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier.size(21.dp).clip(CircleShape)
-                                .background(if (checked) DangerRed else Color.Transparent)
-                                .then(if (!checked) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (checked) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(Modifier.width(13.dp))
-                        Text(doc.title.ifBlank { "未命名文档" }, fontSize = scaledFontSize(14.sp), color = TextPrimary)
-                    }
-                }
-            }
         }
     }
 }

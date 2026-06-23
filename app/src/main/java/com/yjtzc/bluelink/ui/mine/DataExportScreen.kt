@@ -283,19 +283,19 @@ private fun ExportContentSection(
 
 // ====== 文档选择器 ======
 
-private val sliceCounts = mapOf(
+val sliceCounts = mapOf(
     "deep-work" to 42, "design-thinking" to 31,
     "feynman" to 19, "rag-notes" to 27, "sleep-platform" to 36
 )
 
 // 按标题首英文单词首字母分组
-private fun docGroupKey(title: String): String {
+fun docGroupKey(title: String): String {
     val first = title.firstOrNull()?.uppercase() ?: "#"
     return if (first in "ABCDEFGHIJKLMNOPQRSTUVWXYZ") first else "#"
 }
 
 @Composable
-private fun DocumentPickerSection(
+fun DocumentPickerSection(
     documents: List<com.yjtzc.bluelink.data.local.db.DocumentEntity>,
     selectedIds: Set<String>,
     onToggleDoc: (String) -> Unit
@@ -401,7 +401,7 @@ private fun DocumentPickerSection(
 }
 
 @Composable
-private fun FilterCapsule(text: String, active: Boolean, onClick: () -> Unit) {
+fun FilterCapsule(text: String, active: Boolean, onClick: () -> Unit) {
     androidx.compose.material3.Surface(
         modifier = Modifier.height(24.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(40.dp),

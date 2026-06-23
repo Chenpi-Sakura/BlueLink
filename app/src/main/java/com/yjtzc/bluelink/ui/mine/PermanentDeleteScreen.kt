@@ -41,16 +41,7 @@ fun PermanentDeleteScreen(
 ) {
     val state by viewModel.deleteState.collectAsStateWithLifecycle()
     val dbDocs by viewModel.allDocuments.collectAsStateWithLifecycle(initialValue = emptyList())
-    val documents = remember(dbDocs) {
-        if (dbDocs.isNotEmpty()) dbDocs
-        else listOf(
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "deep-work", title = "Deep Work 深度工作笔记", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "design-thinking", title = "Design Thinking 产品设计", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "feynman", title = "Feynman 费曼学习法资料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "rag-notes", title = "RAG 知识库方案", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "sleep-platform", title = "Sleep Platform 睡眠平台材料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST)
-        )
-    }
+    val documents = dbDocs
 
     MineNavScaffold(title = "永久删除", onBack = onBack) {
         LazyColumn(
@@ -93,12 +84,19 @@ fun PermanentDeleteScreen(
                 // 永久删除按钮
                 Surface(
                     modifier = Modifier.fillMaxWidth().height(48.dp)
-                        .then(if (state.canDelete) Modifier.clickable(onClick = viewModel::performDelete) else Modifier),
+                        .then(if (!state.isDeleting && !state.deleteDone) Modifier.clickable(onClick = viewModel::performDelete) else Modifier),
                     shape = RoundedCornerShape(18.dp),
-                    color = if (state.canDelete) DangerRed else DangerRed.copy(alpha = 0.3f)
+                    color = if (state.isDeleting || state.deleteDone) DangerRed.copy(alpha = 0.5f)
+                            else if (state.canDelete) DangerRed else DangerRed.copy(alpha = 0.3f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("永久删除", color = Color.White, fontSize = scaledFontSize(15.sp), fontWeight = FontWeight.Bold)
+                        if (state.isDeleting) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                        } else if (state.deleteDone) {
+                            Text("已删除", color = Color.White, fontSize = scaledFontSize(15.sp), fontWeight = FontWeight.Bold)
+                        } else {
+                            Text("永久删除", color = Color.White, fontSize = scaledFontSize(15.sp), fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
 

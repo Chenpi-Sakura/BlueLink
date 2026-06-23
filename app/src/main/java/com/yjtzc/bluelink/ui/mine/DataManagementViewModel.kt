@@ -23,7 +23,8 @@ data class ExportUiState(
     val isExporting: Boolean = false,
     val exportDone: Boolean = false,
     val errorMessage: String? = null,
-    val exportJson: String? = null
+    val exportJson: String? = null,
+    val exportFileName: String? = null
 ) {
     val hasSelectedAnyContent: Boolean
         get() = exportDocuments || exportInspirationCards || exportSettings
@@ -84,7 +85,8 @@ class DataManagementViewModel(
     fun setExportDocuments(v: Boolean) { _exportState.update { it.copy(exportDocuments = v) } }
     fun setExportInspirationCards(v: Boolean) { _exportState.update { it.copy(exportInspirationCards = v) } }
     fun setExportSettings(v: Boolean) { _exportState.update { it.copy(exportSettings = v) } }
-    fun setExportError(msg: String) { _exportState.update { it.copy(errorMessage = msg) } }
+    fun setExportError(msg: String) { _exportState.update { it.copy(errorMessage = msg, exportDone = false, isExporting = false) } }
+    fun setExportFileName(name: String) { _exportState.update { it.copy(exportFileName = name) } }
 
     fun performExport() {
         val s = _exportState.value

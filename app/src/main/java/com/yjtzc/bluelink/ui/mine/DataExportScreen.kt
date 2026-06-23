@@ -42,16 +42,7 @@ fun DataExportScreen(
 ) {
     val state by viewModel.exportState.collectAsStateWithLifecycle()
     val dbDocs by viewModel.allDocuments.collectAsStateWithLifecycle(initialValue = emptyList())
-    val documents = remember(dbDocs) {
-        if (dbDocs.isNotEmpty()) dbDocs
-        else listOf(
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "deep-work", title = "Deep Work 深度工作笔记", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "design-thinking", title = "Design Thinking 产品设计", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "feynman", title = "Feynman 费曼学习法资料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "rag-notes", title = "RAG 知识库方案", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "sleep-platform", title = "Sleep Platform 睡眠平台材料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST)
-        )
-    }
+    val documents = dbDocs
 
     val context = LocalContext.current
 
@@ -66,8 +57,10 @@ fun DataExportScreen(
                     return@LaunchedEffect
                 }
                 dir.mkdirs()
-                val file = java.io.File(dir, "bluelink_export_$dateStr.json")
+                val fileName = "bluelink_export_$dateStr.json"
+                val file = java.io.File(dir, fileName)
                 file.writeText(state.exportJson!!)
+                viewModel.setExportFileName(fileName)
             } catch (e: Exception) {
                 viewModel.setExportError("导出文件写入失败: ${e.message}")
             }
@@ -148,10 +141,18 @@ fun DataExportScreen(
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                         } else if (state.exportDone) {
                             Text("导出完成", color = Color.White, fontSize = scaledFontSize(20.sp), fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
+                        } else if (state.errorMessage != null) {
+                            Text("重试", color = Color.White, fontSize = scaledFontSize(20.sp), fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
                         } else {
                             Text("确认导出", color = if (state.canExport) Color.White else Color(0xC7FFFFFF), fontSize = scaledFontSize(20.sp), fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
                         }
                     }
+                }
+
+                // 导出完成提示
+                if (state.exportDone && state.exportFileName != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text("已保存至: ${state.exportFileName}", fontSize = scaledFontSize(12.sp), color = MidGray)
                 }
 
                 val errMsg = state.errorMessage

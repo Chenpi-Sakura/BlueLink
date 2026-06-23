@@ -369,7 +369,7 @@ private fun DocumentPickerSection(
                     docs.forEach { doc ->
                         val checked = doc.id in selectedIds
                         Surface(
-                            modifier = Modifier.fillMaxWidth().height(54.dp).padding(top = 7.dp).clickable { onToggleDoc(doc.id) },
+                            modifier = Modifier.fillMaxWidth().height(50.dp).padding(top = 7.dp).clickable { onToggleDoc(doc.id) },
                             shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
                             border = BorderStroke(1.dp, Color(0xE6E5E0D8))
                         ) {
@@ -385,10 +385,10 @@ private fun DocumentPickerSection(
                                 }
                                 Spacer(Modifier.width(13.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp, lineHeight = 16.sp,
+                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp,
                                         color = Color(0xFF30343C), maxLines = 1,
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                                    Spacer(Modifier.height(4.dp))
+                                    Spacer(Modifier.height(2.dp))
                                     Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = 11.sp, color = Color(0xFF777777))
                                 }
                             }

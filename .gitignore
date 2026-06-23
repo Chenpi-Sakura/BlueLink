@@ -40,7 +40,15 @@ Thumbs.db
 # ====== Kotlin ======
 .kotlin/
 
-# ====== 日志 & 临时文件 ======
+# ====== 后端 ======
+.env
+server/*.db
+server/__pycache__/
+server/**/__pycache__/
+server/*.pyc
+server/vectors/
+server/uploads/
+.fernet_key
 *.log
 *.tmp
 *.bak
@@ -51,3 +59,4 @@ Thumbs.db
 
 # ====== 生成的代码（如有） ======
 # app/src/main/java/com/yjtzc/bluelink/generated/
+server/resource/

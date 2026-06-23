@@ -1,0 +1,26 @@
+# BlueLink 数据库层 — PostgreSQL 17 + pgvector
+# 独立于应用层启动，方便先搭建数据库环境
+# 使用：docker compose -f docker-compose.db.yml up -d
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: bluelink-db
+    environment:
+      POSTGRES_DB: bluelink
+      POSTGRES_USER: bluelink
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bluelink}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bluelink -d bluelink"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:

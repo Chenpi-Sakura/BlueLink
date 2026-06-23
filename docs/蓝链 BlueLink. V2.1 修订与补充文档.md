@@ -1097,6 +1097,10 @@ private fun createNotificationChannels() {
 | **同步冲突** | 无 | **LWW + 删除不复活 + 状态机** |
 | **Vivo 适配** | 仅厂商表一笔 | **权限/后台/引导/通知 4 节补全** |
 | **ForegroundService 录音** | 未提及 | **V2.1 必加**（Vivo 后台管控） |
+| | **V2.1+ 新增（2026-06-21）** | |
+| **数据库** | SQLite + numpy 向量 | **PostgreSQL 17 + pgvector**（本地可回退 SQLite） |
+| **LLM 配置** | Moonshot/DeepSeek 硬编码分支 | **LLMConfig 纯配置驱动**，改 .env 换厂商 |
+| **部署方案** | uvicorn 裸启动 | **Docker Compose**（pgvector/pg17 + FastAPI） |
 
 ---
 
@@ -1143,12 +1147,153 @@ private fun createNotificationChannels() {
 
 ---
 
-## 9. 变更记录
+## 9. 后续架构修订（V2.1+）
+
+> 以下修订在 V2.1 定稿后于 2026-06-21 确认，覆盖后端架构与部署方案。
+> **生效范围**：替代 V2.0 详细设计 §3.2 / §9.1.5 / §9.7 / §13.2 及 V2.1 §5.1 中相关条款。
+
+### 9.1 数据库：SQLite → PostgreSQL + pgvector
+
+#### 9.1.1 决策
+
+**后端数据库从 SQLite 迁移至 PostgreSQL 17，向量存储从 numpy npy 文件迁移至 pgvector 扩展。**
+
+#### 9.1.2 选型对比
+
+| 维度 | SQLite（V2.1 原方案） | PostgreSQL + pgvector |
+|------|----------------------|----------------------|
+| 数据模型 | 单文件，无并发 | 连接池（pool_size=10），多请求并发 |
+| 向量检索 | numpy 进程内余弦相似度 | pgvector SQL 级 `<->` 算子，支持索引 |
+| 运维 | 零运维 | 需 Docker 或云服务 |
+| 本地开发 | ⚡ 零配置 | 回退 SQLite 模式（改 DATABASE_URL 即可） |
+| 多设备同步 | 不支持 | 天然支持（单数据源） |
+| 生产部署 | ❌ 不适用 | ✅ 标准方案 |
+
+#### 9.1.3 自动选择机制
+
+```python
+# DATABASE_URL 以 postgresql:// 开头 → PostgreSQL + 连接池
+# DATABASE_URL 以 sqlite:/// 开头   → SQLite（本地开发/测试用）
+```
+
+本地开发仍可零配置使用 SQLite，切换只需改 `.env` 一行。
+
+#### 9.1.4 向量存储分层
+
+```
+VectorStore（抽象接口）
+  ├── PgVectorStore（生产）— pgvector 表，SQL 级向量检索
+  └── NumpyVectorStore（回退）— 原 numpy npy 方案，保留兼容
+```
+
+通过 `create_vector_store()` 工厂函数根据 DATABASE_URL 自动选择实现。
+
+### 9.2 LLM Provider：厂商解耦
+
+#### 9.2.1 决策
+
+**移除 LLMProvider 内部对 Moonshot / DeepSeek 的硬编码分支，改为纯配置驱动。**
+
+#### 9.2.2 配置扁平化
+
+```bash
+# 旧（V2.1）：每个厂商一段配置，代码里写 if/else
+MOONSHOT_API_KEY=xxx
+DEEPSEEK_API_KEY=xxx
+LLM_PROVIDER=moonshot
+
+# 新（V2.1+）：纯 OpenAI 兼容协议，厂商无关
+LLM_API_KEY=sk-xxx
+LLM_BASE_URL=https://api.deepseek.com/v1
+LLM_CHAT_MODEL=deepseek-chat
+LLM_EMBED_MODEL=embedding-v1
+```
+
+#### 9.2.3 新增厂商示例
+
+| 厂商 | LLM_BASE_URL | LLM_CHAT_MODEL |
+|------|-------------|---------------|
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| Moonshot | `https://api.moonshot.cn/v1` | `moonshot-v1-8k` |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o` |
+| 硅基流动 | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-7B-Instruct` |
+
+#### 9.2.4 架构变化
+
+```
+旧：LLMProvider 内部持 settings.MOONSHOT_*/settings.DEEPSEEK_* 分支
+新：LLMProvider 构造时接收 LLMConfig（纯数据类），内部零厂商判断
+   └── get_llm() 工厂从 Settings 读取值构造 LLMConfig
+```
+
+### 9.3 部署：Docker 容器化
+
+#### 9.3.1 新增文件
+
+```
+server/
+├── Dockerfile                   # Python 3.12-slim + uvicorn
+├── docker-compose.yml           # pgvector/pg17 + FastAPI
+├── .dockerignore                # 排除 pycache / .env / .git
+└── .env.example                 # 环境变量模板（可入版本库）
+```
+
+#### 9.3.2 使用方式
+
+```bash
+# 生产部署
+cd server
+docker compose up -d
+# → PostgreSQL 起在 5432，FastAPI 起在 8000
+
+# 查看日志
+docker compose logs -f
+
+# 停止（保留数据）
+docker compose down
+
+# 停止并清空数据
+docker compose down -v
+
+# 本地开发（不依赖 Docker）
+uvicorn app.main:app --reload
+# → 需本地有 PostgreSQL 或 .env 切 SQLite
+```
+
+#### 9.3.3 部署架构
+
+```
+                         Nginx（可选反代）
+                              │
+                         ┌────┴────┐
+                         │  FastAPI │ :8000
+                         └────┬────┘
+                              │ depends_on (healthy)
+                         ┌────┴────┐
+                         │ pgvector│ :5432
+                         │  PG 17  │
+                         └─────────┘
+```
+
+### 9.4 受影响章节对照
+
+| 原文档章节 | 原内容 | 替代为 |
+|-----------|--------|--------|
+| V2.0 详细设计 §3.2 后端技术选型 | SQLite + numpy | PostgreSQL + pgvector（本地开发可回退 SQLite） |
+| V2.0 详细设计 §9.1.5 LLM Provider | Moonshot/DeepSeek 硬编码 | LLMConfig 纯配置驱动 |
+| V2.0 详细设计 §9.7 伪代码骨架 | LLMProvider 构造传特定厂商参数 | `get_llm().chat_json(...)` 单例调用 |
+| V2.0 详细设计 §13.2 后端目录 | 无 Docker 相关文件 | 新增 Dockerfile / docker-compose.yml |
+| V2.1 §5.1 部署环境变量 | 分 Moonshot/DeepSeek 区块 | 扁平化为 LLM_API_KEY / LLM_BASE_URL / LLM_CHAT_MODEL |
+
+---
+
+## 10. 变更记录
 
 | 版本 | 日期 | 修订内容 | 作者 |
 |------|------|----------|------|
 | 2.0 | 2026-06-05 | 客户端栈重构为 Android Kotlin + Jetpack Compose | Eau团队 |
 | **2.1** | **2026-06-07** | **加密策略统一（SecurePrefs 间接存储）；OCR 改 PaddleOCR Lite（零 GMS 依赖）；取消 APK 体积限制（高端机不设限）；登录改匿名 UUID + X-User-Id；新增 5 个工程化章节（部署/Seed/隐私 UI/PDF 渲染/同步冲突）；新增 Vivo 适配专章** | **Eau团队** |
+| **2.1+** | **2026-06-21** | **后端架构修订：数据库 SQLite → PostgreSQL + pgvector；LLM Provider 厂商解耦为纯配置驱动；新增 Docker 容器化部署方案** | **Eau团队** |
 
 ---
 

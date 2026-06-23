@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,10 +25,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberAsyncImagePainter
 import com.yjtzc.bluelink.ui.navigation.BlueLinkViewModelFactory
 import com.yjtzc.bluelink.util.LocalAppContainer
 import kotlinx.coroutines.delay
@@ -218,7 +219,7 @@ private fun VoiceTab(
                 Icon(Icons.Default.Stop, contentDescription = "停止录音", tint = MaterialTheme.colorScheme.onError)
             }
         } else if (state.audioFilePath != null) {
-            // 录音完成
+            // 录音完成 — 可听状态
             Icon(
                 Icons.Default.Check,
                 contentDescription = null,

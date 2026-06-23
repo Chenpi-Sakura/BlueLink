@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.yjtzc.bluelink.ui.navigation.BlueLinkNavGraph
 import com.yjtzc.bluelink.ui.theme.BlueLinkTheme
@@ -20,10 +20,15 @@ class MainActivity : ComponentActivity() {
         val container = (application as BlueLinkApplication).container
 
         setContent {
+            var isDarkMode by remember { mutableStateOf(false) }
+
             CompositionLocalProvider(LocalAppContainer provides container) {
-                BlueLinkTheme {
+                BlueLinkTheme(darkTheme = isDarkMode) {
                     Surface(modifier = Modifier.fillMaxSize()) {
-                        BlueLinkNavGraph()
+                        BlueLinkNavGraph(
+                            isDarkMode = isDarkMode,
+                            onToggleDarkMode = { isDarkMode = !isDarkMode }
+                        )
                     }
                 }
             }

@@ -67,7 +67,9 @@ data class InspirationCardEntity(
     val type: CardType,
     val privacyLevel: PrivacyLevel = PrivacyLevel.LOCAL_ONLY,
     val tags: String = "",                     // 逗号分隔关键词
-    val createdAt: Long = System.currentTimeMillis()
+    val folderId: String? = null,              // 所属文件夹 ID（null = 未归档）
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()  // 最近修改时间
 )
 
 /**
@@ -126,4 +128,20 @@ data class PendingSyncEntity(
     val retryCount: Int = 0,
     val lastError: String? = null,             // V2.1: 上次失败原因
     val status: SyncStatus = SyncStatus.PENDING
+)
+
+/**
+ * 回收站（删除后保留 15 天）
+ */
+@Entity(tableName = "trash_items")
+data class TrashItemEntity(
+    @PrimaryKey val id: String,
+    val originalId: String,                    // 原内容 ID
+    val itemType: String,                      // "INSPIRATION" | "DOCUMENT" | "FILE"
+    val title: String = "",                    // 标题
+    val contentRef: String? = null,            // SecurePrefs key（可恢复用）
+    val contentSnippet: String = "",           // 摘要
+    val metadataJson: String? = null,          // 额外元数据
+    val deletedAt: Long = System.currentTimeMillis(),
+    val expiresAt: Long = System.currentTimeMillis() + 15L * 24 * 60 * 60 * 1000  // 15 天后
 )

@@ -18,9 +18,10 @@ import androidx.room.RoomDatabase
         AnchorEntity::class,
         GraphNodeEntity::class,
         GraphEdgeEntity::class,
-        PendingSyncEntity::class
+        PendingSyncEntity::class,
+        TrashItemEntity::class
     ],
-    version = 1,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -32,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun graphNodeDao(): GraphNodeDao
     abstract fun graphEdgeDao(): GraphEdgeDao
     abstract fun pendingSyncDao(): PendingSyncDao
+    abstract fun trashDao(): TrashDao
 
     companion object {
         fun build(context: Context): AppDatabase {

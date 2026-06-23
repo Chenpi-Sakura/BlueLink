@@ -79,11 +79,20 @@ interface AnchorDao {
 
 @Dao
 interface InspirationDao {
-    @Query("SELECT * FROM inspiration_cards ORDER BY createdAt DESC")
+    @Query("SELECT * FROM inspiration_cards ORDER BY updatedAt DESC")
     fun observeAll(): Flow<List<InspirationCardEntity>>
+
+    @Query("SELECT * FROM inspiration_cards WHERE folderId = :folderId ORDER BY updatedAt DESC")
+    fun observeByFolder(folderId: String): Flow<List<InspirationCardEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(card: InspirationCardEntity)
+
+    @Query("UPDATE inspiration_cards SET folderId = :folderId WHERE id = :cardId")
+    suspend fun updateFolder(cardId: String, folderId: String?)
+
+    @Query("UPDATE inspiration_cards SET folderId = NULL WHERE folderId = :folderId")
+    suspend fun clearFolder(folderId: String)
 
     @Delete
     suspend fun delete(card: InspirationCardEntity)
@@ -132,4 +141,27 @@ interface PendingSyncDao {
 
     @Query("UPDATE pending_sync SET serverRefId = :serverRefId, status = 'SUCCESS' WHERE id = :id")
     suspend fun markSuccess(id: String, serverRefId: String? = null)
+}
+
+// ====== TrashDao ======
+
+@Dao
+interface TrashDao {
+    @Query("SELECT * FROM trash_items ORDER BY deletedAt DESC")
+    fun observeAll(): Flow<List<TrashItemEntity>>
+
+    @Query("SELECT * FROM trash_items WHERE id = :id")
+    suspend fun getById(id: String): TrashItemEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(item: TrashItemEntity)
+
+    @Delete
+    suspend fun delete(item: TrashItemEntity)
+
+    @Query("DELETE FROM trash_items WHERE expiresAt < :now")
+    suspend fun deleteExpired(now: Long = System.currentTimeMillis())
+
+    @Query("SELECT COUNT(*) FROM trash_items")
+    fun observeCount(): Flow<Int>
 }

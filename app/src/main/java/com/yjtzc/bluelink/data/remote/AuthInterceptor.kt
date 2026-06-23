@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
-import java.util.UUID
+
 
 /**
  * OkHttp 拦截器 — 为所有请求注入认证 Header（V2.1 §4.2）
@@ -29,13 +29,14 @@ class AuthInterceptor(
 
     /**
      * 获取或生成匿名 User ID。
-     * 首次启动生成 UUID 并持久化到 DataStore，之后复用。
+     * V2.1 MVP 阶段：所有设备使用固定 ID 共享同一份数据。
+     * 后续如需多用户，改回随机 UUID 即可。
      */
     private fun getUserId(): String {
         return runBlocking {
             val existing = userPreferences.userId.firstOrNull()
             if (existing.isNullOrBlank()) {
-                val newId = UUID.randomUUID().toString()
+                val newId = "seed-user-0000-0000-0000-000000000000"
                 userPreferences.setUserId(newId)
                 newId
             } else {

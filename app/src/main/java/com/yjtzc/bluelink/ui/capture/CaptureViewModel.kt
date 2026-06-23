@@ -82,7 +82,6 @@ class CaptureViewModel(
                         content = audioPath,
                         type = CardType.VOICE,
                         privacyLevel = if (_state.value.isPrivate) PrivacyLevel.LOCAL_ONLY else PrivacyLevel.LOCAL_FIRST,
-                        tags = listOf("voice")
                     )
                     resetAndDismiss(onSuccess)
                 }
@@ -96,7 +95,6 @@ class CaptureViewModel(
                         content = imagePath,
                         type = CardType.IMAGE,
                         privacyLevel = if (_state.value.isPrivate) PrivacyLevel.LOCAL_ONLY else PrivacyLevel.LOCAL_FIRST,
-                        tags = listOf("image")
                     )
                     resetAndDismiss(onSuccess)
                 }

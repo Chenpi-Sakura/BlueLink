@@ -11,6 +11,7 @@ import com.yjtzc.bluelink.data.repository.CaptureRepository
 import com.yjtzc.bluelink.data.repository.DocumentRepository
 import com.yjtzc.bluelink.data.repository.FeynmanRepository
 import com.yjtzc.bluelink.data.repository.GraphRepository
+import com.yjtzc.bluelink.data.repository.TrashRepository
 import com.yjtzc.bluelink.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -83,6 +84,9 @@ class AppContainer(private val appContext: Context) {
     }
     val captureRepository: CaptureRepository by lazy {
         CaptureRepository(api, database.inspirationDao(), securePrefs)
+    }
+    val trashRepository: TrashRepository by lazy {
+        TrashRepository(database.trashDao(), securePrefs)
     }
     val feynmanRepository: FeynmanRepository by lazy {
         FeynmanRepository(api)

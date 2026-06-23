@@ -2,4 +2,5 @@
 <paths>
     <files-path name="captures" path="captures/" />
     <files-path name="recordings" path="recordings/" />
+    <cache-path name="cache" path="/" />
 </paths>

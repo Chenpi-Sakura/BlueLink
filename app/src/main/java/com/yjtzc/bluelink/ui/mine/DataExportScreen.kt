@@ -39,7 +39,20 @@ fun DataExportScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.exportState.collectAsStateWithLifecycle()
-    val documents by viewModel.allDocuments.collectAsStateWithLifecycle(initialValue = emptyList())
+    val dbDocs by viewModel.allDocuments.collectAsStateWithLifecycle(initialValue = emptyList())
+    val documents = remember(dbDocs) {
+        if (dbDocs.isNotEmpty()) dbDocs
+        else listOf(
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(
+                id = "doc-1", title = "深度工作笔记",
+                privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST
+            ),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(
+                id = "doc-2", title = "费曼学习法资料",
+                privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST
+            )
+        )
+    }
 
     MineNavScaffold(title = "数据导出", onBack = onBack, titleWeight = FontWeight(760)) {
         LazyColumn(

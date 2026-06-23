@@ -43,14 +43,11 @@ fun DataExportScreen(
     val documents = remember(dbDocs) {
         if (dbDocs.isNotEmpty()) dbDocs
         else listOf(
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(
-                id = "doc-1", title = "深度工作笔记",
-                privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST
-            ),
-            com.yjtzc.bluelink.data.local.db.DocumentEntity(
-                id = "doc-2", title = "费曼学习法资料",
-                privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST
-            )
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "deep-work", title = "Deep Work 深度工作笔记", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "design-thinking", title = "Design Thinking 产品设计", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "feynman", title = "Feynman 费曼学习法资料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "rag-notes", title = "RAG 知识库方案", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "sleep-platform", title = "Sleep Platform 睡眠平台材料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST)
         )
     }
 
@@ -285,103 +282,85 @@ private fun ExportContentSection(
 
 // ====== 文档选择器 ======
 
+private val sliceCounts = mapOf(
+    "deep-work" to 42, "design-thinking" to 31,
+    "feynman" to 19, "rag-notes" to 27, "sleep-platform" to 36
+)
+
+// 按标题首英文单词首字母分组
+private fun docGroupKey(title: String): String {
+    val first = title.firstOrNull()?.uppercase() ?: "#"
+    return if (first in "ABCDEFGHIJKLMNOPQRSTUVWXYZ") first else "#"
+}
+
 @Composable
 private fun DocumentPickerSection(
     documents: List<com.yjtzc.bluelink.data.local.db.DocumentEntity>,
     selectedIds: Set<String>,
     onToggleDoc: (String) -> Unit
 ) {
-    // 按首字母分组
-    val grouped = remember(documents) {
-        documents.groupBy { it.title.firstOrNull()?.uppercase() ?: "#" }
-    }
-    val letters = remember(documents) { grouped.keys.sorted() }
-    var activeLetter by remember { mutableStateOf<String?>(null) }
-    var expandedGroups by remember { mutableStateOf(grouped.keys.associateWith { true }) }
+    val grouped = remember(documents) { documents.groupBy { docGroupKey(it.title) } }
+    val letters = remember(documents) { grouped.keys.filter { it != "#" }.sorted() }
+    var selectedAlpha by remember { mutableStateOf("all") }
+    var expandedGroups by remember { mutableStateOf(letters.toSet()) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp), color = Color(0x80FFFDF8),
         border = BorderStroke(1.dp, CardBorder)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("选择文档", fontSize = 16.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
-                fontFamily = FontFamily.Serif,
-                modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
+        Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 12.dp)) {
+            // 标题
+            Text("选择文档", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86),
+                modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 10.dp))
 
-            // 字母筛选栏
+            // 字母筛选胶囊
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // "全部"按钮
-                val allActive = activeLetter == null
-                Surface(
-                    modifier = Modifier.height(24.dp).widthIn(min = 28.dp).clickable { activeLetter = null },
-                    shape = RoundedCornerShape(40.dp),
-                    color = if (allActive) Color.Transparent else Color(0xB8FFFDF8),
-                    border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.22f))
-                ) {
-                    Box(
-                        modifier = if (allActive) Modifier.fillMaxSize().background(
-                            Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
-                            RoundedCornerShape(40.dp)
-                        ) else Modifier,
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("全部", fontSize = 12.sp, color = if (allActive) Color.White else Color(0xFF064AA9),
-                            modifier = Modifier.padding(horizontal = 9.dp))
-                    }
-                }
+                val allActive = selectedAlpha == "all"
+                // 全部
+                FilterCapsule("全部", allActive) { selectedAlpha = "all" }
                 letters.forEach { letter ->
-                    val isActive = activeLetter == letter
-                    Surface(
-                        modifier = Modifier.height(24.dp).widthIn(min = 28.dp).clickable { activeLetter = letter },
-                        shape = RoundedCornerShape(40.dp),
-                        color = if (isActive) Color.Transparent else Color(0xB8FFFDF8),
-                        border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.22f))
-                    ) {
-                        Box(
-                            modifier = if (isActive) Modifier.fillMaxSize().background(
-                                Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
-                                RoundedCornerShape(40.dp)
-                            ) else Modifier,
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(letter, fontSize = 12.sp, color = if (isActive) Color.White else Color(0xFF064AA9),
-                                modifier = Modifier.padding(horizontal = 9.dp))
-                        }
+                    val active = selectedAlpha == letter
+                    FilterCapsule(letter, active) {
+                        selectedAlpha = letter
+                        expandedGroups = expandedGroups + letter
                     }
                 }
             }
 
-            // 文档分组
-            val filteredGroups = if (activeLetter == null) grouped else {
-                grouped.filterKeys { it == activeLetter }
-            }
-            filteredGroups.forEach { (letter, docs) ->
-                val expanded = expandedGroups[letter] ?: true
+            // 分组
+            val visibleGroups = if (selectedAlpha == "all") grouped
+            else grouped.filterKeys { it == selectedAlpha }
+
+            visibleGroups.forEach { (letter, docs) ->
+                val expanded = letter in expandedGroups
                 // 分组头
                 Row(
                     modifier = Modifier.fillMaxWidth().height(30.dp).clickable {
-                        expandedGroups = expandedGroups.toMutableMap().apply { put(letter, !expanded) }
+                        expandedGroups = if (expanded) expandedGroups - letter else expandedGroups + letter
                     },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // 字母块
                     Box(
                         modifier = Modifier.size(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Surface(shape = RoundedCornerShape(8.dp), color = AccentBlue.copy(alpha = 0.08f)) {
                             Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                                Text(letter, fontSize = 13.sp, fontWeight = FontWeight(760), color = Color(0xFF0A3F86))
+                                Text(letter, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86))
                             }
                         }
                     }
                     Spacer(Modifier.width(8.dp))
-                    Text("$letter  ${docs.size} 个文档", fontSize = 12.sp, color = Color(0xFF777777), fontWeight = FontWeight(520))
+                    Text("${docs.size} 个文档", fontSize = 12.sp, color = Color(0xFF777777), fontWeight = FontWeight(520))
                     Spacer(Modifier.weight(1f))
-                    Text(if (expanded) "›" else "›", fontSize = 16.sp, color = AccentBlue,
+                    // 折叠箭头
+                    Text(if (expanded) "❯" else "❯",
+                        fontSize = 16.sp, color = AccentBlue,
                         modifier = Modifier.rotate(if (expanded) 90f else 0f))
                 }
 
@@ -395,6 +374,7 @@ private fun DocumentPickerSection(
                             border = BorderStroke(1.dp, Color(0xE6E5E0D8))
                         ) {
                             Row(modifier = Modifier.padding(horizontal = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                // 自定义圆形 check
                                 Box(
                                     modifier = Modifier.size(21.dp).clip(androidx.compose.foundation.shape.CircleShape)
                                         .background(if (checked) AccentBlue else Color.Transparent)
@@ -405,15 +385,39 @@ private fun DocumentPickerSection(
                                 }
                                 Spacer(Modifier.width(13.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp, lineHeight = 16.sp, color = Color(0xFF30343C))
+                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp, lineHeight = 16.sp,
+                                        color = Color(0xFF30343C), maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                                     Spacer(Modifier.height(4.dp))
-                                    Text("含 ${doc.id.hashCode().rem(100).let { if (it < 0) -it else it }} 个片段", fontSize = 11.sp, color = Color(0xFF777777))
+                                    Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = 11.sp, color = Color(0xFF777777))
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FilterCapsule(text: String, active: Boolean, onClick: () -> Unit) {
+    androidx.compose.material3.Surface(
+        modifier = Modifier.height(24.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(40.dp),
+        color = if (active) Color.Transparent else Color(0xB8FFFDF8),
+        border = if (active) null else BorderStroke(1.dp, AccentBlue.copy(alpha = 0.22f))
+    ) {
+        Box(
+            modifier = if (active) Modifier.fillMaxSize().background(
+                Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
+                RoundedCornerShape(40.dp)
+            ) else Modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text, fontSize = 12.sp,
+                color = if (active) Color.White else Color(0xFF064AA9),
+                modifier = Modifier.padding(horizontal = 9.dp))
         }
     }
 }

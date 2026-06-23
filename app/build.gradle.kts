@@ -24,7 +24,7 @@ android {
         buildConfigField(
             "String",
             "BACKEND_BASE_URL",
-            "\"${project.findProperty("bluelink.backend.baseUrl") ?: "http://10.0.2.2:8000/"}\""
+            "\"${project.findProperty("bluelink.backend.baseUrl") ?: "http://117.72.38.57:8000/"}\""
         )
     }
 

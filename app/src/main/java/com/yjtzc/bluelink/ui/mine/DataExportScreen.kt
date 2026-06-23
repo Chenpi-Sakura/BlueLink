@@ -359,8 +359,7 @@ private fun DocumentPickerSection(
                     Text("${docs.size} 个文档", fontSize = 12.sp, color = Color(0xFF777777), fontWeight = FontWeight(520))
                     Spacer(Modifier.weight(1f))
                     // 折叠箭头
-                    Text(if (expanded) "❯" else "❯",
-                        fontSize = 16.sp, color = AccentBlue,
+                    Text("›", fontSize = 14.sp, color = AccentBlue,
                         modifier = Modifier.rotate(if (expanded) 90f else 0f))
                 }
 
@@ -369,12 +368,11 @@ private fun DocumentPickerSection(
                     docs.forEach { doc ->
                         val checked = doc.id in selectedIds
                         Surface(
-                            modifier = Modifier.fillMaxWidth().height(50.dp).padding(top = 7.dp).clickable { onToggleDoc(doc.id) },
+                            modifier = Modifier.fillMaxWidth().height(58.dp).padding(top = 7.dp).clickable { onToggleDoc(doc.id) },
                             shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
                             border = BorderStroke(1.dp, Color(0xE6E5E0D8))
                         ) {
                             Row(modifier = Modifier.padding(horizontal = 13.dp), verticalAlignment = Alignment.CenterVertically) {
-                                // 自定义圆形 check
                                 Box(
                                     modifier = Modifier.size(21.dp).clip(androidx.compose.foundation.shape.CircleShape)
                                         .background(if (checked) AccentBlue else Color.Transparent)
@@ -384,13 +382,16 @@ private fun DocumentPickerSection(
                                     if (checked) Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(Modifier.width(13.dp))
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.Center
+                                ) {
                                     Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp,
-                                        color = Color(0xFF30343C), maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                        modifier = Modifier.padding(bottom = 0.dp))
+                                        lineHeight = 17.sp, color = Color(0xFF30343C), maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                    Spacer(Modifier.height(3.dp))
                                     Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = 11.sp,
-                                        color = Color(0xFF777777))
+                                        lineHeight = 14.sp, maxLines = 1, color = Color(0xFF777777))
                                 }
                             }
                         }

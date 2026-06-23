@@ -61,9 +61,16 @@ fun DataExportScreen(
             try {
                 val dateStr = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(java.util.Date())
                 val dir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS)
+                if (dir == null) {
+                    viewModel.setExportError("无法访问外部存储目录")
+                    return@LaunchedEffect
+                }
+                dir.mkdirs()
                 val file = java.io.File(dir, "bluelink_export_$dateStr.json")
                 file.writeText(state.exportJson!!)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                viewModel.setExportError("导出文件写入失败: ${e.message}")
+            }
         }
     }
 

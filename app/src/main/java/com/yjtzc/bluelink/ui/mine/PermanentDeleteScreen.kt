@@ -40,7 +40,17 @@ fun PermanentDeleteScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.deleteState.collectAsStateWithLifecycle()
-    val documents by viewModel.allDocuments.collectAsStateWithLifecycle(initialValue = emptyList())
+    val dbDocs by viewModel.allDocuments.collectAsStateWithLifecycle(initialValue = emptyList())
+    val documents = remember(dbDocs) {
+        if (dbDocs.isNotEmpty()) dbDocs
+        else listOf(
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "deep-work", title = "Deep Work 深度工作笔记", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "design-thinking", title = "Design Thinking 产品设计", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "feynman", title = "Feynman 费曼学习法资料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "rag-notes", title = "RAG 知识库方案", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST),
+            com.yjtzc.bluelink.data.local.db.DocumentEntity(id = "sleep-platform", title = "Sleep Platform 睡眠平台材料", privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.LOCAL_FIRST)
+        )
+    }
 
     MineNavScaffold(title = "永久删除", onBack = onBack) {
         LazyColumn(

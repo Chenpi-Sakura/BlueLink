@@ -111,13 +111,15 @@ def seed():
             db.add(card)
         logger.info("  ✅ 导入 %d 条灵感卡片", len(SAMPLE_CARDS))
 
-        # 3. 创建图谱节点
+        # 3. 创建图谱节点（DOCUMENT/INSPIRATION 类型设 ref_id 以便溯源内容）
         for nid, label, ntype in SAMPLE_NODES:
+            ref_id = SEED_NODE_IDS.get("deep_work_doc") if nid == SEED_NODE_IDS.get("deep_work_doc") and ntype == "DOCUMENT" else None
             node = GraphNode(
                 id=nid,
                 user_id=SEED_USER_ID,
                 label=label,
                 type=ntype,
+                ref_id=ref_id,
             )
             db.add(node)
         logger.info("  ✅ 导入 %d 个图谱节点", len(SAMPLE_NODES))

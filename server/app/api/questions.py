@@ -38,4 +38,11 @@ def ask_question(
         local_segment_ids=request.local_segment_ids,
     )
 
-    return AskResponse(**result)
+    try:
+        return AskResponse(**result)
+    except Exception as e:
+        logger.warning("LLM 返回格式异常: %s", e)
+        return AskResponse(
+            introduction="抱歉，AI 暂时无法处理您的请求，请稍后重试。",
+            anchors=[],
+        )

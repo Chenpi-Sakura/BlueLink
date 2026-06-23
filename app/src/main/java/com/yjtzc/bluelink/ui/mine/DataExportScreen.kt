@@ -387,9 +387,10 @@ private fun DocumentPickerSection(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp,
                                         color = Color(0xFF30343C), maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                                    Spacer(Modifier.height(2.dp))
-                                    Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = 11.sp, color = Color(0xFF777777))
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(bottom = 0.dp))
+                                    Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = 11.sp,
+                                        color = Color(0xFF777777))
                                 }
                             }
                         }

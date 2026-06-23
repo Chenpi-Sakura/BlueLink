@@ -205,45 +205,11 @@ private fun ExportMainCard(
             // 选择文档
             if (scope == ItemScope.SELECTED) {
                 Spacer(Modifier.height(14.dp))
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp), color = Color(0x80FFFDF8),
-                    border = BorderStroke(1.dp, CardBorder)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text("选择文档", fontSize = 16.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
-                            fontFamily = FontFamily.Serif,
-                            modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
-                        if (documents.isEmpty()) {
-                            Text("暂无文档", fontSize = 14.5.sp, color = MidGray)
-                        } else {
-                            documents.forEachIndexed { idx, doc ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().height(54.dp).clickable { onToggleDoc(doc.id) },
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier.size(21.dp).clip(CircleShape)
-                                            .background(if (doc.id in selectedIds) AccentBlue else Color.Transparent)
-                                            .then(if (doc.id !in selectedIds) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (doc.id in selectedIds) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                    Spacer(Modifier.width(13.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.5.sp, lineHeight = 20.sp, color = InkColor)
-                                        Spacer(Modifier.height(4.dp))
-                                        Text("文档", fontSize = 11.sp, color = Color(0xFF777777))
-                                    }
-                                }
-                                if (idx < documents.lastIndex) {
-                                    Box(modifier = Modifier.fillMaxWidth().padding(start = 34.dp).height(1.dp).background(DividerColor))
-                                }
-                            }
-                        }
-                    }
-                }
+                DocumentPickerSection(
+                    documents = documents,
+                    selectedIds = selectedIds,
+                    onToggleDoc = onToggleDoc
+                )
             }
         }
     }
@@ -312,6 +278,141 @@ private fun ExportContentSection(
                 ) { if (exportSettings) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(13.dp))
                 Text("认知设置与隐私偏好", fontSize = 14.5.sp, color = InkColor)
+            }
+        }
+    }
+}
+
+// ====== 文档选择器 ======
+
+@Composable
+private fun DocumentPickerSection(
+    documents: List<com.yjtzc.bluelink.data.local.db.DocumentEntity>,
+    selectedIds: Set<String>,
+    onToggleDoc: (String) -> Unit
+) {
+    // 按首字母分组
+    val grouped = remember(documents) {
+        documents.groupBy { it.title.firstOrNull()?.uppercase() ?: "#" }
+    }
+    val letters = remember(documents) { grouped.keys.sorted() }
+    var activeLetter by remember { mutableStateOf<String?>(null) }
+    var expandedGroups by remember { mutableStateOf(grouped.keys.associateWith { true }) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp), color = Color(0x80FFFDF8),
+        border = BorderStroke(1.dp, CardBorder)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text("选择文档", fontSize = 16.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+                fontFamily = FontFamily.Serif,
+                modifier = Modifier.padding(start = 4.dp, bottom = 10.dp))
+
+            // 字母筛选栏
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                // "全部"按钮
+                val allActive = activeLetter == null
+                Surface(
+                    modifier = Modifier.height(24.dp).widthIn(min = 28.dp).clickable { activeLetter = null },
+                    shape = RoundedCornerShape(40.dp),
+                    color = if (allActive) Color.Transparent else Color(0xB8FFFDF8),
+                    border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.22f))
+                ) {
+                    Box(
+                        modifier = if (allActive) Modifier.fillMaxSize().background(
+                            Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
+                            RoundedCornerShape(40.dp)
+                        ) else Modifier,
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("全部", fontSize = 12.sp, color = if (allActive) Color.White else Color(0xFF064AA9),
+                            modifier = Modifier.padding(horizontal = 9.dp))
+                    }
+                }
+                letters.forEach { letter ->
+                    val isActive = activeLetter == letter
+                    Surface(
+                        modifier = Modifier.height(24.dp).widthIn(min = 28.dp).clickable { activeLetter = letter },
+                        shape = RoundedCornerShape(40.dp),
+                        color = if (isActive) Color.Transparent else Color(0xB8FFFDF8),
+                        border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.22f))
+                    ) {
+                        Box(
+                            modifier = if (isActive) Modifier.fillMaxSize().background(
+                                Brush.verticalGradient(listOf(Color(0xFF075BC5), Color(0xFF003E9D))),
+                                RoundedCornerShape(40.dp)
+                            ) else Modifier,
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(letter, fontSize = 12.sp, color = if (isActive) Color.White else Color(0xFF064AA9),
+                                modifier = Modifier.padding(horizontal = 9.dp))
+                        }
+                    }
+                }
+            }
+
+            // 文档分组
+            val filteredGroups = if (activeLetter == null) grouped else {
+                grouped.filterKeys { it == activeLetter }
+            }
+            filteredGroups.forEach { (letter, docs) ->
+                val expanded = expandedGroups[letter] ?: true
+                // 分组头
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(30.dp).clickable {
+                        expandedGroups = expandedGroups.toMutableMap().apply { put(letter, !expanded) }
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier.size(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(shape = RoundedCornerShape(8.dp), color = AccentBlue.copy(alpha = 0.08f)) {
+                            Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                                Text(letter, fontSize = 13.sp, fontWeight = FontWeight(760), color = Color(0xFF0A3F86))
+                            }
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Text("$letter  ${docs.size} 个文档", fontSize = 12.sp, color = Color(0xFF777777), fontWeight = FontWeight(520))
+                    Spacer(Modifier.weight(1f))
+                    Text(if (expanded) "›" else "›", fontSize = 16.sp, color = AccentBlue,
+                        modifier = Modifier.rotate(if (expanded) 90f else 0f))
+                }
+
+                // 文档列表
+                if (expanded) {
+                    docs.forEach { doc ->
+                        val checked = doc.id in selectedIds
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().height(54.dp).padding(top = 7.dp).clickable { onToggleDoc(doc.id) },
+                            shape = RoundedCornerShape(14.dp), color = Color(0x8CFFFDF8),
+                            border = BorderStroke(1.dp, Color(0xE6E5E0D8))
+                        ) {
+                            Row(modifier = Modifier.padding(horizontal = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier.size(21.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(if (checked) AccentBlue else Color.Transparent)
+                                        .then(if (!checked) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (checked) Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(Modifier.width(13.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp, lineHeight = 16.sp, color = Color(0xFF30343C))
+                                    Spacer(Modifier.height(4.dp))
+                                    Text("含 ${doc.id.hashCode().rem(100).let { if (it < 0) -it else it }} 个片段", fontSize = 11.sp, color = Color(0xFF777777))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

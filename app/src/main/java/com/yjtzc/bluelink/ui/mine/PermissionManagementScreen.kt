@@ -24,31 +24,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
-import com.yjtzc.bluelink.ui.theme.KleinBlue
+import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 
 private val AccentBlue = Color(0xFF002FA7)
 private val GrayText = Color(0xFF777777)
+
+data class PermInfo(val label: String, val granted: Boolean, val isBattery: Boolean)
 
 @Composable
 fun PermissionManagementScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val permissions = remember(context) {
-        listOf(
-            Triple("相机权限", ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED, "📷"),
-            Triple("麦克风权限", ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED, "🎤"),
-            Triple("通知权限",
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                else true, "🔔"),
-            Triple("电池优化白名单", {
-                val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-                pm.isIgnoringBatteryOptimizations(context.packageName)
-            }(), "🔋")
-        )
+
+    // 权限状态改为可变，支持 ON_RESUME 刷新
+    var permissions by remember { mutableStateOf(computePermissions(context)) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        permissions = computePermissions(context)
     }
 
     MineNavScaffold(title = "权限管理", onBack = onBack) {
@@ -57,7 +52,6 @@ fun PermissionManagementScreen(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // 顶部说明卡片（无图标）
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth().heightIn(min = 104.dp),
@@ -70,30 +64,28 @@ fun PermissionManagementScreen(
                             colors = listOf(Color(0xB3EBF4FF), Color(0xD1FFFDF8)),
                             start = androidx.compose.ui.geometry.Offset.Zero,
                             end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                        ),
-                        RoundedCornerShape(24.dp)
+                        ), RoundedCornerShape(24.dp)
                     )) {
-                        Text(
-                            text = "为了保证灵感捕获、OCR 和同步提醒正常工作，\n请检查以下权限。",
+                        Text("为了保证灵感捕获、OCR 和同步提醒正常工作，\n请检查以下权限。",
                             fontSize = scaledFontSize(14.5.sp), lineHeight = 24.sp,
                             color = Color(0xFF10213B), fontFamily = FontFamily.Serif,
-                            modifier = Modifier.padding(24.dp, 22.dp)
-                        )
+                            modifier = Modifier.padding(24.dp, 22.dp))
                     }
                 }
                 Spacer(Modifier.height(24.dp))
             }
 
-            // 权限列表卡片
             item {
                 Surface(
-                    shape = RoundedCornerShape(23.dp),
-                    color = Color(0xCCFFFDF8),
+                    shape = RoundedCornerShape(23.dp), color = Color(0xCCFFFDF8),
                     border = BorderStroke(1.dp, Color(0xEBE5E0D8))
                 ) {
                     Column(modifier = Modifier.padding(18.dp, 20.dp)) {
-                        permissions.forEachIndexed { index, (name, granted, emoji) ->
-                            PermItem(name, granted, emoji, onActionClick = { openAppSettings(context) })
+                        permissions.forEachIndexed { index, p ->
+                            PermItem(p, onClick = {
+                                if (p.isBattery) openBatterySettings(context)
+                                else openAppSettings(context)
+                            })
                             if (index < permissions.lastIndex) {
                                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xB8D6CFC4)))
                             }
@@ -103,29 +95,20 @@ fun PermissionManagementScreen(
                 Spacer(Modifier.height(10.dp))
             }
 
-            // 蓝色提示卡
             item {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color.Transparent,
-                    border = BorderStroke(1.dp, Color(0xE6CBF1F4))
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
+                    color = Color.Transparent, border = BorderStroke(1.dp, Color(0xE6CBF1F4))
                 ) {
                     Box(modifier = Modifier.fillMaxSize().background(
                         Brush.linearGradient(
                             colors = listOf(Color(0xEBE9F3FF), Color(0xE0FAFDFF)),
                             start = androidx.compose.ui.geometry.Offset.Zero,
                             end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                        ),
-                        RoundedCornerShape(18.dp)
+                        ), RoundedCornerShape(18.dp)
                     )) {
-                        Row(
-                            modifier = Modifier.padding(18.dp, 20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(34.dp),
-                                shape = RoundedCornerShape(40.dp),
+                        Row(modifier = Modifier.padding(18.dp, 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(modifier = Modifier.size(34.dp), shape = RoundedCornerShape(40.dp),
                                 color = AccentBlue.copy(alpha = 0.1f)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -133,11 +116,9 @@ fun PermissionManagementScreen(
                                 }
                             }
                             Spacer(Modifier.width(12.dp))
-                            Text(
-                                text = "Vivo / OriginOS 可能会限制后台同步，建议加入电池优化白名单。",
+                            Text("Vivo / OriginOS 可能会限制后台同步，建议加入电池优化白名单。",
                                 fontSize = scaledFontSize(14.5.sp), lineHeight = 22.sp, fontFamily = FontFamily.Serif,
-                                color = Color(0xFF47688F)
-                            )
+                                color = Color(0xFF47688F))
                         }
                     }
                 }
@@ -148,42 +129,34 @@ fun PermissionManagementScreen(
 }
 
 @Composable
-private fun PermItem(name: String, granted: Boolean, emoji: String, onActionClick: () -> Unit) {
+private fun PermItem(p: PermInfo, onClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().height(52.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 名称
         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(emoji, fontSize = scaledFontSize(13.sp))
+            Text(if (p.isBattery) "🔋" else if (p.label.contains("相机")) "📷" else if (p.label.contains("麦克")) "🎤" else "🔔",
+                fontSize = scaledFontSize(13.sp))
             Spacer(Modifier.width(8.dp))
-            Text(name, fontSize = scaledFontSize(14.5.sp), fontWeight = FontWeight.SemiBold,
+            Text(p.label, fontSize = scaledFontSize(14.5.sp), fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF10213B), fontFamily = FontFamily.Serif)
         }
-        // 状态文字
-        Text(
-            text = if (granted) "已允许" else "未开启",
-            fontSize = scaledFontSize(13.sp),
-            color = if (granted) AccentBlue else GrayText,
-            modifier = Modifier.width(64.dp)
-        )
-        // 按钮
-        if (!granted) {
-            Button(
-                onClick = onActionClick,
+        Text(if (p.granted) "已允许" else "未开启",
+            fontSize = scaledFontSize(13.sp), color = if (p.granted) AccentBlue else GrayText,
+            modifier = Modifier.width(64.dp))
+        if (!p.granted) {
+            Button(onClick = onClick,
                 modifier = Modifier.height(34.dp).widthIn(min = 70.dp),
                 shape = RoundedCornerShape(40.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (name.contains("通知")) AccentBlue else Color.Transparent
+                    containerColor = if (p.label.contains("通知")) AccentBlue else Color.Transparent
                 ),
                 contentPadding = PaddingValues(horizontal = 12.dp)
             ) {
-                Text(
-                    text = if (name.contains("通知")) "开启" else "去设置",
+                Text(if (p.label.contains("通知")) "开启" else "去设置",
                     fontSize = scaledFontSize(13.sp),
-                    color = if (name.contains("通知")) Color.White else AccentBlue,
-                    fontWeight = FontWeight.Medium
-                )
+                    color = if (p.label.contains("通知")) Color.White else AccentBlue,
+                    fontWeight = FontWeight.Medium)
             }
         } else {
             Box(modifier = Modifier.height(34.dp).widthIn(min = 70.dp), contentAlignment = Alignment.Center) {
@@ -193,9 +166,38 @@ private fun PermItem(name: String, granted: Boolean, emoji: String, onActionClic
     }
 }
 
+private fun computePermissions(context: Context): List<PermInfo> = listOf(
+    PermInfo("相机权限", ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED, false),
+    PermInfo("麦克风权限", ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED, false),
+    PermInfo("通知权限",
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        else true, false),
+    PermInfo("电池优化白名单", {
+        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        pm.isIgnoringBatteryOptimizations(context.packageName)
+    }(), true)
+)
+
 private fun openAppSettings(context: Context) {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        .setData(Uri.parse("package:${context.packageName}"))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    context.startActivity(intent)
+    context.startActivity(
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .setData(Uri.parse("package:${context.packageName}"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
+}
+
+private fun openBatterySettings(context: Context) {
+    try {
+        context.startActivity(
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                .setData(Uri.parse("package:${context.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    } catch (e: Exception) {
+        context.startActivity(
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
 }

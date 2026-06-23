@@ -37,4 +37,11 @@ def evaluate_feynman(
         context_segment_ids=request.context_segment_ids,
     )
 
-    return FeynmanResponse(**result)
+    try:
+        return FeynmanResponse(**result)
+    except Exception as e:
+        logger.warning("LLM 返回格式异常: %s", e)
+        return FeynmanResponse(
+            summary="AI 暂时无法完成评估，请稍后重试。",
+            deviations=[],
+        )

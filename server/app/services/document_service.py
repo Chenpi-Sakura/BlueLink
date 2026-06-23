@@ -196,6 +196,12 @@ class DocumentService:
                 batch = segments[i:i + batch_size]
                 texts = [s.text for s in batch]
                 vectors = llm.embed_texts(texts)
+                if len(vectors) != len(batch):
+                    logger.warning(
+                        "向量数量不匹配: 期望 %d, 收到 %d（跳过该批）",
+                        len(batch), len(vectors),
+                    )
+                    continue
                 segment_vectors = [
                     (s.id, vec) for s, vec in zip(batch, vectors)
                 ]

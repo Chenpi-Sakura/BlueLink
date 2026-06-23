@@ -210,10 +210,11 @@ class GraphBuilder:
                     f"  内容: {ctx['summary'][:200]}\n"
                 )
             batch_prompt += (
-                f"\n请判断新节点与哪些已有节点存在关系。"
+                f"\n请判断新节点(source_id={new_node.id})与哪些已有节点存在关系。"
                 f"只输出确实存在的关系，不要臆测。"
                 f"输出 JSON 格式：\n"
-                f'{{"edges": [{{"target_id": "已有节点ID", "relation": "SUPPORT|CHALLENGE|SUPPLEMENT|CITE", '
+                f'{{"edges": [{{"source_id": "{new_node.id}", "target_id": "已有节点ID", '
+                f'"relation": "SUPPORT|CHALLENGE|SUPPLEMENT|CITE", '
                 f'"confidence": 0.0-1.0, "reason": "简短理由"}}]}}'
             )
 
@@ -228,38 +229,48 @@ class GraphBuilder:
                 logger.warning("LLM 调用失败（跳过该批）: %s", e)
                 continue
 
-            # 7. 去重 & 插入新边
+            # 7. 去重 & 插入新边（逐条验证外键，单条失败不影响其他）
             for edge_data in result.get("edges", []):
-                target_id = edge_data.get("target_id")
-                relation = edge_data.get("relation")
-                confidence = edge_data.get("confidence", 0.5)
+                try:
+                    source_id = edge_data.get("source_id", node_id)
+                    target_id = edge_data.get("target_id")
+                    relation = edge_data.get("relation")
+                    confidence = edge_data.get("confidence", 0.5)
 
-                if not target_id or not relation:
-                    continue
+                    if not source_id or not target_id or not relation:
+                        continue
 
-                # 检查是否已存在相同边
-                existing = (
-                    db.query(GraphEdge)
-                    .filter(
-                        GraphEdge.source_id == node_id,
-                        GraphEdge.target_id == target_id,
-                        GraphEdge.relation == relation,
+                    # 验证两个节点都存在
+                    src = db.query(GraphNode).filter(GraphNode.id == source_id).first()
+                    tgt = db.query(GraphNode).filter(GraphNode.id == target_id).first()
+                    if not src or not tgt:
+                        logger.warning("跳过不存在的节点: %s → %s", source_id, target_id)
+                        continue
+
+                    # 检查是否已存在相同边
+                    existing = (
+                        db.query(GraphEdge)
+                        .filter(
+                            GraphEdge.source_id == source_id,
+                            GraphEdge.target_id == target_id,
+                            GraphEdge.relation == relation,
+                        )
+                        .first()
                     )
-                    .first()
-                )
-                if existing:
-                    continue
+                    if existing:
+                        continue
 
-                edge = GraphEdge(
-                    id=str(uuid.uuid4()),
-                    source_id=node_id,
-                    target_id=target_id,
-                    relation=relation,
-                    confidence=confidence,
-                    is_manual=False,
-                )
-                db.add(edge)
-                logger.info("发现关系: %s →[%s]→ %s", node_id, relation, target_id)
+                    db.add(GraphEdge(
+                        id=str(uuid.uuid4()),
+                        source_id=source_id,
+                        target_id=target_id,
+                        relation=relation,
+                        confidence=confidence,
+                        is_manual=False,
+                    ))
+                    logger.info("发现关系: %s →[%s]→ %s", source_id, relation, target_id)
+                except Exception as e:
+                    logger.warning("单条边插入失败（跳过）: %s", e)
 
     @staticmethod
     def _get_node_context(db: Session, node: GraphNode) -> dict | None:

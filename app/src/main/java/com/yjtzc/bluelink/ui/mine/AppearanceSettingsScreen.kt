@@ -175,7 +175,8 @@ private fun FontScaleCard(fontScale: Float, onScaleChange: (Float) -> Unit) {
             ) {
                 Text("阅读即思考", fontFamily = FontFamily.Serif,
                     fontSize = (16.sp * fontScale), color = TextPrimary,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
             }
             Spacer(Modifier.height(4.dp))
         }

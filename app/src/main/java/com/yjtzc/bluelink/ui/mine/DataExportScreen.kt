@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
+import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 import com.yjtzc.bluelink.ui.theme.KleinBlue as KB
 
 private val CardBg = Color(0xCCFFFDF8)
@@ -93,10 +94,10 @@ fun DataExportScreen(
                 Spacer(Modifier.height(20.dp))
 
                 if (!state.hasSelectedAnyContent) {
-                    Text("请至少选择一项导出内容。", color = ErrorColor, fontSize = 12.sp)
+                    Text("请至少选择一项导出内容。", color = ErrorColor, fontSize = scaledFontSize(12.sp))
                 }
                 if (state.scope == ItemScope.SELECTED && state.selectedDocumentIds.isEmpty()) {
-                    Text("请选择至少一个文档，或切换为全部导出。", color = ErrorColor, fontSize = 12.sp)
+                    Text("请选择至少一个文档，或切换为全部导出。", color = ErrorColor, fontSize = scaledFontSize(12.sp))
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -124,9 +125,9 @@ fun DataExportScreen(
                         if (state.isExporting) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                         } else if (state.exportDone) {
-                            Text("导出完成", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
+                            Text("导出完成", color = Color.White, fontSize = scaledFontSize(20.sp), fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
                         } else {
-                            Text("确认导出", color = if (state.canExport) Color.White else Color(0xC7FFFFFF), fontSize = 20.sp, fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
+                            Text("确认导出", color = if (state.canExport) Color.White else Color(0xC7FFFFFF), fontSize = scaledFontSize(20.sp), fontWeight = FontWeight(720), letterSpacing = 0.08.sp)
                         }
                     }
                 }
@@ -134,7 +135,7 @@ fun DataExportScreen(
                 val errMsg = state.errorMessage
                 if (errMsg != null) {
                     Spacer(Modifier.height(8.dp))
-                    Text(text = errMsg, color = ErrorColor, fontSize = 12.sp)
+                    Text(text = errMsg, color = ErrorColor, fontSize = scaledFontSize(12.sp))
                 }
 
                 Spacer(Modifier.height(5.dp))
@@ -147,7 +148,7 @@ fun DataExportScreen(
                     border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.72f))
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("取消", color = AccentBlue, fontSize = 14.5.sp, fontWeight = FontWeight(650))
+                        Text("取消", color = AccentBlue, fontSize = scaledFontSize(14.5.sp), fontWeight = FontWeight(650))
                     }
                 }
 
@@ -176,7 +177,7 @@ private fun ExportMainCard(
         ) {
             Text(
                 text = "导出本地知识库\n导出内容将包含文档索引、灵感卡片、图谱节点、个人设置。",
-                fontSize = 14.5.sp, lineHeight = 24.sp, color = MidGray,
+                fontSize = scaledFontSize(14.5.sp), lineHeight = 24.sp, color = MidGray,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
@@ -193,7 +194,7 @@ private fun ExportMainCard(
                         border = BorderStroke(1.dp, AccentBlue.copy(alpha = 0.25f))
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(label, color = if (sel) Color.White else AccentBlue, fontSize = 14.5.sp)
+                            Text(label, color = if (sel) Color.White else AccentBlue, fontSize = scaledFontSize(14.5.sp))
                         }
                     }
                 }
@@ -222,7 +223,7 @@ private fun ExportContentSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         // 分割线 + 标题
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DividerColor.copy(alpha = 0.55f)))
-        Text("导出内容", fontSize = 16.sp, fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
+        Text("导出内容", fontSize = scaledFontSize(16.sp), fontWeight = FontWeight(720), color = Color(0xFF0A3F86),
             fontFamily = FontFamily.Serif,
             modifier = Modifier.padding(top = 14.dp, bottom = 6.dp, start = 4.dp))
 
@@ -238,9 +239,9 @@ private fun ExportContentSection(
                         .background(if (exportDocuments) AccentBlue else Color.Transparent)
                         .then(if (!exportDocuments) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
                     contentAlignment = Alignment.Center
-                ) { if (exportDocuments) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                ) { if (exportDocuments) Text("✓", color = Color.White, fontSize = scaledFontSize(12.sp), fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(13.dp))
-                Text("文档与切片索引", fontSize = 14.5.sp, color = InkColor)
+                Text("文档与切片索引", fontSize = scaledFontSize(14.5.sp), color = InkColor)
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -255,9 +256,9 @@ private fun ExportContentSection(
                         .background(if (exportInspirationCards) AccentBlue else Color.Transparent)
                         .then(if (!exportInspirationCards) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
                     contentAlignment = Alignment.Center
-                ) { if (exportInspirationCards) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                ) { if (exportInspirationCards) Text("✓", color = Color.White, fontSize = scaledFontSize(12.sp), fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(13.dp))
-                Text("灵感卡片", fontSize = 14.5.sp, color = InkColor)
+                Text("灵感卡片", fontSize = scaledFontSize(14.5.sp), color = InkColor)
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -272,9 +273,9 @@ private fun ExportContentSection(
                         .background(if (exportSettings) AccentBlue else Color.Transparent)
                         .then(if (!exportSettings) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
                     contentAlignment = Alignment.Center
-                ) { if (exportSettings) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                ) { if (exportSettings) Text("✓", color = Color.White, fontSize = scaledFontSize(12.sp), fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.width(13.dp))
-                Text("认知设置与隐私偏好", fontSize = 14.5.sp, color = InkColor)
+                Text("认知设置与隐私偏好", fontSize = scaledFontSize(14.5.sp), color = InkColor)
             }
         }
     }
@@ -311,7 +312,7 @@ private fun DocumentPickerSection(
     ) {
         Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 12.dp)) {
             // 标题
-            Text("选择文档", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86),
+            Text("选择文档", fontSize = scaledFontSize(14.sp), fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86),
                 modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 10.dp))
 
             // 字母筛选胶囊
@@ -348,15 +349,15 @@ private fun DocumentPickerSection(
                     ) {
                         Surface(shape = RoundedCornerShape(8.dp), color = AccentBlue.copy(alpha = 0.08f)) {
                             Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                                Text(letter, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86))
+                                Text(letter, fontSize = scaledFontSize(13.sp), fontWeight = FontWeight.Bold, color = Color(0xFF0A3F86))
                             }
                         }
                     }
                     Spacer(Modifier.width(8.dp))
-                    Text("${docs.size} 个文档", fontSize = 12.sp, color = Color(0xFF777777), fontWeight = FontWeight(520))
+                    Text("${docs.size} 个文档", fontSize = scaledFontSize(12.sp), color = Color(0xFF777777), fontWeight = FontWeight(520))
                     Spacer(Modifier.weight(1f))
                     // 折叠箭头
-                    Text("›", fontSize = 14.sp, color = AccentBlue,
+                    Text("›", fontSize = scaledFontSize(14.sp), color = AccentBlue,
                         modifier = Modifier.rotate(if (expanded) 90f else 0f))
                 }
 
@@ -376,18 +377,18 @@ private fun DocumentPickerSection(
                                         .then(if (!checked) Modifier.border(2.dp, Color(0xFFB9B4AC), CircleShape) else Modifier),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (checked) Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    if (checked) Text("✓", color = Color.White, fontSize = scaledFontSize(11.sp), fontWeight = FontWeight.Bold)
                                 }
                                 Spacer(Modifier.width(13.dp))
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = 14.sp,
+                                    Text(doc.title.ifBlank { "未命名文档" }, fontSize = scaledFontSize(14.sp),
                                         lineHeight = 17.sp, color = Color(0xFF30343C), maxLines = 1,
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                                     Spacer(Modifier.height(3.dp))
-                                    Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = 11.sp,
+                                    Text("含 ${sliceCounts[doc.id] ?: 0} 个片段", fontSize = scaledFontSize(11.sp),
                                         lineHeight = 14.sp, maxLines = 1, color = Color(0xFF777777))
                                 }
                             }
@@ -414,7 +415,7 @@ private fun FilterCapsule(text: String, active: Boolean, onClick: () -> Unit) {
             ) else Modifier,
             contentAlignment = Alignment.Center
         ) {
-            Text(text, fontSize = 12.sp,
+            Text(text, fontSize = scaledFontSize(12.sp),
                 color = if (active) Color.White else Color(0xFF064AA9),
                 modifier = Modifier.padding(horizontal = 9.dp))
         }
@@ -430,10 +431,10 @@ private fun WarningBox() {
         color = Color(0xB8FFEEE7)
     ) {
         Row(modifier = Modifier.padding(18.dp, 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("⚠", fontSize = 16.sp)
+            Text("⚠", fontSize = scaledFontSize(16.sp))
             Spacer(Modifier.width(12.dp))
             Text("导出文件可能包含明文内容，请妥善保存。",
-                fontSize = 14.5.sp, lineHeight = 22.sp, color = ErrorColor)
+                fontSize = scaledFontSize(14.5.sp), lineHeight = 22.sp, color = ErrorColor)
         }
     }
 }

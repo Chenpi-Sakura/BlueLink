@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
+import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 import com.yjtzc.bluelink.ui.mine.components.MineSectionTitle
 
 // 主界面色板
@@ -96,7 +97,7 @@ private fun ThemeModeCard(currentMode: String, onModeSelected: (String) -> Unit)
                         colors = RadioButtonDefaults.colors(selectedColor = AccentBlue)
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(label, fontSize = 14.5.sp, color = TextPrimary, fontFamily = FontFamily.Serif)
+                    Text(label, fontSize = scaledFontSize(14.5.sp), color = TextPrimary, fontFamily = FontFamily.Serif)
                     Spacer(Modifier.weight(1f))
                 }
                 if (index < modes.lastIndex) {
@@ -124,9 +125,9 @@ private fun SettingSwitchCard(title: String, subtitle: String, checked: Boolean,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontSize = 14.5.sp, color = TextPrimary, fontFamily = FontFamily.Serif)
+                Text(title, fontSize = scaledFontSize(14.5.sp), color = TextPrimary, fontFamily = FontFamily.Serif)
                 Spacer(Modifier.height(2.dp))
-                Text(subtitle, fontSize = 12.sp, color = TextSecondary)
+                Text(subtitle, fontSize = scaledFontSize(12.sp), color = TextSecondary)
             }
             Spacer(Modifier.width(12.dp))
             Switch(
@@ -153,10 +154,10 @@ private fun FontScaleCard(fontScale: Float, onScaleChange: (Float) -> Unit) {
     ) {
         Column(modifier = Modifier.padding(start = 19.dp, end = 19.dp)) {
             Spacer(Modifier.height(4.dp))
-            Text("字体大小", fontSize = 14.5.sp, color = TextPrimary, fontFamily = FontFamily.Serif)
+            Text("字体大小", fontSize = scaledFontSize(14.5.sp), color = TextPrimary, fontFamily = FontFamily.Serif)
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("小", fontSize = 12.sp, color = TextSecondary)
+                Text("小", fontSize = scaledFontSize(12.sp), color = TextSecondary)
                 Slider(value = fontScale, onValueChange = onScaleChange,
                     valueRange = 0.85f..1.25f,
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
@@ -165,7 +166,7 @@ private fun FontScaleCard(fontScale: Float, onScaleChange: (Float) -> Unit) {
                         inactiveTrackColor = Color(0xFFDEDCD8)
                     )
                 )
-                Text("大", fontSize = 12.sp, color = TextSecondary)
+                Text("大", fontSize = scaledFontSize(12.sp), color = TextSecondary)
             }
             Spacer(Modifier.height(4.dp))
             // 预览

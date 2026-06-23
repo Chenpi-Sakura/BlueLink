@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 import com.yjtzc.bluelink.ui.mine.components.MineNavScaffold
 import kotlinx.coroutines.delay
 import org.json.JSONArray
@@ -64,7 +65,7 @@ fun CognitiveSettingsScreen(
             item {
                 Text(
                     text = "调整蓝链提供线索的方式\n让 AI 更像索引，而不是答案生成器",
-                    fontSize = 16.sp, lineHeight = 26.sp,
+                    fontSize = scaledFontSize(16.sp), lineHeight = 26.sp,
                     color = Color(0xFF66686D),
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
@@ -88,7 +89,7 @@ fun CognitiveSettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             CardTitle("探索深度")
                             Spacer(Modifier.height(8.dp))
-                            Text("开启后会优先显示关联争议和对应观点", fontSize = 14.5.sp, color = DescText, maxLines = 1)
+                            Text("开启后会优先显示关联争议和对应观点", fontSize = scaledFontSize(14.5.sp), color = DescText, maxLines = 1)
                         }
                         Spacer(Modifier.width(8.dp))
                         CognitiveSwitch(checked = profile.exploreDepth, onToggle = viewModel::toggleExploreDepth)
@@ -132,7 +133,7 @@ private fun BlockCard(content: @Composable ColumnScope.() -> Unit) {
 private fun CardTitle(text: String) {
     Text(
         text = text,
-        fontSize = 18.5.sp, lineHeight = 26.sp,
+        fontSize = scaledFontSize(18.5.sp), lineHeight = 26.sp,
         fontWeight = FontWeight(740), color = BlueTitle,
         fontFamily = FontFamily.Serif,
         letterSpacing = (-0.02).sp,
@@ -168,7 +169,7 @@ private fun GranularitySegWide(selected: String, onSelect: (String) -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(label, color = if (isSelected) Color.White else DeepText,
-                        fontSize = 16.5.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        fontSize = scaledFontSize(16.5.sp), fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         fontFamily = FontFamily.Serif, letterSpacing = 0.02.sp)
                 }
             }
@@ -203,8 +204,8 @@ private fun DirectnessSliderWide(value: Float, onValueChange: (Float) -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("温和启发", fontSize = 14.sp, color = Color(0xFF666666))
-            Text("直指核心", fontSize = 14.sp, color = Color(0xFF666666))
+            Text("温和启发", fontSize = scaledFontSize(14.sp), color = Color(0xFF666666))
+            Text("直指核心", fontSize = scaledFontSize(14.sp), color = Color(0xFF666666))
         }
     }
 }
@@ -245,7 +246,7 @@ private fun ToneSegRow(selected: String, onSelect: (String) -> Unit) {
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(label, color = if (isSelected) SelectedBlue else Color(0xFF606164),
-                        fontSize = 16.sp, fontWeight = if (isSelected) FontWeight(640) else FontWeight.Normal,
+                        fontSize = scaledFontSize(16.sp), fontWeight = if (isSelected) FontWeight(640) else FontWeight.Normal,
                         fontFamily = FontFamily.Serif)
                 }
             }
@@ -273,11 +274,11 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { if (it.length <= 7) inputText = it },
-                    placeholder = { Text("最多7字", fontSize = 14.sp) },
+                    placeholder = { Text("最多7字", fontSize = scaledFontSize(14.sp)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = Color(0xFF10213B)),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = scaledFontSize(14.sp), color = Color(0xFF10213B)),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AccentBlue.copy(alpha = 0.55f),
                         unfocusedBorderColor = OffChipBorder
@@ -300,7 +301,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
                     modifier = Modifier.height(52.dp)
                 ) {
-                    Text("添加", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("添加", fontSize = scaledFontSize(14.sp), fontWeight = FontWeight.Bold, color = Color.White)
                 }
                 Surface(
                     modifier = Modifier.height(52.dp).clickable { showEditor = false; inputText = "" },
@@ -309,7 +310,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     border = BorderStroke(1.dp, Color(0xCCD6CFC4))
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text("取消", color = Color(0xFF6B6B6B), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("取消", color = Color(0xFF6B6B6B), fontSize = scaledFontSize(14.sp), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -338,7 +339,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     border = BorderStroke(1.dp, if (isSelected) SelectedBorder else OffChipBorder)
                 ) {
                     Text(tag, color = if (isSelected) SelectedBlue else Color(0xFF6B6B6B),
-                        fontSize = 14.sp, fontWeight = if (isSelected) FontWeight(560) else FontWeight.Normal,
+                        fontSize = scaledFontSize(14.sp), fontWeight = if (isSelected) FontWeight(560) else FontWeight.Normal,
                         fontFamily = FontFamily.Serif, modifier = Modifier.padding(horizontal = 15.dp))
                 }
             }
@@ -356,7 +357,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
                     ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("＋", color = SelectedBlue, fontSize = 20.sp)
+                    Text("＋", color = SelectedBlue, fontSize = scaledFontSize(20.sp))
                 }
             }
         }
@@ -370,7 +371,7 @@ private fun TerminologyChips(selectedTerms: Set<String>, onTermsChanged: (Set<St
             Text(
                 text = toastMsg!!,
                 color = AccentBlue,
-                fontSize = 12.sp,
+                fontSize = scaledFontSize(12.sp),
                 modifier = Modifier.padding(top = 4.dp)
             )
         }

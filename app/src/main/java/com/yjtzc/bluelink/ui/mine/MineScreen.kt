@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 import com.yjtzc.bluelink.ui.mine.components.MineSectionTitle
 
 // 原型色板
@@ -150,9 +151,9 @@ private fun HeroIdentityCard(onEditClick: () -> Unit) {
                     }
                     Spacer(Modifier.width(22.dp))
                     Column(modifier = Modifier.weight(1f).offset(y = 2.dp)) {
-                        Text("本机知识库", fontSize = 22.sp, fontWeight = FontWeight(750), fontFamily = FontFamily.Serif, letterSpacing = (-1).sp, color = Color(0xFF092651))
+                        Text("本机知识库", fontSize = scaledFontSize(22.sp), fontWeight = FontWeight(750), fontFamily = FontFamily.Serif, letterSpacing = (-1).sp, color = Color(0xFF092651))
                         Spacer(Modifier.height(7.dp))
-                        Text("匿名身份 · 本地优先", fontSize = 13.sp, color = Color(0xFF7E7D7B), letterSpacing = 0.8.sp)
+                        Text("匿名身份 · 本地优先", fontSize = scaledFontSize(13.sp), color = Color(0xFF7E7D7B), letterSpacing = 0.8.sp)
                     }
                     IconButton(onClick = onEditClick) {
                         Icon(Icons.Filled.Edit, contentDescription = "编辑", tint = AccentBlue, modifier = Modifier.size(23.dp))
@@ -176,26 +177,26 @@ private fun CognitiveSettingsPanel(
 ) {
     SettingsCard {
         SettingRow(icon = Icons.Outlined.CenterFocusStrong, showDivider = true, onClick = onClickGranularity) {
-            Text("默认溯源粒度", style = rowTS)
+            Text("默认溯源粒度", style = rowTS())
             Spacer(Modifier.weight(1f))
-            Text(granularityLabel, color = Color(0xFF4B5363), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+            Text(granularityLabel, color = Color(0xFF4B5363), fontSize = scaledFontSize(14.sp), fontFamily = FontFamily.Serif)
             Spacer(Modifier.width(4.dp))
             Arrow()
         }
         SettingRow(icon = Icons.Outlined.Tune, showDivider = true, onClick = onClickGranularity) {
-            Text("提示明确度", style = rowTS)
+            Text("提示明确度", style = rowTS())
             Spacer(Modifier.weight(1f))
             Arrow()
         }
         SettingRow(icon = Icons.Outlined.Layers, showDivider = true, onClick = onClickGranularity) {
-            Text("探索深度", style = rowTS)
+            Text("探索深度", style = rowTS())
             Spacer(Modifier.weight(1f))
             MiniSwitch(checked = exploreDepth, onToggle = onExploreDepthToggle)
         }
         SettingRow(icon = Icons.Outlined.AutoAwesome, showDivider = false, onClick = onClickCompanion) {
-            Text("伴读风格", style = rowTS)
+            Text("伴读风格", style = rowTS())
             Spacer(Modifier.weight(1f))
-            Text(companionStyleLabel, color = Color(0xFF4B5363), fontSize = 14.sp, fontFamily = FontFamily.Serif)
+            Text(companionStyleLabel, color = Color(0xFF4B5363), fontSize = scaledFontSize(14.sp), fontFamily = FontFamily.Serif)
             Spacer(Modifier.width(4.dp))
             Arrow()
         }
@@ -213,18 +214,18 @@ private fun PrivacySettingsPanel(
 ) {
     SettingsCard {
         SettingRow(icon = Icons.Outlined.Shield, showDivider = true, onClick = onClickPrivacy) {
-            Text("当前模式：", style = rowTS)
-            Text(privacyModeLabel, color = AccentBlue, fontSize = 13.sp, fontFamily = FontFamily.Serif, letterSpacing = 0.7.sp)
+            Text("当前模式：", style = rowTS())
+            Text(privacyModeLabel, color = AccentBlue, fontSize = scaledFontSize(13.sp), fontFamily = FontFamily.Serif, letterSpacing = 0.7.sp)
             Spacer(Modifier.weight(1f))
             Arrow()
         }
         SettingRow(icon = Icons.Outlined.Lock, showDivider = true, onClick = onClickPermission) {
-            Text("权限管理", style = rowTS)
+            Text("权限管理", style = rowTS())
             Spacer(Modifier.weight(1f))
             Arrow()
         }
         SettingRow(icon = Icons.Outlined.Download, showDivider = false, onClick = onClickExport) {
-            Text("数据导出", style = rowTS)
+            Text("数据导出", style = rowTS())
             Spacer(Modifier.weight(1f))
             Arrow()
         }
@@ -239,7 +240,7 @@ private fun PrivacySettingsPanel(
 private fun DangerCard(onClick: () -> Unit) {
     SettingsCard {
         SettingRow(icon = Icons.Outlined.DeleteForever, showDivider = false, onClick = onClick, isDanger = true) {
-            Text("永久删除所有数据", color = DangerColor, fontSize = 14.sp, fontFamily = FontFamily.Serif)
+            Text("永久删除所有数据", color = DangerColor, fontSize = scaledFontSize(14.sp), fontFamily = FontFamily.Serif)
             Spacer(Modifier.weight(1f))
             Text("›", color = DangerColor, fontSize = 28.sp, fontWeight = FontWeight.Light)
         }
@@ -250,7 +251,10 @@ private fun DangerCard(onClick: () -> Unit) {
 // 复用组件
 // ============================================================
 
-private val rowTS = androidx.compose.ui.text.TextStyle(fontSize = 14.5.sp, color = Color(0xFF10213B), fontFamily = FontFamily.Serif)
+@Composable
+private fun rowTS(): androidx.compose.ui.text.TextStyle = androidx.compose.ui.text.TextStyle(
+    fontSize = scaledFontSize(14.5.sp), color = Color(0xFF10213B), fontFamily = FontFamily.Serif
+)
 
 @Composable
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
@@ -327,7 +331,7 @@ private fun GranularitySeg(selectedIndex: Int, onSelected: (Int) -> Unit) {
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(label, color = if (sel) Color.White else Color(0xFF20252E), fontSize = 12.sp,
+                        Text(label, color = if (sel) Color.White else Color(0xFF20252E), fontSize = scaledFontSize(12.sp),
                             fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal, fontFamily = FontFamily.Serif)
                     }
                 }
@@ -353,9 +357,9 @@ private fun MiniSlider(value: Float, onValueChange: (Float) -> Unit) {
                 .clip(CircleShape).background(AccentBlue))
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("低", fontSize = 10.sp, color = Color(0xFF777777))
-            Text("中", fontSize = 10.sp, color = Color(0xFF777777))
-            Text("高", fontSize = 10.sp, color = Color(0xFF777777))
+            Text("低", fontSize = scaledFontSize(10.sp), color = Color(0xFF777777))
+            Text("中", fontSize = scaledFontSize(10.sp), color = Color(0xFF777777))
+            Text("高", fontSize = scaledFontSize(10.sp), color = Color(0xFF777777))
         }
     }
 }

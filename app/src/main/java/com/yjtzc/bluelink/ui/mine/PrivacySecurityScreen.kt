@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkCard
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkCardTitle
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkPrimaryButton
+import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkPrivacyOption
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkSubPageScaffold
 import com.yjtzc.bluelink.ui.mine.components.ConfirmPrivacyChangeDialog
@@ -64,14 +65,14 @@ fun PrivacySecurityScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("当前模式：", fontSize = MineTypography.PrivacyHeroTitleSize,
+                    Text("当前模式：", fontSize = scaledFontSize(MineTypography.PrivacyHeroTitleSize),
                         fontWeight = FontWeight(700), color = MineColors.TextPrimary,
                         fontFamily = FontFamily.Serif)
                 }
                 Text(heroLabel, color = MineColors.KleinBlue, fontFamily = FontFamily.Serif,
-                    fontSize = 14.5.sp, fontWeight = FontWeight(760), letterSpacing = 0.35.sp)
+                    fontSize = scaledFontSize(14.5.sp), fontWeight = FontWeight(760), letterSpacing = 0.35.sp)
                 Spacer(Modifier.height(10.dp))
-                Text(heroDesc, fontSize = MineTypography.SmallTextSize,
+                Text(heroDesc, fontSize = scaledFontSize(MineTypography.SmallTextSize),
                     lineHeight = 21.sp, color = Color(0xFF2F3136), fontFamily = FontFamily.Serif)
             }
         }
@@ -123,9 +124,9 @@ fun PrivacySecurityScreen(
                 Icon(Icons.Outlined.Lock, contentDescription = null,
                     tint = MineColors.KleinBlue, modifier = Modifier.size(22.dp))
                 Spacer(Modifier.width(13.dp))
-                Text("权限管理", fontSize = 14.5.sp, color = MineColors.TextPrimary,
+                Text("权限管理", fontSize = scaledFontSize(14.5.sp), color = MineColors.TextPrimary,
                     fontFamily = FontFamily.Serif, modifier = Modifier.weight(1f))
-                Text("›", color = MineColors.KleinBlue, fontSize = 24.sp, fontWeight = FontWeight.Light)
+                Text("›", color = MineColors.KleinBlue, fontSize = scaledFontSize(24.sp), fontWeight = FontWeight.Light)
             }
         }
 

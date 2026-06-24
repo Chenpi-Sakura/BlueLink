@@ -100,13 +100,27 @@ fun String.parseContentBlocks(cardType: String = "TEXT"): List<ContentBlock> {
 @Composable
 fun InspirationEditorScreen(
     card: InspirationCardEntity,
+    preloadedContent: String? = null,
     captureRepository: CaptureRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 核心状态
-    var blocks by remember { mutableStateOf<List<ContentBlock>>(emptyList()) }
-    var isLoaded by remember { mutableStateOf(false) }
+    // blocks 同步初始化：
+    // - 优先用 preloadedContent（OverlayLayer 内预加载的完整 JSON，含图片/语音引用）
+    // - fallback 到 card.contentSnippet（30 字摘要，作为兜底）
+    // 这样首次渲染就用完整 blocks（不是 contentSnippet 摘要），避免 blocks 数 1→N 导致的 UI 跳变（"闪一下"）+ 图片丢失。
+    val blocksState = remember(card.id) {
+        mutableStateOf<List<ContentBlock>>(
+            try {
+                (preloadedContent ?: card.contentSnippet).parseContentBlocks(card.type.name)
+            } catch (_: Exception) {
+                emptyList()
+            }
+        )
+    }
+    var blocks by blocksState
+    var isLoaded by remember { mutableStateOf(true) }
     var isEditMode by remember { mutableStateOf(false) }
 
     // 撤回栈
@@ -120,16 +134,8 @@ fun InspirationEditorScreen(
         }
     }
 
-    // 加载内容
-    LaunchedEffect(card.id) {
-        try {
-            val raw = captureRepository.readCardContent(card)
-            blocks = raw.parseContentBlocks(card.type.name)
-        } catch (_: Exception) {
-            blocks = card.contentSnippet.parseContentBlocks(card.type.name)
-        }
-        isLoaded = true
-    }
+    // 不再需要 LaunchedEffect 异步加载 readCardContent —— OverlayLayer 内已经预加载并通过 preloadedContent 参数传入
+    // 首次渲染 blocks 就是完整内容（不是 contentSnippet 摘要），避免 UI 跳变和图片丢失
 
     // 自动保存（仅编辑模式退出或手动触发）
     val scope = rememberCoroutineScope()

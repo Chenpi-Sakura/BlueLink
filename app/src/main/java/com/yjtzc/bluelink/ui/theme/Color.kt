@@ -33,6 +33,10 @@ val SuccessGreen = Color(0xFF34A853)  // 成功 / 支撑
 // 磨砂效果用半透明白
 val GlassWhite = Color(0xB3FDFBF7)   // 70% 白 — 毛玻璃面板
 
+// 危险色
+val DangerRed = Color(0xFFB8322A)    // 危险操作文字/描边
+val DangerPale = Color(0xFFFFF1ED)   // 危险操作背景
+
 // 背景 / 分割（旧名称保留，值已对齐）
 val RiceWhite = Parchment50
 val RiceWarm = Parchment100

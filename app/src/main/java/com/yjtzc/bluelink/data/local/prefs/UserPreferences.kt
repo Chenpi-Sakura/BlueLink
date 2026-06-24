@@ -77,6 +77,52 @@ class UserPreferences(private val context: Context) {
         dataStore.edit { it[KEY_ONBOARDING_DONE] = true }
     }
 
+    suspend fun clearAll() {
+        dataStore.edit { it.clear() }
+    }
+
+    // ====== 外观设置 ======
+
+    val themeMode: Flow<String> = dataStore.data.map { it[KEY_THEME_MODE] ?: "SYSTEM" }
+
+    suspend fun setThemeMode(mode: String) {
+        dataStore.edit { it[KEY_THEME_MODE] = mode }
+    }
+
+    val dynamicColor: Flow<Boolean> = dataStore.data.map { it[KEY_DYNAMIC_COLOR] ?: false }
+
+    suspend fun setDynamicColor(enabled: Boolean) {
+        dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled }
+    }
+
+    val fontScale: Flow<Float> = dataStore.data.map { it[KEY_FONT_SCALE] ?: 1.0f }
+
+    suspend fun setFontScale(scale: Float) {
+        dataStore.edit { it[KEY_FONT_SCALE] = scale.coerceIn(0.85f, 1.25f) }
+    }
+
+    val highContrast: Flow<Boolean> = dataStore.data.map { it[KEY_HIGH_CONTRAST] ?: false }
+
+    suspend fun setHighContrast(enabled: Boolean) {
+        dataStore.edit { it[KEY_HIGH_CONTRAST] = enabled }
+    }
+
+    // ====== 伴读风格 ======
+
+    val companionStyle: Flow<String> = dataStore.data.map { it[KEY_COMPANION_STYLE] ?: "GENTLE" }
+
+    suspend fun setCompanionStyle(style: String) {
+        dataStore.edit { it[KEY_COMPANION_STYLE] = style }
+    }
+
+    // ====== 术语偏好（JSON 数组字符串） ======
+
+    val terminologyTags: Flow<String> = dataStore.data.map { it[KEY_TERMINOLOGY_TAGS] ?: "[]" }
+
+    suspend fun setTerminologyTags(tagsJson: String) {
+        dataStore.edit { it[KEY_TERMINOLOGY_TAGS] = tagsJson }
+    }
+
     companion object {
         private val KEY_USER_ID = stringPreferencesKey("user_id")
         private val KEY_PROFILE_MAJOR = stringPreferencesKey("profile_major")
@@ -87,6 +133,16 @@ class UserPreferences(private val context: Context) {
         private val KEY_PRIVACY_MODE = stringPreferencesKey("privacy_mode")
         private val KEY_WEBDAV_ENDPOINT = stringPreferencesKey("webdav_endpoint")
         private val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
+
+        // 外观设置
+        private val KEY_THEME_MODE = stringPreferencesKey("appearance.theme_mode")
+        private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("appearance.dynamic_color")
+        private val KEY_FONT_SCALE = floatPreferencesKey("appearance.font_scale")
+        private val KEY_HIGH_CONTRAST = booleanPreferencesKey("appearance.high_contrast")
+
+        // 认知设置扩展
+        private val KEY_COMPANION_STYLE = stringPreferencesKey("cognitive.companion_style")
+        private val KEY_TERMINOLOGY_TAGS = stringPreferencesKey("cognitive.terminology_tags")
     }
 }
 

@@ -18,3 +18,5 @@ import com.yjtzc.bluelink.AppContainer
 val LocalAppContainer = compositionLocalOf<AppContainer> {
     error("AppContainer not provided. Make sure to wrap your root Composable with CompositionLocalProvider.")
 }
+
+val LocalFontScale = compositionLocalOf { 1.0f }

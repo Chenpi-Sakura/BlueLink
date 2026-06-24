@@ -11,12 +11,14 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 // ====== 亮色主题（对齐参考样式 Parchment + Klein Blue） ======
@@ -94,7 +96,8 @@ private val BlueLinkShapes = Shapes(
 @Composable
 fun BlueLinkTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,      // ← 关闭动态颜色，使用品牌色
+    dynamicColor: Boolean = false,
+    fontScale: Float = 1.0f,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -106,7 +109,15 @@ fun BlueLinkTheme(
         else -> BlueLinkLightColors
     }
 
-    // 设置状态栏颜色
+    // 字号缩放
+    val scaledTypography = BlueLinkTypography.copy(
+        bodyLarge = BlueLinkTypography.bodyLarge.copy(fontSize = (16.sp * fontScale)),
+        titleMedium = BlueLinkTypography.titleMedium.copy(fontSize = (18.sp * fontScale)),
+        titleSmall = BlueLinkTypography.titleSmall.copy(fontSize = (14.sp * fontScale)),
+        bodySmall = BlueLinkTypography.bodySmall.copy(fontSize = (12.sp * fontScale)),
+        labelSmall = BlueLinkTypography.labelSmall.copy(fontSize = (11.sp * fontScale))
+    )
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -116,10 +127,12 @@ fun BlueLinkTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = BlueLinkTypography,
-        shapes = BlueLinkShapes,
-        content = content
-    )
+    CompositionLocalProvider(com.yjtzc.bluelink.util.LocalFontScale provides fontScale) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = scaledTypography,
+            shapes = BlueLinkShapes,
+            content = content
+        )
+    }
 }

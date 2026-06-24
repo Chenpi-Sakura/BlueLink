@@ -105,6 +105,7 @@ fun InspirationEditorScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     // 核心状态
     // blocks 同步初始化：
     // - 优先用 preloadedContent（OverlayLayer 内预加载的完整 JSON，含图片/语音引用）
@@ -289,6 +290,7 @@ fun InspirationEditorScreen(
                         blocks.forEachIndexed { index, block ->
                             ContentBlockView(
                                 block = block,
+                                coverAspectRatio = card.coverAspectRatio,  // 从 card 传入 ratio，让 ImageBlockView 用 Modifier.aspectRatio 固定比例避免 layout 跳变
                                 isEditMode = isEditMode,
                                 onUpdate = { newData ->
                                     pushUndo()
@@ -356,6 +358,7 @@ fun InspirationEditorScreen(
 @Composable
 private fun ContentBlockView(
     block: ContentBlock,
+    coverAspectRatio: Float?,           // 从 InspirationCardEntity 传入，渲染图片时固定比例避免 Coil 异步加载 layout 跳变
     isEditMode: Boolean,
     onUpdate: (String) -> Unit,
     onDelete: () -> Unit,
@@ -424,7 +427,7 @@ private fun ContentBlockView(
                         )
                     }
                 }
-                "image" -> ImageBlockView(block.data, isEditMode, onUpdate)
+                "image" -> ImageBlockView(block.data, coverAspectRatio, isEditMode, onUpdate)
                 "voice" -> VoiceBlockView(block.data, isEditMode, onUpdate)
             }
 
@@ -456,6 +459,7 @@ private fun ContentBlockView(
 @Composable
 private fun ImageBlockView(
     filePath: String,
+    coverAspectRatio: Float?,           // 从 card 传入，固定真实图片比例避免 Image layout 跳变（Coil 加载完成前后高度一致）
     isEditMode: Boolean,
     onUpdate: (String) -> Unit
 ) {
@@ -492,7 +496,16 @@ private fun ImageBlockView(
                     contentDescription = "图片",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 150.dp, max = 300.dp)
+                        // 用 inJustDecodeBounds 同步读取文件头宽高，计算真实 aspect ratio（不分配像素内存）
+                        .aspectRatio(
+                            remember(currentPath) {
+                                val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                BitmapFactory.decodeFile(currentPath, opts)
+                                if (opts.outWidth > 0 && opts.outHeight > 0)
+                                    opts.outWidth.toFloat() / opts.outHeight.toFloat()
+                                else null
+                            } ?: 4f / 3f
+                        )
                         .clip(RoundedCornerShape(12.dp))
                         .clickable(enabled = !isEditMode) { },
                     contentScale = ContentScale.Fit

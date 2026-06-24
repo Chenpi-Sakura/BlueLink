@@ -49,6 +49,7 @@ import com.yjtzc.bluelink.ui.theme.Parchment50
 import com.yjtzc.bluelink.domain.model.toDomain
 import com.yjtzc.bluelink.ui.editor.InspirationEditorScreen
 import com.yjtzc.bluelink.util.LocalAppContainer
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -203,6 +204,14 @@ fun BlueLinkNavGraph() {
             when (currentDest) {
                 NavDest.HOME -> HomeScreen(
                     viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                    // TODO: 接入暗色模式 state（当前临时硬编码 false，build 通过优先）
+                    isDarkMode = false,
+                    // TODO: 接入搜索意图（当前 no-op，build 通过优先）
+                    onSearch = { /* TODO: 跳转到 SearchScreen */ },
+                    // TODO: 接入抽屉打开（当前 no-op，build 通过优先）
+                    onOpenDrawer = { /* TODO: 打开侧滑抽屉 */ },
+                    // TODO: 接入暗色模式切换（当前 no-op，build 通过优先）
+                    onToggleDarkMode = { /* TODO: 切换 dark/light theme */ },
                     onOpenInspiration = { cardId -> editorCardId = cardId },
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -334,8 +343,22 @@ fun BlueLinkNavGraph() {
                                 onBack = { editorCardId = null }
                             )
                         } else {
-                            // 完整内容加载中，loading 占位（必须有 opaque background，否则透明 Box 会让用户透过看到底层的 HOME）
-                            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                            // 完整内容加载中：debounce 延迟显示 Spinner
+                            // - 前 150ms 保持干净的主题色背景（slideIn 动画掩盖 IO 耗时）
+                            // - 超过 150ms 才出 CircularProgressIndicator（避免 100ms Spinner 一闪而过的 FOUC/Loading Flicker）
+                            var showLoading by remember { mutableStateOf(false) }
+                            LaunchedEffect(Unit) {
+                                delay(150)
+                                showLoading = true
+                            }
+                            Box(
+                                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (showLoading) {
+                                    CircularProgressIndicator()
+                                }
+                            }
                         }
                     } else if (cards == null) {
                         // Flow 还没 emit（正在查询数据库），loading 占位（必须有 opaque background 避免透过看到 HOME）
@@ -409,6 +432,10 @@ fun BlueLinkNavGraph() {
  * 这里用手工方式同时渲染两个 overlay slot（z-order 上下两层），各自用 graphicsLayer
  * 控制 alpha 和 translationX，独立应用 enter/exit 动画，完美实现 iOS push 双向对称。
  *
+ * 关键设计：旧 slot 用稳定 key "displayed_overlay_slot"（不依赖 disp），
+ * 避免 Forward 接管时 key(disp) 变化触发整个旧 slot instance 重建（会导致 100ms 内容消失闪动）。
+ * content(disp) 在 disp 变化时重新渲染新 overlay 内容，但 slot instance / Animatable 都保留——无缝接管。
+ *
  * @param targetOverlay 即将进入的目标 overlay（null 表示退出覆盖层）
  * @param direction 当前 transition 的方向（null 表示无 transition）
  * @param onTransitionEnd transition 结束后回调（用于父级更新 previousOverlay 等状态）
@@ -426,8 +453,8 @@ private fun OverlayLayer(
         LocalConfiguration.current.screenWidthDp.dp.toPx()
     }
 
-    // displayedOverlay = 当前显示的旧 overlay（z-order 下方，exit 动画对象）
-    // pendingOverlay = 等待显示的新 overlay（z-order 上方，enter 动画对象）
+    // displayedOverlay = 当前显示的旧 overlay（在旧 slot 稳定 key 块内渲染，content(disp) 在 disp 变化时重新渲染）
+    // pendingOverlay = 等待显示的新 overlay（新 slot 跑 slideIn / 保持原位 / slideOut 动画）
     var displayedOverlay by remember { mutableStateOf<Overlay?>(null) }
     var pendingOverlay by remember { mutableStateOf<Overlay?>(null) }
     var activeDirection by remember { mutableStateOf<TransitionDirection?>(null) }
@@ -435,14 +462,34 @@ private fun OverlayLayer(
     // scrim 半透明黑色遮罩 alpha（统一在 OverlayLayer 顶层管理，首次进入一级→二级也有 scrim 效果）
     val scrimAlpha = remember { Animatable(0f) }
 
+    // 🌟 核心魔法：movableContentOf 包装 content
+    // 当 stableKeySlot 和 pendingOverlaySlot 都调用 movableOverlayContent(overlay) 时，
+    // Compose 检测到同一个 movableContent 实例，会直接把整个 LayoutNode 从一个 Box 平移到另一个 Box——
+    // 不触发 onDispose、不重新 measure、保留 Coil 图片加载进度、内部 remember state
+    // 解决 slot swap 时 InspirationEditorScreen 销毁重建 + transparent Box 空档问题
+    val movableOverlayContent = remember {
+        movableContentOf<Overlay> { overlay ->
+            content(overlay)
+        }
+    }
+
     // 启动 transition
     LaunchedEffect(targetOverlay, direction) {
-        if (direction != null) {
-            // 首次进入和后续切换都走同样的 pendingOverlay 流程：
-            // 新 slot 渲染 pendingOverlay + slideIn（首次进入时旧 slot 不存在，新 slot 直接显示）；
-            // 后续 transition 时旧 slot 存在，做 exit 动画。
-            pendingOverlay = targetOverlay
-            activeDirection = direction
+        when {
+            targetOverlay != null && direction != null -> {
+                // 进入（首次或嵌套变深）：新 slot 跑 slideIn
+                pendingOverlay = targetOverlay
+                activeDirection = direction
+            }
+            targetOverlay == null && (pendingOverlay != null || displayedOverlay != null) -> {
+                // 退出（覆盖首次进入后退出和嵌套切换后退出两种场景）：
+                // - pendingOverlay != null：首次进入后退出，新 slot 自己跑 slideOut
+                // - displayedOverlay != null：Forward 完成后 pendingOverlay 已被清空，靠 displayedOverlay 跑 slideOut
+                // 关键修复：之前只判断 pendingOverlay != null，Forward 完成后 pendingOverlay = null 但 displayedOverlay != null，
+                // 返回时所有分支都不命中 → activeDirection 保持 null → 没有 Exit 动画触发 → 卡片退不出去
+                activeDirection = TransitionDirection.Exit
+            }
+            // 其他场景保持当前状态
         }
     }
 
@@ -468,19 +515,22 @@ private fun OverlayLayer(
             .background(Color.Black.copy(alpha = scrimAlpha.value))
         )
 
-        // ===== 旧 overlay slot（z-order 位于 scrim 之上）=====
+        // ===== 旧 overlay slot（key 稳定，disp 变化不触发 instance 重建）=====
+        // 这是修复"Forward 接管时内容消失 100ms 闪动"的关键：
+        // - Forward 完成后，新 slot (pendingOverlay) 接管渲染——但旧 slot 的 key 稳定（不依赖 disp），
+        //   所以旧 slot 的 Animatable / GraphicsLayer 都保留，content(disp) 在 disp 变化时重新渲染新 overlay 内容，
+        //   同一帧内两个 slot 都在渲染新内容，新 slot dispose 后只剩旧 slot 显示——无缝接管，无空档
+        // - Backward 时：旧 slot (displayedOverlay = 旧 overlay) 跑 slideOut + fadeOut
+        // - Exit 时（旧 slot 存在时）：同上
         displayedOverlay?.let { disp ->
-            key(disp) {
-                val alpha = remember(disp) { Animatable(1f) }
-                val translationX = remember(disp) { Animatable(0f) }
+            key("displayed_overlay_slot") {  // 稳定 key——disp 变化不触发 instance 重建
+                val alpha = remember { Animatable(1f) }
+                val translationX = remember { Animatable(0f) }
 
                 LaunchedEffect(pendingOverlay, activeDirection) {
                     when (activeDirection) {
-                        TransitionDirection.Forward -> {
-                            // Forward：旧 overlay 保持原位不动（scrim 由顶层 effect 处理）
-                        }
                         TransitionDirection.Backward, TransitionDirection.Exit -> {
-                            // Backward / Exit：旧 overlay 从右滑出 + 淡出
+                            // 旧 overlay 从右滑出 + 淡出
                             val animTrans = launch {
                                 translationX.animateTo(screenWidthPx, tween(300))
                             }
@@ -489,29 +539,31 @@ private fun OverlayLayer(
                             }
                             animTrans.join()
                             animAlpha.join()
-                            displayedOverlay = pendingOverlay
-                            pendingOverlay = null
+                            displayedOverlay = null
                             activeDirection = null
                             onTransitionEnd()
                         }
-                        null -> {} // 没有 transition
+                        else -> {} // Forward 和 null：旧 slot 继续渲染（content(disp) 在 disp 变化时重新渲染新 overlay 内容）
                     }
                 }
 
                 Box(modifier = Modifier
                     .fillMaxSize()
+                    // 不加 .background() 防御性兜底——会让 Box 在退出动画期间遮住底层 HOME
+                    // movableContentOf 已经解决了 slideIn 完成时空档问题，不需要 opaque 兜底
                     .graphicsLayer {
                         this.alpha = alpha.value
                         this.translationX = translationX.value
                     }
                 ) {
-                    content(disp)
+                    // 🌟 关键：调用 movableOverlayContent(disp) 而不是 content(disp)，
+                    // 让 Compose 检测 movableContent 实例并平移 LayoutNode 而非销毁重建
+                    movableOverlayContent(disp)
                 }
             }
         }
 
-        // ===== 新 overlay slot =====
-        // z-order 动态控制：Forward 时新 slot 在上（slideIn 可见）；Backward 时新 slot 在下（旧 slot slideOut 可见，露出新 slot）
+        // ===== 新 overlay slot（跑 slideIn / 保持原位 / slideOut）=====
         pendingOverlay?.let { pend ->
             key(pend) {
                 val alpha = remember(pend) { Animatable(1f) }
@@ -519,6 +571,7 @@ private fun OverlayLayer(
                 // 覆盖旧 slot 导致"抽动"闪烁。
                 // - Forward：LaunchedEffect 内 animateTo(0f) 从屏幕外滑入
                 // - Backward：LaunchedEffect 内 snapTo(0f) 跳到屏幕中央（被旧 slot 覆盖，用户看不到跳变）
+                // - Exit：LaunchedEffect 内 animateTo(screenWidthPx) 从屏幕中央滑出
                 val translationX = remember(pend) { Animatable(screenWidthPx) }
 
                 LaunchedEffect(pend, activeDirection) {
@@ -526,9 +579,9 @@ private fun OverlayLayer(
                         TransitionDirection.Forward -> {
                             // Forward：从右滑入覆盖（已经在屏幕外，直接 animateTo）
                             translationX.animateTo(0f, tween(300))
-                            // 接管：displayedOverlay = pend
-                            // - 首次进入：displayedOverlay 从 null 变 pend，旧 slot 接管渲染新 overlay
-                            // - 非首次 forward：displayedOverlay 从旧 overlay 变 pend，旧 slot 重新渲染新 overlay
+                            // Forward 完成：旧 slot 已经显示新 content（content(disp) 重新渲染），
+                            // 此时把 displayedOverlay 设为 pend（让旧 slot 用 content(pend) 渲染新 overlay 内容），
+                            // 同时清 pendingOverlay（让新 slot dispose）——无缝接管，无 100ms 内容消失
                             displayedOverlay = pend
                             pendingOverlay = null
                             activeDirection = null
@@ -537,9 +590,22 @@ private fun OverlayLayer(
                         TransitionDirection.Backward -> {
                             // Backward：立即跳到屏幕中央（保持原位，被旧 slot 在 z-order 上方覆盖）
                             translationX.snapTo(0f)
+                            // 不更新 displayedOverlay——让旧 slot 跑 slideOut 动画
                         }
                         TransitionDirection.Exit -> {
-                            // Exit 不应该到这里（pendingOverlay 在 Exit 时为 null）
+                            // Exit（首次进入后退出：displayedOverlay = null，没有旧 slot 可以跑 exit），
+                            // 新 slot 自己跑 slideOut + fadeOut
+                            val animTrans = launch {
+                                translationX.animateTo(screenWidthPx, tween(300))
+                            }
+                            val animAlpha = launch {
+                                alpha.animateTo(0f, tween(300))
+                            }
+                            animTrans.join()
+                            animAlpha.join()
+                            pendingOverlay = null
+                            activeDirection = null
+                            onTransitionEnd()
                         }
                         null -> {}
                     }
@@ -553,7 +619,9 @@ private fun OverlayLayer(
                         this.translationX = translationX.value
                     }
                 ) {
-                    content(pend)
+                    // 🌟 关键：调用 movableOverlayContent(pend) 而不是 content(pend)，
+                    // 让 Compose 检测 movableContent 实例并平移 LayoutNode 而非销毁重建
+                    movableOverlayContent(pend)
                 }
             }
         }

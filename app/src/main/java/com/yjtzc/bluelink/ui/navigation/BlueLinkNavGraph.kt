@@ -218,12 +218,12 @@ fun BlueLinkNavGraph() {
             transitionSpec = {
                 val duration = 300
                 if (targetState != null) {
-                    // 进入：从右滑入
-                    (slideInHorizontally(animationSpec = tween(duration)) { width -> width } + fadeIn())
-                        .togetherWith(slideOutHorizontally(animationSpec = tween(duration)) { width -> -width } + fadeOut())
+                    // 进入覆盖层：新页面从右滑入覆盖，旧页面不动
+                    slideInHorizontally(animationSpec = tween(duration)) { width -> width }
+                        .togetherWith(fadeOut(animationSpec = tween(duration)))
                 } else {
-                    // 退出：向右滑出
-                    (slideInHorizontally(animationSpec = tween(duration)) { width -> -width } + fadeIn())
+                    // 退出覆盖层：当前页面向右滑出，露出下层页面
+                    fadeIn(animationSpec = tween(duration))
                         .togetherWith(slideOutHorizontally(animationSpec = tween(duration)) { width -> width } + fadeOut())
                 }
             },

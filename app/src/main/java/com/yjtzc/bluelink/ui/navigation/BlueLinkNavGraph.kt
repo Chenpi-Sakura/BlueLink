@@ -1,6 +1,13 @@
 package com.yjtzc.bluelink.ui.navigation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -77,9 +84,7 @@ sealed interface MineRoute {
  * App 主导航骨架
  *
  * - 底部 4 Tab：灵感 / 对话 / 图谱 / 我的
- * - 阅读器覆盖层：全屏阅读
- * - 灵感编辑器覆盖层：全屏编辑
- * - 我的子页面覆盖层：二级设置页
+ * - 覆盖层（阅读器、编辑器、我的子页）使用 AnimatedContent 实现右滑动画
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,152 +101,33 @@ fun BlueLinkNavGraph() {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ====== 阅读器覆盖层 ======
-    if (readerParams != null) {
-        val params = readerParams!!
-        val readerViewModel: ReaderViewModel = viewModel(
-            factory = BlueLinkViewModelFactory(container)
-        )
+    // 返回处理
+    BackHandler(enabled = mineRoute != null || editorCardId != null || readerParams != null) {
+        when {
+            mineRoute != null -> {
+                if (mineFromRoute != null) {
+                    mineRoute = mineFromRoute
+                    mineFromRoute = null
+                } else {
+                    mineRoute = null
+                }
+            }
+            editorCardId != null -> editorCardId = null
+            readerParams != null -> readerParams = null
+        }
+    }
 
-        BackHandler { readerParams = null }
+    // 当前覆盖层
+    val overlay = when {
+        readerParams != null -> "reader"
+        editorCardId != null -> "editor"
+        mineRoute != null -> "mine"
+        else -> null
+    }
 
+    Box(Modifier.fillMaxSize()) {
+        // ====== 底部 Tab 导航（始终组合） ======
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("阅读") },
-                    navigationIcon = {
-                        IconButton(onClick = { readerParams = null }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "返回"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    )
-                )
-            },
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) { innerPadding ->
-            ReaderScreen(
-                viewModel = readerViewModel,
-                docId = params.docId,
-                spotlightSegmentId = params.spotlightSegmentId,
-                modifier = Modifier.padding(innerPadding)
-            )
-        }
-        return
-    }
-
-    // ====== 灵感编辑器覆盖层 ======
-    if (editorCardId != null) {
-        BackHandler { editorCardId = null }
-
-        // 从仓库查找卡片
-        val cards by container.captureRepository.observeAllCards()
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-        val card = cards.find { it.id == editorCardId }
-
-        if (card != null) {
-            InspirationEditorScreen(
-                card = card,
-                captureRepository = container.captureRepository,
-                onBack = { editorCardId = null }
-            )
-        } else {
-            // 卡片不存在或已删除
-            LaunchedEffect(Unit) {
-                snackbarHostState.showSnackbar("灵感不存在或已被删除")
-                editorCardId = null
-            }
-        }
-        return
-    }
-
-    // ====== 我的子页面覆盖层 ======
-    if (mineRoute != null) {
-        val onGoBack: () -> Unit = {
-            // 从深页面返回时使用 mineFromRoute，用完即重置
-            if (mineFromRoute != null) {
-                mineRoute = mineFromRoute
-                mineFromRoute = null
-            } else {
-                mineRoute = null
-            }
-        }
-
-        BackHandler { onGoBack() }
-
-        val mineViewModel: MineViewModel = viewModel(
-            factory = BlueLinkViewModelFactory(container)
-        )
-
-        when (mineRoute) {
-            is MineRoute.Appearance -> {
-                AppearanceSettingsScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
-                    onBack = onGoBack
-                )
-            }
-            is MineRoute.CognitiveSettings -> {
-                CognitiveSettingsScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
-                    onBack = onGoBack
-                )
-            }
-            is MineRoute.PrivacySecurity -> {
-                PrivacySecurityScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
-                    onBack = onGoBack,
-                    onNavigateToPermission = {
-                        mineFromRoute = MineRoute.PrivacySecurity
-                        mineRoute = MineRoute.PermissionManagement
-                    },
-                    onNavigateToDataExport = {
-                        mineFromRoute = MineRoute.PrivacySecurity
-                        mineRoute = MineRoute.DataExport
-                    },
-                    onNavigateToPermanentDelete = {
-                        mineFromRoute = MineRoute.PrivacySecurity
-                        mineRoute = MineRoute.PermanentDelete
-                    }
-                )
-            }
-            is MineRoute.PermissionManagement -> {
-                PermissionManagementScreen(
-                    onBack = onGoBack
-                )
-            }
-            is MineRoute.DataExport -> {
-                DataExportScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
-                    onBack = onGoBack
-                )
-            }
-            is MineRoute.PermanentDelete -> {
-                PermanentDeleteScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
-                    onBack = onGoBack
-                )
-            }
-            null -> {}
-        }
-        return
-    }
-
-    // ====== 底部 Tab 导航 ======
-    Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 NavigationBar(
@@ -285,18 +171,12 @@ fun BlueLinkNavGraph() {
         ) { innerPadding ->
             when (currentDest) {
                 NavDest.HOME -> HomeScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
-                    onOpenInspiration = { cardId ->
-                        editorCardId = cardId
-                    },
+                    viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                    onOpenInspiration = { cardId -> editorCardId = cardId },
                     modifier = Modifier.padding(innerPadding)
                 )
                 NavDest.CHAT -> ChatScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
+                    viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
                     onNavigateToReader = { segmentId ->
                         scope.launch {
                             val segment = container.documentRepository.getSegmentById(segmentId)
@@ -313,44 +193,133 @@ fun BlueLinkNavGraph() {
                     modifier = Modifier.padding(innerPadding)
                 )
                 NavDest.GRAPH -> GraphScreen(
-                    viewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    ),
+                    viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
                     modifier = Modifier.padding(innerPadding)
                 )
                 NavDest.MINE -> {
-                    val mineViewModel: MineViewModel = viewModel(
-                        factory = BlueLinkViewModelFactory(container)
-                    )
+                    val mineViewModel: MineViewModel = viewModel(factory = BlueLinkViewModelFactory(container))
                     MineScreen(
                         viewModel = mineViewModel,
-                        onNavigateToAppearance = {
-                            mineFromRoute = null
-                            mineRoute = MineRoute.Appearance
-                        },
-                        onNavigateToCognitive = {
-                            mineFromRoute = null
-                            mineRoute = MineRoute.CognitiveSettings
-                        },
-                        onNavigateToPrivacySecurity = {
-                            mineFromRoute = null
-                            mineRoute = MineRoute.PrivacySecurity
-                        },
-                        onNavigateToPermission = {
-                            mineFromRoute = null
-                            mineRoute = MineRoute.PermissionManagement
-                        },
-                        onNavigateToDataExport = {
-                            mineFromRoute = null
-                            mineRoute = MineRoute.DataExport
-                        },
-                        onNavigateToPermanentDelete = {
-                            mineFromRoute = null
-                            mineRoute = MineRoute.PermanentDelete
-                        },
+                        onNavigateToAppearance = { mineFromRoute = null; mineRoute = MineRoute.Appearance },
+                        onNavigateToCognitive = { mineFromRoute = null; mineRoute = MineRoute.CognitiveSettings },
+                        onNavigateToPrivacySecurity = { mineFromRoute = null; mineRoute = MineRoute.PrivacySecurity },
+                        onNavigateToPermission = { mineFromRoute = null; mineRoute = MineRoute.PermissionManagement },
+                        onNavigateToDataExport = { mineFromRoute = null; mineRoute = MineRoute.DataExport },
+                        onNavigateToPermanentDelete = { mineFromRoute = null; mineRoute = MineRoute.PermanentDelete },
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
         }
+
+        // ====== 覆盖层动画 ======
+        AnimatedContent(
+            targetState = overlay,
+            transitionSpec = {
+                val duration = 300
+                if (targetState != null) {
+                    // 进入：从右滑入
+                    (slideInHorizontally(animationSpec = tween(duration)) { width -> width } + fadeIn())
+                        .togetherWith(slideOutHorizontally(animationSpec = tween(duration)) { width -> -width } + fadeOut())
+                } else {
+                    // 退出：向右滑出
+                    (slideInHorizontally(animationSpec = tween(duration)) { width -> -width } + fadeIn())
+                        .togetherWith(slideOutHorizontally(animationSpec = tween(duration)) { width -> width } + fadeOut())
+                }
+            },
+            label = "overlayTransition"
+        ) { target ->
+            when (target) {
+                "reader" -> {
+                    val params = readerParams ?: return@AnimatedContent
+                    val readerViewModel: ReaderViewModel = viewModel(factory = BlueLinkViewModelFactory(container))
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = { Text("阅读") },
+                                navigationIcon = {
+                                    IconButton(onClick = { readerParams = null }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                                    }
+                                },
+                                colors = TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.background
+                                )
+                            )
+                        },
+                        snackbarHost = { SnackbarHost(snackbarHostState) }
+                    ) { innerPadding ->
+                        ReaderScreen(
+                            viewModel = readerViewModel,
+                            docId = params.docId,
+                            spotlightSegmentId = params.spotlightSegmentId,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+
+                "editor" -> {
+                    val cardId = editorCardId ?: return@AnimatedContent
+                    BackHandler { editorCardId = null }
+
+                    val cards by container.captureRepository.observeAllCards()
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
+                    val card = cards.find { it.id == cardId }
+
+                    if (card != null) {
+                        InspirationEditorScreen(
+                            card = card,
+                            captureRepository = container.captureRepository,
+                            onBack = { editorCardId = null }
+                        )
+                    } else {
+                        LaunchedEffect(Unit) {
+                            snackbarHostState.showSnackbar("灵感不存在或已被删除")
+                            editorCardId = null
+                        }
+                    }
+                }
+
+                "mine" -> {
+                    val route = mineRoute ?: return@AnimatedContent
+                    val onGoBack: () -> Unit = {
+                        if (mineFromRoute != null) {
+                            mineRoute = mineFromRoute
+                            mineFromRoute = null
+                        } else {
+                            mineRoute = null
+                        }
+                    }
+                    val mineViewModel: MineViewModel = viewModel(factory = BlueLinkViewModelFactory(container))
+
+                    when (route) {
+                        is MineRoute.Appearance -> AppearanceSettingsScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            onBack = onGoBack
+                        )
+                        is MineRoute.CognitiveSettings -> CognitiveSettingsScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            onBack = onGoBack
+                        )
+                        is MineRoute.PrivacySecurity -> PrivacySecurityScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            onBack = onGoBack,
+                            onNavigateToPermission = { mineFromRoute = MineRoute.PrivacySecurity; mineRoute = MineRoute.PermissionManagement },
+                            onNavigateToDataExport = { mineFromRoute = MineRoute.PrivacySecurity; mineRoute = MineRoute.DataExport },
+                            onNavigateToPermanentDelete = { mineFromRoute = MineRoute.PrivacySecurity; mineRoute = MineRoute.PermanentDelete }
+                        )
+                        is MineRoute.PermissionManagement -> PermissionManagementScreen(onBack = onGoBack)
+                        is MineRoute.DataExport -> DataExportScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            onBack = onGoBack
+                        )
+                        is MineRoute.PermanentDelete -> PermanentDeleteScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            onBack = onGoBack
+                        )
+                    }
+                }
+            }
+        }
     }
+}

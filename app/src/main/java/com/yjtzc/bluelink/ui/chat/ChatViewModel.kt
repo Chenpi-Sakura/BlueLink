@@ -85,10 +85,11 @@ class ChatViewModel(
                     // 生成费曼报告消息
                     val report = FeynmanReport(
                         summary = response.summary,
-                        deviations = response.deviations.map { dto ->
+                        deviations = response.deviations.mapNotNull { dto ->
+                            val type = com.yjtzc.bluelink.domain.model.DeviationType.safeValueOf(dto.deviationType) ?: return@mapNotNull null
                             Deviation(
                                 userSegment = dto.userSegment,
-                                deviationType = com.yjtzc.bluelink.domain.model.DeviationType.valueOf(dto.deviationType),
+                                deviationType = type,
                                 explanation = dto.explanation,
                                 originalSnippet = dto.originalSnippet,
                                 anchorSegmentId = dto.anchorSegmentId

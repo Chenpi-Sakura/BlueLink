@@ -98,6 +98,7 @@ class DocumentRepository(
                         title = dto.title,
                         privacyLevel = com.yjtzc.bluelink.data.local.db.PrivacyLevel.valueOf(dto.privacyLevel),
                         source = dto.source,
+                        createdAt = dto.createdAt,
                         conceptBeacon = dto.conceptBeacon
                     )
                 )

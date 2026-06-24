@@ -7,7 +7,6 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -249,10 +248,7 @@ private fun VoiceTab(
             Spacer(Modifier.height(16.dp))
             FilledTonalButton(
                 onClick = {
-                    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                        Manifest.permission.RECORD_AUDIO
-                    else
-                        Manifest.permission.RECORD_AUDIO
+                    val permission = Manifest.permission.RECORD_AUDIO
 
                     if (androidx.core.content.ContextCompat.checkSelfPermission(
                             context, permission

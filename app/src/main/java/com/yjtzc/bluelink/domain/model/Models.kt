@@ -62,7 +62,13 @@ data class Deviation(
     val anchorSegmentId: String
 )
 
-enum class DeviationType { OMISSION, CONTRADICTION, OVER_EXTENSION }
+enum class DeviationType { OMISSION, CONTRADICTION, OVER_EXTENSION;
+
+    companion object {
+        fun safeValueOf(value: String): DeviationType? =
+            entries.find { it.name == value }
+    }
+}
 
 data class FeynmanReport(
     val summary: String,

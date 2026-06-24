@@ -160,27 +160,38 @@ feat: CaptureRepository 实现云端同步逻辑     ← 同步完成就提
 
 ## 6. 分支策略
 
-**开发不要直接在 `backend` 上改，而是从它拉一条 `feat/xxx` 分支：**
+**开发不要直接在 `develop` 上改，而是先从 `develop` 拉一条 `feat/xxx` 分支，等功能开发完善后再合并回 `develop`：**
 
 ```bash
-# 从 backend 拉开发分支
-git checkout -b feat/backend-dev backend
+# 1. 确保本地 develop 是最新的
+git checkout develop
+git pull origin develop
 
-# 开发完成后合并回 backend
-git checkout backend
-git merge feat/backend-dev
-git push origin backend
+# 2. 从 develop 拉开发分支
+git checkout -b feat/xxx develop
 
-# 远程分支可保留或删除
-git push origin --delete feat/backend-dev   # 如果不需要了
+# 3. 在 feat/xxx 上开发、commit（开发期间不上 remote，避免污染远端）
+
+# 4. 功能开发完善后，先本地确认 build 通过，再合并回 develop
+git checkout develop
+git merge feat/xxx
+git push origin develop          # push 前需用户批准（见第 7 节）
+
+# 5. 远程 feat/xxx 分支可保留也可删除
+git push origin --delete feat/xxx   # 如果不需要了
 ```
+
+**为什么不在 `feat/xxx` 上长期累积 commit：**
+- 一个功能开发周期内可能出现多次"未完成的中间态"，长期挂在一个分支上会让 review 难以聚焦
+- 等功能自测 build 通过、CR 通过后再合并到 `develop`，保证 `develop` 始终是"可发布状态"
 
 **分支命名规则：**
 | 分支 | 用途 | 从哪拉 |
 |------|------|--------|
-| `backend` | 后端主分支，保持稳定 | — |
-| `feat/xxx` | 具体功能开发 | `backend` |
-| `fix/xxx` | 修 bug | `backend` |
+| `main` | 远端默认主分支，对外发布 | — |
+| `develop` | 开发主分支，保持稳定可发布 | 从 `main` 拉（按需） |
+| `feat/xxx` | 具体功能开发 | `develop` |
+| `fix/xxx` | 修 bug | `develop` |
 
 > 所有 push 仍遵循第 7 条规则——需用户批准。
 

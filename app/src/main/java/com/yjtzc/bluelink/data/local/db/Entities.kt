@@ -69,7 +69,9 @@ data class InspirationCardEntity(
     val tags: String = "",                     // 逗号分隔关键词
     val folderId: String? = null,              // 所属文件夹 ID（null = 未归档）
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()  // 最近修改时间
+    val updatedAt: Long = System.currentTimeMillis(),  // 最近修改时间
+    val coverAspectRatio: Float? = null         // 封面图片宽高比（width/height），保存图片时计算，
+                                                // 渲染时用 Modifier.aspectRatio() 固定比例避免 Coil 异步加载导致 Image layout 跳变
 )
 
 /**

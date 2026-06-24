@@ -1,5 +1,6 @@
 package com.yjtzc.bluelink.data.repository
 
+import android.graphics.BitmapFactory
 import com.yjtzc.bluelink.data.local.crypto.SecurePrefs
 import com.yjtzc.bluelink.data.local.db.CardType
 import com.yjtzc.bluelink.data.local.db.InspirationCardEntity
@@ -36,6 +37,9 @@ class CaptureRepository(
         val ciphertext = content.encodeToByteArray()
         securePrefs.putCipherText(ref, ciphertext)
 
+        // 计算 cover 图片宽高比（仅 IMAGE 类型；用于渲染时固定比例避免 Coil 异步加载 layout 跳变）
+        val coverAspectRatio = computeCoverAspectRatio(content, type)
+
         val card = InspirationCardEntity(
             id = id,
             contentRef = ref,
@@ -44,7 +48,8 @@ class CaptureRepository(
             privacyLevel = privacyLevel,
             tags = tags.joinToString(","),
             createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            updatedAt = System.currentTimeMillis(),
+            coverAspectRatio = coverAspectRatio
         )
         inspirationDao.upsert(card)
 
@@ -97,12 +102,59 @@ class CaptureRepository(
             newContent.take(30)
         }
 
+        // 重新计算 cover 图片宽高比（如果图片变了）
+        val newCoverRatio = computeCoverAspectRatio(newContent, card.type)
+        // 保留已有 ratio（图片未变时不重算，避免重复 IO）
+        val coverAspectRatio = newCoverRatio ?: card.coverAspectRatio
+
         val updated = card.copy(
             contentSnippet = snippet,
-            updatedAt = System.currentTimeMillis()
+            updatedAt = System.currentTimeMillis(),
+            coverAspectRatio = coverAspectRatio
         )
         inspirationDao.upsert(updated)
         return updated
+    }
+
+    /**
+     * 计算 cover 图片宽高比（width/height）
+     *
+     * 关键：用 [BitmapFactory.Options.inJustDecodeBounds] = true —— 只读取图片头部的宽高元数据，
+     * 不分配像素内存。10MB 大图也几乎瞬时返回 outWidth/outHeight，避免 OOM。
+     *
+     * 仅 IMAGE 类型卡片计算；TEXT/VOICE 类型返回 null（渲染时 fallback 4:3）。
+     *
+     * @return aspect ratio（width / height）或 null（解析失败、非图片、无宽高信息）
+     */
+    private fun computeCoverAspectRatio(content: String, type: CardType): Float? {
+        if (type != CardType.IMAGE) return null
+
+        return try {
+            val arr = JSONArray(content)
+            var imagePath: String? = null
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                if (obj.getString("type") == "image") {
+                    imagePath = obj.getString("data")
+                    break  // 只计算第一张 cover 图的 ratio
+                }
+            }
+
+            imagePath?.let { path ->
+                val options = BitmapFactory.Options().apply {
+                    // 关键：只解码边界信息（宽高），不分配像素内存！
+                    inJustDecodeBounds = true
+                }
+                BitmapFactory.decodeFile(path, options)
+                if (options.outWidth > 0 && options.outHeight > 0) {
+                    options.outWidth.toFloat() / options.outHeight.toFloat()
+                } else {
+                    null
+                }
+            }
+        } catch (_: Exception) {
+            null  // 解析失败不阻塞主流程：ratio 为 null，渲染时 fallback 4:3
+        }
     }
 
     /**

@@ -322,3 +322,153 @@ Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
 1. **`contentSnippet` 设计**：当前是 30 字摘要，应该改成**完整 JSON 短串**或**JSON 标识**——避免摘要和完整内容解析结果不一致导致 UI 跳变。或者在数据库增加 `cachedFullContent` 字段预存完整内容。
 2. **Room Flow 中间态**：考虑在 Repository 层加 `firstOrNull()` + retry 逻辑，避免 Flow emit 空列表直接被 UI 误用。
 3. **重写覆盖层的可复用性**：当前 `OverlayLayer` 是 hardcoded 给 mine/reader/editor 三种类型的。如果未来有更多覆盖层场景，建议抽象成 generic `TwoSlotOverlay` composable。
+
+---
+
+## 阶段 15（新增）：OverlayLayer 状态机缺 Exit 路径 B
+
+**现象**：用户"按返回退出不了卡片"——返回时卡片无动画、画面卡住不动。
+
+**踩坑**：Forward 完成后 `pendingOverlay = null`，返回时 `targetOverlay == null && pendingOverlay != null` 分支不命中（因为 pending null），所有分支都不走。
+
+**修复**：补 `displayedOverlay != null` 条件：
+```kotlin
+targetOverlay == null && (pendingOverlay != null || displayedOverlay != null) -> {
+    activeDirection = TransitionDirection.Exit
+}
+```
+
+**教训**：手动状态机必须覆盖所有状态组合。Forward 完成后 displayedOverlay 非空、pendingOverlay 空是稳定态，退出时需要 displayedOverlay 触发 Exit。
+
+---
+
+## 阶段 16（新增）：movableContentOf 终极解决 slot swap 销毁重建
+
+**现象**：slideIn 期间卡片完美呈现，slideIn 完成瞬间"画面变成背景色"→ 图片压缩 → 拉伸复原。
+
+**根因**（用户精确推演）：
+- T=0~300ms（slideIn）：卡片在 pendingOverlaySlot（key(pend)）完美渲染
+- T=300ms：`displayedOverlay = pend; pendingOverlay = null` 触发 recomposition
+- stableKeySlot（key("displayed_overlay_slot")）**首次进入**——InspirationEditorScreen 被**销毁重建**，内部所有 remember state 丢失
+- stableKeySlot 的 Box 默认**transparent**——content 首次 measure 期间用户透过看到底层 HOME + scrim → "画面变成背景色"
+- 重建后 Coil 重新加载图片 → 150dp 压缩 → 加载完成 → 拉伸复原
+
+**日志验证**（DisposableEffect + Log.d）：
+```
+22:35:09.531 Test  InspirationEditorScreen 创建了！
+22:35:09.843 Test  InspirationEditorScreen 被销毁了！  ← 312ms = slideIn 完成
+22:35:09.869 Test  InspirationEditorScreen 创建了！     ← 重建
+```
+
+**修复**：`movableContentOf`（Compose 高级 API，1.5+）：
+```kotlin
+val movableOverlayContent = remember {
+    movableContentOf<Overlay> { overlay -> content(overlay) }
+}
+// 两个 slot 都调用 movableOverlayContent(overlay) 而不是 content(overlay)
+```
+
+**原理**：Compose 检测到同一个 movableContent 实例从 pendingBox 移到 stableBox，**将整个 LayoutNode 连根拔起平移过去**——不触发 onDispose、不重新 measure、保留 Coil 加载进度和内部 remember state。
+
+**修复后日志**：
+```
+22:37:51.318 Test  InspirationEditorScreen 创建了！  ← 只创建一次
+（无销毁+重建日志）
+返回退出 → 被销毁了
+```
+
+**教训**：
+- slot swap（容器切换）在 Compose 中 = 销毁重建。`key()` 变化让 Compose 认为这是新节点。
+- `movableContentOf` 是解决"节点在不同容器间移动时不丢失状态"的唯一官方方式。
+- 不要用"提前设置 content + opaque background"等 hack 来掩盖 slot swap——`movableContentOf` 才是正确的。
+
+---
+
+## 阶段 17（新增）：stableKeySlot opaque background 遮住退出动画
+
+**现象**：修好进入后退出动画期间看到 "纯背景色"，HOME 在动画结束后才出现。
+
+**根因**：之前给 stableKeySlot Box 加了 `.background(MaterialTheme.colorScheme.background)` 防御性兜底——但退出动画期间这个 Box 仍在渲染（alpha 从 1 → 0 正在衰减），opaque background **遮住了底层的 HOME**。
+
+**修复**：去掉 `.background()`。`movableContentOf` 已经解决了 slideIn 空档问题，不需要 opaque 兜底。
+
+**教训**：防御性编程要考虑**退出路径**。进入时需要 opaque 兜底，退出时它会遮住下层。
+
+---
+
+## 阶段 18（新增）：inJustDecodeBounds 实时计算图片 aspectRatio
+
+**现象**：去掉 aspectRatio 后图片不可见（height=0）；用 ContentScale.Crop 图片模糊。
+
+**根因**：Image 没有高度约束，Coil 加载时 Painter intrinsicSize = 0 → height = 0 → 不可见。
+
+**修复**：用 `BitmapFactory.Options.inJustDecodeBounds` 同步读取文件头宽高比：
+```kotlin
+val realRatio = remember(filePath) {
+    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(filePath, opts)  // 只读文件头，不分配像素内存
+    if (opts.outWidth > 0 && opts.outHeight > 0)
+        opts.outWidth.toFloat() / opts.outHeight.toFloat()
+    else null
+}
+Image(
+    modifier = Modifier
+        .fillMaxWidth()
+        .aspectRatio(realRatio ?: 4f / 3f)  // measure 阶段已知比例，layout 稳定
+        .clip(...),
+    contentScale = ContentScale.Fit          // 原比例不裁剪不模糊
+)
+```
+
+**为什么这比数据库预存 coverAspectRatio 好**：
+- 数据库字段需要 Room migration + 旧数据回填 + 编辑保存时才写入
+- `inJustDecodeBounds` 实时读文件头（< 1ms 同步阻塞）——**无需数据库字段**，兼容所有数据
+- 适用两处：EditorScreen（ImageBlockView）+ HomeScreen（InspirationCard Image）
+
+**教训**：
+- `inJustDecodeBounds` 是 Android 原生 API 的经典用法——只读取文件头宽高，不分配像素内存，OOM 风险为零。
+- 可以在 Compose 的 `.remember()` 中同步调用（< 1ms 阻塞），不违反 StrictMode。
+- `aspectRatio + Fit` 是图片渲染的黄金组合：layout 稳定 + 原比例 + 不裁剪。
+- `ContentScale.Crop` 只在图片一定要填满固定框时用——如果不需要固定框比例，用 `Fit` 更自然。
+
+---
+
+## 阶段 19（总结）：故障时间线
+
+| 时间 | 阶段 | 现象 | 根因 | 方案 |
+|---|---|---|---|---|
+| 初始 | 1-3 | "从左上角扩展" | 新版 Compose 默认 sizeTransform | 显式禁掉 |
+| 初始 | 4 | "返回闪现" | content lambda 不命中 null 分支 | Box 占位 |
+| 初始 | 5 | "三级嵌套无动画" | String targetState equals | sealed class Overlay |
+| 初始 | 6 | "首次进入无动画" | displayedOverlay=null 特殊分支 | 统一 pending 流程 |
+| 初始 | 7 | "页面抽动" | new slot translationX 初值 0f | 初值 screenWidthPx |
+| 初始 | 8 | "三级退出闪现" | Backward z-order 新 slot 在上 | 动态 zIndex |
+| 初始 | 9 | "dim 效果" | alpha 降低 vs 黑色 scrim | scrim 顶层化 |
+| 初始 | 10-11 | Editor 错误提示+转圈 | Flow 加载中 vs cards=[] | produceState nullable |
+| 初始 | 12 | 图片丢失+闪动 | contentSnippet 摘要 vs 完整内容 | preloadedContent |
+| 初始 | 13 | "闪回主界面" | Flow 中途 emit 空列表 | cachedCard |
+| 初始 | 14 | "透过看到 HOME" | Box 默认 transparent | opaque background |
+| 新 | 15 | "返回退出不了" | pendingOverlay=null 错失 Exit 分支 | 补 displayedOverlay 条件 |
+| **新** | **16** | **slot swap 销毁重建** | **容器 key 变化 = 销毁重建** | **movableContentOf 🏆** |
+| 新 | 17 | 退出动画 "纯背景色" | opaque Box 遮住下层 | 去掉 defensive background |
+| **新** | **18** | **图片不可见 + 模糊** | **0 height + Crop 裁剪** | **inJustDecodeBounds + aspectRatio + Fit** |
+
+> **阶段 16（movableContentOf）是整个调试过程中最关键的一步**——前面 15 个阶段的修复都只是治标，movableContentOf 才是治本（让节点在不同容器间移动时保留完整状态）。所有"闪动/拉伸/背景色"问题的根本原因都在 slot swap 销毁重建。
+
+## 新增相关文件
+
+- `app/src/main/java/com/yjtzc/bluelink/ui/navigation/BlueLinkNavGraph.kt` —— `movableContentOf` + OverlayLayer 状态机 Exit 分支
+- `app/src/main/java/com/yjtzc/bluelink/ui/editor/InspirationEditorScreen.kt` —— ImageBlockView `inJustDecodeBounds` + aspectRatio
+- `app/src/main/java/com/yjtzc/bluelink/ui/home/HomeScreen.kt` —— InspirationCard Image `inJustDecodeBounds` + aspectRatio
+- `app/src/main/java/com/yjtzc/bluelink/data/local/db/Entities.kt` —— `coverAspectRatio` 字段（虽然最终改用 inJustDecodeBounds，保留字段供未来使用）
+- `app/src/main/java/com/yjtzc/bluelink/data/repository/CaptureRepository.kt` —— `computeCoverAspectRatio`（inJustDecodeBounds 安全版）
+
+## 追加后续建议
+
+4. **`coverAspectRatio` 数据库字段 vs `inJustDecodeBounds`**：当前数据库字段保留不动，`inJustDecodeBounds` 实时计算已经优于数据库预存。如果未来有大量图片列表（每次渲染都读文件头影响性能），可以启用数据库字段做缓存。
+5. **`movableContentOf` 的可复用性**：建议封装成 `MovableContentBox` composable 供其他 slot swap 场景复用。
+6. **Image + ContentScale 选择指南**：
+   - 需要固定比例 + 稳定 layout → `aspectRatio(realRatio) + ContentScale.Fit`（推荐）
+   - 需要填满固定框 → `ContentScale.Crop`
+   - 图片在 scrollable 容器内随内容滚动 → `ContentScale.Fit + fillMaxWidth`（高度由图片决定）
+

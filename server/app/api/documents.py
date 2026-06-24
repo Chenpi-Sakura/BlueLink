@@ -228,6 +228,20 @@ def update_document(
     )
 
 
+@router.get("/segments/{seg_id}")
+def get_segment(
+    seg_id: str,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_user_id),
+) -> dict:
+    """获取切片全文（供 App 点击锚点时下载）"""
+    seg = db.query(Segment).filter(Segment.id == seg_id).first()
+    if not seg:
+        from fastapi import HTTPException
+        raise HTTPException(404, detail="切片不存在")
+    return {"id": seg.id, "text": seg.text, "summary": seg.summary}
+
+
 @router.delete("/{doc_id}", status_code=204)
 def delete_document(
     doc_id: str,

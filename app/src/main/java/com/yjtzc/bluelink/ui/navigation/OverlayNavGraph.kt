@@ -224,13 +224,11 @@ fun OverlayNavGraph(
                 }
                 entry<OverlayNavKey.PrivacySecurity> {
                     val vm: MineViewModel = viewModel(factory = factory)
-                    // Commit 2 临时保留 3 个 onNavigateTo* 参数；Commit 3 收敛为单个 onNavigate
+                    // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
                     PrivacySecurityScreen(
                         viewModel = vm,
                         onBack = { backStack.removeLastOrNull() },
-                        onNavigateToPermission = { backStack.add(OverlayNavKey.PermissionManagement) },
-                        onNavigateToDataExport = { backStack.add(OverlayNavKey.DataExport) },
-                        onNavigateToPermanentDelete = { backStack.add(OverlayNavKey.PermanentDelete) }
+                        onNavigate = { key -> backStack.add(key) }
                     )
                 }
                 entry<OverlayNavKey.PermissionManagement> {

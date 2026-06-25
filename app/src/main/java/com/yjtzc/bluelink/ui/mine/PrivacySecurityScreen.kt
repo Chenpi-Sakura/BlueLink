@@ -25,19 +25,28 @@ import com.yjtzc.bluelink.ui.mine.components.BlueLinkPrivacyOption
 import com.yjtzc.bluelink.ui.mine.components.BlueLinkSubPageScaffold
 import com.yjtzc.bluelink.ui.mine.components.ConfirmPrivacyChangeDialog
 import com.yjtzc.bluelink.ui.mine.components.PrivacyLevelPickerSheet
+import com.yjtzc.bluelink.ui.navigation.OverlayNavKey
 import com.yjtzc.bluelink.ui.theme.MineColors
 import com.yjtzc.bluelink.ui.theme.MinePrivacy
 import com.yjtzc.bluelink.ui.theme.MineTypography
 
 private val levelOrder = mapOf("LOCAL_ONLY" to 0, "LOCAL_FIRST" to 1, "CLOUD_OK" to 2)
 
+/**
+ * 「隐私与安全」子页面。
+ *
+ * V2.2 Nav3 迁移：3 个 `onNavigateTo*` 回调收敛为单个 `onNavigate: (OverlayNavKey) -> Unit`，
+ * 与 [MineScreen] 保持一致的导航接口风格。子项点击统一通过 `onNavigate(targetKey)` 通知父级。
+ *
+ * @param viewModel MineViewModel（隐私模式 state + 弹窗控制）
+ * @param onBack 返回上一级（PrivacySecurity 弹出 back stack）
+ * @param onNavigate 子页面跳转（目标：PermissionManagement / DataExport / PermanentDelete）
+ */
 @Composable
 fun PrivacySecurityScreen(
     viewModel: MineViewModel,
     onBack: () -> Unit,
-    onNavigateToPermission: () -> Unit,
-    onNavigateToDataExport: () -> Unit,
-    onNavigateToPermanentDelete: () -> Unit
+    onNavigate: (OverlayNavKey) -> Unit
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val showPicker by viewModel.showPrivacyLevelPicker.collectAsStateWithLifecycle()
@@ -115,7 +124,7 @@ fun PrivacySecurityScreen(
         // ====== 权限管理入口 ======
         BlueLinkCard(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp),
-            modifier = Modifier.clickable(onClick = onNavigateToPermission)
+            modifier = Modifier.clickable(onClick = { onNavigate(OverlayNavKey.PermissionManagement) })
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().height(36.dp),
@@ -139,7 +148,7 @@ fun PrivacySecurityScreen(
             shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
             icon = { Icon(Icons.Outlined.FileDownload, contentDescription = null,
                 tint = Color.White, modifier = Modifier.size(20.dp)) },
-            onClick = onNavigateToDataExport
+            onClick = { onNavigate(OverlayNavKey.DataExport) }
         )
 
         Spacer(Modifier.height(14.dp))
@@ -149,7 +158,7 @@ fun PrivacySecurityScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(MinePrivacy.DeleteEntryHeight)
-                .clickable(onClick = onNavigateToPermanentDelete),
+                .clickable(onClick = { onNavigate(OverlayNavKey.PermanentDelete) }),
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically,

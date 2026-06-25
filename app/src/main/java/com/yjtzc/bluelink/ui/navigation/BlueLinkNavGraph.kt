@@ -138,13 +138,8 @@ fun BlueLinkNavGraph() {
                     val mineViewModel: MineViewModel = viewModel(factory = factory)
                     MineScreen(
                         viewModel = mineViewModel,
-                        // Commit 2 临时保留 6 个 onNavigateTo* 参数；Commit 3 收敛为单个 onNavigate
-                        onNavigateToAppearance = { onNavigate(OverlayNavKey.Appearance) },
-                        onNavigateToCognitive = { onNavigate(OverlayNavKey.CognitiveSettings) },
-                        onNavigateToPrivacySecurity = { onNavigate(OverlayNavKey.PrivacySecurity) },
-                        onNavigateToPermission = { onNavigate(OverlayNavKey.PermissionManagement) },
-                        onNavigateToDataExport = { onNavigate(OverlayNavKey.DataExport) },
-                        onNavigateToPermanentDelete = { onNavigate(OverlayNavKey.PermanentDelete) },
+                        // 单一回调：6 个子页统一入口，子项 onClick 通过 onNavigate(targetKey) 触发
+                        onNavigate = onNavigate,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yjtzc.bluelink.ui.mine.components.scaledFontSize
 import com.yjtzc.bluelink.ui.mine.components.MineSectionTitle
+import com.yjtzc.bluelink.ui.navigation.OverlayNavKey
 
 // 原型色板
 private val RiceWhite = Color(0xFFFAF7F2)
@@ -47,16 +48,22 @@ private val SliderInactive = Color(0xFFDEDCD8)
 private val SwitchOff = Color(0xFFD8D5CF)
 private val DangerColor = Color(0xFFD9605B)
 
+/**
+ * 「我的」Tab 主屏幕。
+ *
+ * V2.2 Nav3 迁移：6 个 `onNavigateTo*` 回调收敛为单个 `onNavigate: (OverlayNavKey) -> Unit`。
+ * 子项点击统一通过 `onNavigate(目标 key)` 通知父级（[com.yjtzc.bluelink.ui.navigation.BlueLinkNavGraph]），
+ * 由父级 push 到覆盖层 back stack —— 子屏幕不直接耦合 OverlayNavGraph / NavDisplay。
+ *
+ * @param viewModel MineViewModel（提供 profile 等偏好与设置 state）
+ * @param modifier 外部 modifier（padding / fillMaxSize 等）
+ * @param onNavigate 覆盖层跳转回调（接收 [OverlayNavKey] 子类型作为目标）
+ */
 @Composable
 fun MineScreen(
     viewModel: MineViewModel,
     modifier: Modifier = Modifier,
-    onNavigateToAppearance: () -> Unit = {},
-    onNavigateToCognitive: () -> Unit = {},
-    onNavigateToPrivacySecurity: () -> Unit = {},
-    onNavigateToPermission: () -> Unit = {},
-    onNavigateToDataExport: () -> Unit = {},
-    onNavigateToPermanentDelete: () -> Unit = {}
+    onNavigate: (OverlayNavKey) -> Unit = {}
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
 
@@ -76,7 +83,7 @@ fun MineScreen(
             )
         }
         item {
-            HeroIdentityCard(onEditClick = onNavigateToAppearance)
+            HeroIdentityCard(onEditClick = { onNavigate(OverlayNavKey.Appearance) })
             Spacer(Modifier.height(8.dp))
         }
         item {
@@ -85,23 +92,23 @@ fun MineScreen(
                 granularityLabel = granularityLabel(profile.defaultGranularity),
                 exploreDepth = profile.exploreDepth,
                 companionStyleLabel = companionLabel(profile.companionStyle),
-                onClickGranularity = onNavigateToCognitive,
+                onClickGranularity = { onNavigate(OverlayNavKey.CognitiveSettings) },
                 onExploreDepthToggle = viewModel::toggleExploreDepth,
-                onClickCompanion = onNavigateToCognitive
+                onClickCompanion = { onNavigate(OverlayNavKey.CognitiveSettings) }
             )
         }
         item {
             MineSectionTitle("隐私与安全")
             PrivacySettingsPanel(
                 privacyModeLabel = privacyLabel(profile.privacyMode),
-                onClickPrivacy = onNavigateToPrivacySecurity,
-                onClickPermission = onNavigateToPermission,
-                onClickExport = onNavigateToDataExport
+                onClickPrivacy = { onNavigate(OverlayNavKey.PrivacySecurity) },
+                onClickPermission = { onNavigate(OverlayNavKey.PermissionManagement) },
+                onClickExport = { onNavigate(OverlayNavKey.DataExport) }
             )
         }
         item {
             MineSectionTitle("数据管理")
-            DangerCard(onClick = onNavigateToPermanentDelete)
+            DangerCard(onClick = { onNavigate(OverlayNavKey.PermanentDelete) })
             Spacer(Modifier.height(80.dp))
         }
     }

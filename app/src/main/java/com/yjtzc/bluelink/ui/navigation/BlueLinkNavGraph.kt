@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -167,17 +168,6 @@ fun BlueLinkNavGraph() {
             }
         }
 
-        // ====== Scrim 黑色遮罩（iOS-modal 风格）======
-        // 层级：在 Scaffold（底部 Tab + 内容）之上，OverlayNavGraph（zIndex 1f）之下
-        // 动画：与 overlay 同步淡入淡出（300ms），让背景 Tab 蒙黑纱聚焦到子页面
-        if (scrimAlpha > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = scrimAlpha))
-            )
-        }
-
         // ====== 覆盖层 Nav3（替代旧 OverlayLayer 手写动画）======
         // back stack 由本函数 hoist；OverlayNavGraph 渲染栈顶 entry 并处理系统返回手势
         OverlayNavGraph(
@@ -188,6 +178,22 @@ fun BlueLinkNavGraph() {
             // 栈只剩 NoOverlay 时按返回 —— 父级不需动作（系统 fallback 到 app minimize）
             onEmptyBack = { }
         )
+
+        // ====== Scrim 黑色遮罩（iOS-modal 风格）======
+        // 层级：在 OverlayNavGraph（zIndex 1f）之上（zIndex 2f）
+        // 动画：与 overlay 同步淡入淡出（300ms）
+        // 位置意义：
+        // - 一级 overlay 打开时（Tab → 子页）：scrim 在 overlay 之上，统一视觉
+        // - 嵌套 overlay 打开时（子页 → 子子页）：scrim 在所有 overlay 之上，二三级都可见
+        // - 用户从 overlay 返回时：scrim 同步淡出
+        if (scrimAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(2f)
+                    .background(Color.Black.copy(alpha = scrimAlpha))
+            )
+        }
     }
 }
 

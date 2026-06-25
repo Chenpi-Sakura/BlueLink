@@ -2,6 +2,7 @@ package com.yjtzc.bluelink.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,12 +58,12 @@ import com.yjtzc.bluelink.ui.reader.ReaderViewModel
 import kotlinx.coroutines.delay
 
 /**
- * 覆盖层 Nav3 容器 —— 替代旧版手写的 `OverlayLayer`（`movableContentOf` + `Animatable` + `graphicsLayer` 双 slot 状态机）。
+ * 覆盖层 Nav3 容器
  *
  * **架构**：
- * - 使用 Nav3 官方 [NavDisplay] + `rememberNavBackStack`，back stack 由父级 [BlueLinkNavGraph] 持有并 hoist
+ * - 使用 Nav3 [NavDisplay] + `rememberNavBackStack`，back stack 由父级 [BlueLinkNavGraph] 持有并 hoist
  * - 每个覆盖层目的地用 `entry<NavKey> { ... }` 注册（一个 key 对应一个 composable）
- * - 标准 Android push 动画在 NavDisplay 顶层 `transitionSpec` / `popTransitionSpec` / `predictivePopTransitionSpec` 配置
+ * - 过渡动画在 NavDisplay 顶层 `transitionSpec` / `popTransitionSpec` / `predictivePopTransitionSpec` 配置
  *
  * **NoOverlay 占位 entry**：
  * back stack 始终至少包含 [OverlayNavKey.NoOverlay]，保证：
@@ -72,13 +73,12 @@ import kotlinx.coroutines.delay
  *
  * **ViewModel 作用域**：
  * Nav3 把每个 entry 作为 `ViewModelStoreOwner`。`viewModel(factory = factory)` 默认 entry-scoped
- * （与旧版 activity-scoped 行为不同）。`MineViewModel` / `DataManagementViewModel` 之前被多个
- * 屏幕共享，现在每个 entry 一份新实例；这俩 VM 主要读 DataStore 偏好与 DB state，
- * 共享的数据本身在更底层，entry-scoped 没有功能影响。
+ * （每次 entry 进入都拿到同一 VM 实例，pop 后清除）。`MineViewModel` / `DataManagementViewModel`
+ * 共享数据（DataStore 偏好 / DB state）在更底层，entry-scoped 没有功能影响。
  *
  * **InspirationEditor 预加载**：
- * 旧版 [BlueLinkNavGraph] 里的「cardsFlow + produceState + cachedCard + readCardContent + 150ms 防闪」
- * 逻辑被搬移进 `entry<EditorRoute>` 块内（与 key 生命周期对齐，结构更紧凑）。
+ * `EditorRoute` entry 内部串接 cards Flow → 命中卡片 → 预加载完整内容 → 150ms debounce
+ * Spinner（避免 FOUC）→ 否则 'card not found' 提示。整个 pipeline 与 entry 生命周期对齐。
  *
  * @param backStack 父级 hoist 的 [NavBackStack]<[NavKey]>（[BlueLinkNavGraph] 持有，供 tab 回调 push）
  * @param snackbarHostState 共享 SnackbarHostState（与底部 Scaffold 共用，参数传递而非 CompositionLocal）
@@ -90,13 +90,14 @@ import kotlinx.coroutines.delay
 /**
  * Overlay 边缘阴影的 elevation 值（iOS-push drop shadow）
  *
- * iOS-push 没有全屏半透明黑色遮罩——新页面左侧边缘的 drop shadow + 旧页面自身
- * 稍微变暗（通过 `KeepUntilTransitionsFinished` 让旧页面驻留）就足以体现 Z 轴层次。
- * 默认直角矩形阴影契合 iOS-push 页面边缘直上直下的视觉。
- *
- * elevation 越大阴影扩散范围越广（更往外拉），更接近 iOS-push 真实观感。
+ * iOS-push 没有全屏半透明黑色遮罩——通过 `OVERLAY_SHADOW_ELEVATION` 在新页面左侧
+ * 边缘绘制 drop shadow 体现 Z 轴层次（结合 `KeepUntilTransitionsFinished` 让旧 entry
+ * 驻留）。elevation 越大阴影扩散范围越广，越接近 iOS-push 真实观感。
  */
 private val OVERLAY_SHADOW_ELEVATION = 24.dp
+
+/** 覆盖层过渡动画时长（push / pop / predictive pop 共用，保证视觉统一） */
+private val OVERLAY_ANIM_DURATION: FiniteAnimationSpec<IntOffset> = tween(durationMillis = 300)
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +108,7 @@ fun OverlayNavGraph(
     factory: BlueLinkViewModelFactory,
     onEmptyBack: () -> Unit
 ) {
-    // NavDisplay 容器覆盖全屏；NoOverlay entry 的 content 是空 Box（透明、不拦截事件）
+    // NavDisplay 容器覆盖全屏并设 zIndex 1f，保证覆盖在底部 Scaffold（含 NavigationBar）之上
     Box(Modifier.fillMaxSize().zIndex(1f)) {
         NavDisplay(
             backStack = backStack,
@@ -116,9 +117,8 @@ fun OverlayNavGraph(
                 else onEmptyBack()
             },
             entryProvider = entryProvider {
-                // ===== NoOverlay 占位 =====
-                // 透明 Box —— 覆盖层为「无」时让底部 tab 透出来
-                entry<OverlayNavKey.NoOverlay> { /* 空渲染 */ }
+                // ===== NoOverlay 占位（无 composable，覆盖层为「无」时让底部 tab 透出来） =====
+                entry<OverlayNavKey.NoOverlay> { }
 
                 // ===== Reader =====
                 entry<OverlayNavKey.ReaderRoute> { key ->
@@ -159,8 +159,6 @@ fun OverlayNavGraph(
                 }
 
                 // ===== Editor（含预加载逻辑）=====
-                // 搬移自旧 BlueLinkNavGraph.kt 的 cardsFlow + produceState + cachedCard +
-                // readCardContent + 150ms 防闪 + "card not found" snackbar 逻辑
                 entry<OverlayNavKey.EditorRoute> { key ->
                     Box(
                         Modifier
@@ -270,7 +268,6 @@ fun OverlayNavGraph(
                             .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val vm: MineViewModel = viewModel(factory = factory)
-                        // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
                         PrivacySecurityScreen(
                             viewModel = vm,
                             onBack = { backStack.removeLastOrNull() },
@@ -314,40 +311,26 @@ fun OverlayNavGraph(
                     }
                 }
             },
-            // ===== 统一动画：iOS-push 应用于所有 overlay 过渡（level 1+）=====
-            // 层级关系（自动从 backStack.size 推算，NavDisplay 内部已是新状态）：
-            // - backStack.size = 1：仅 NoOverlay（无 overlay）
-            // - backStack.size = 2：Level 1（一级 overlay，如 Reader/Editor/PrivacySecurity）
-            // - backStack.size = 3+：Level 2+（嵌套 overlay，如 PermissionManagement）
-            // - 栈顶 entry 的 level = backStack.size - 1
-            //
-            // 动画规则：所有 overlay 过渡统一 iOS-push（用户决策：彻底视觉统一）
-            // - push：新 overlay 从右滑入，旧 entry 驻留（KeepUntilTransitionsFinished）
+            // ===== 统一动画：所有 overlay 过渡使用 iOS-push（用户决策：彻底视觉统一）=====
+            // - push：新 overlay 从右滑入，旧 entry 驻留（KeepUntilTransitionsFinished 避免 unmount 丢状态）
             // - pop：旧 overlay 向右滑出，新 entry 驻留（EnterTransition.None）
-            // - predictive pop：同 pop
-            //
-            // 扩展性：以后想区分 level 动画，只需在 if 分支里加规则（如 level 1 用 fade, level 2+ 用 slide）
+            // - predictive pop：与 pop 同语义，时长统一用 OVERLAY_ANIM_DURATION
             transitionSpec = {
-                // iOS-push: 新 entry 从右滑入，旧 entry 驻留
-                // 适用于所有 level 1+ overlay（level 1 = 一级，level 2+ = 嵌套，统一动画）
                 slideInHorizontally(
                     initialOffsetX = { it },
-                    animationSpec = tween(300)
+                    animationSpec = OVERLAY_ANIM_DURATION
                 ) togetherWith ExitTransition.KeepUntilTransitionsFinished
             },
             popTransitionSpec = {
-                // iOS-push pop: 旧 entry 向右滑出，新 entry 驻留
-                // 适用于所有 level 1+ overlay pop
                 EnterTransition.None togetherWith slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(300)
+                    animationSpec = OVERLAY_ANIM_DURATION
                 )
             },
             predictivePopTransitionSpec = {
-                // predictive pop 同 pop
                 EnterTransition.None togetherWith slideOutHorizontally(
                     targetOffsetX = { fullWidth -> fullWidth },
-                    animationSpec = tween(300)
+                    animationSpec = OVERLAY_ANIM_DURATION
                 )
             }
         )

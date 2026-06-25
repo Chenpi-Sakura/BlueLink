@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 
 /**
  * 底部 4 Tab 导航目的地
+ *
+ * 4 个根 tab 的判别类型。与 [OverlayNavKey] 分离是因为 Tab 切换不属于 back stack
+ * 模型（点 Chat tab 不应把 Home 压栈），仅用 `mutableStateOf` 跟踪当前选中即可。
  */
 enum class NavDest(val label: String, val icon: Int) {
     HOME("灵感", R.drawable.ic_home),
@@ -31,15 +34,14 @@ enum class NavDest(val label: String, val icon: Int) {
     MINE("我的", R.drawable.ic_account_box)
 }
 
-// V2.2 旧版 ReaderParams / MineRoute / Overlay / TransitionDirection / SCRIM_ALPHA 已删除
-// 全部能力由 androidx.navigation3 + OverlayNavKey / OverlayNavGraph 替代
-// Scrim 改为 per-entry 实现（在 OverlayNavGraph 内部）
-
 /**
  * App 主导航骨架
  *
- * - 底部 4 Tab：灵感 / 对话 / 图谱 / 我的
- * - 覆盖层（阅读器、编辑器、我的子页）使用 AnimatedContent 实现右滑动画
+ * - 底部 4 Tab：灵感 / 对话 / 图谱 / 我的（[NavDest] 标识）
+ * - 覆盖层（阅读器、编辑器、我的子页）走 [OverlayNavGraph]（Nav3 实现）
+ *
+ * back stack hoist 在本函数（`OverlayNavKey.NoOverlay` 初始化），tab 回调通过
+ * `onNavigate` 闭包 push，OverlayNavGraph 通过参数消费。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,12 +52,10 @@ fun BlueLinkNavGraph() {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ===== V2.2 Nav3 迁移：覆盖层 back stack hoist 到 BlueLinkNavGraph =====
-    // 由 OverlayNavGraph 消费（NavDisplay.backStack），tab 回调通过 onNavigate 闭包 push
     val backStack = rememberNavBackStack(OverlayNavKey.NoOverlay)
     val onNavigate: (OverlayNavKey) -> Unit = { key -> backStack.add(key) }
 
-    // ===== 复用 ViewModelFactory（避免每帧 new）=====
+    // 复用 ViewModelFactory（避免每帧 new）
     val factory = remember(container) { BlueLinkViewModelFactory(container) }
 
     Box(Modifier.fillMaxSize()) {
@@ -63,7 +63,7 @@ fun BlueLinkNavGraph() {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                // 不再根据 overlay 状态隐藏 NavigationBar —— 由 overlay 的不透明背景自然盖住 Tab 栏（iOS-modal 模式）
+                // NavigationBar 始终渲染——子页用不透明背景自然盖住 Tab 栏（iOS-push 不需要瞬间隐藏）
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                     tonalElevation = 0.dp,
@@ -148,21 +148,14 @@ fun BlueLinkNavGraph() {
             }
         }
 
-        // ====== 覆盖层 Nav3（替代旧 OverlayLayer 手写动画）======
-        // back stack 由本函数 hoist；OverlayNavGraph 渲染栈顶 entry 并处理系统返回手势
-        // Scrim 改为 per-entry（在 OverlayNavGraph 内部实现）：每个 entry 在自己 Box 底部放 scrim
-        // 这样 scrim 在「上一级页面之上、下一级页面之下」（如 L2 的 scrim 在 L1 之上、L2 内容之下）
+        // 覆盖层 Nav3：back stack 由本函数 hoist，OverlayNavGraph 渲染栈顶 entry 并处理系统返回手势
         OverlayNavGraph(
             backStack = backStack,
             snackbarHostState = snackbarHostState,
             container = container,
             factory = factory,
-            // 栈只剩 NoOverlay 时按返回 —— 父级不需动作（系统 fallback 到 app minimize）
+            // 栈只剩 NoOverlay 时按返回——父级不需动作（系统 fallback 到 app minimize）
             onEmptyBack = { }
         )
     }
 }
-
-// V2.2 旧版 OverlayLayer composable（movableContentOf + Animatable + graphicsLayer + scrim 双 slot 状态机）
-// 已由 androidx.navigation3 + OverlayNavGraph 替代。相关 18 轮踩坑记录保留在
-// docs/debug/2026-06-24-overlay-animation-and-editor-debug.md。

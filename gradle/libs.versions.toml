@@ -18,7 +18,9 @@ moshi = "1.15.0"
 coil = "2.6.0"
 datastore = "1.1.1"
 security-crypto = "1.1.0-alpha06"
-navigation-compose = "2.7.7"
+# ===== V2.2 新增：Nav3 导航 =====
+nav3 = "1.1.3"
+kotlinx-serialization = "1.7.3"
 lifecycle-viewmodel-compose = "2.7.0"
 coroutines = "1.8.0"
 coroutines-android = "1.8.0"
@@ -70,7 +72,10 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security-crypto" }
 
 # ====== V2.1 新增：导航 ======
-androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-compose" }
+# ====== V2.2 切换到 Nav3，移除 Nav2 ======
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "nav3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "nav3" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # ====== V2.1 新增：ViewModel ======
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
@@ -84,3 +89,5 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+# ===== V2.2 新增：kotlinx-serialization 插件（Nav3 @Serializable NavKey 编译期生成） =====
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

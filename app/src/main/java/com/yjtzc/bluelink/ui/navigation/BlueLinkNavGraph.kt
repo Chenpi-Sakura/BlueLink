@@ -54,6 +54,10 @@ fun BlueLinkNavGraph() {
     val backStack = rememberNavBackStack(OverlayNavKey.NoOverlay)
     val onNavigate: (OverlayNavKey) -> Unit = { key -> backStack.add(key) }
 
+    // 派生状态：是否有 overlay 打开（栈大小 > 1 意味着栈顶有 overlay，NoOverlay 是唯一时 = 无 overlay）
+    // 用于隐藏底部 NavigationBar（iOS-modal 模式：overlay 打开时主导航栏隐藏）
+    val isAnyOverlayOpen = backStack.size > 1
+
     // ===== 复用 ViewModelFactory（避免每帧 new）=====
     val factory = remember(container) { BlueLinkViewModelFactory(container) }
 
@@ -62,41 +66,44 @@ fun BlueLinkNavGraph() {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                    tonalElevation = 0.dp,
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .height(64.dp)
-                ) {
-                    NavDest.entries.forEach { dest ->
-                        val selected = currentDest == dest
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { currentDest = dest },
-                            icon = {
-                                Icon(
-                                    painterResource(dest.icon),
-                                    contentDescription = dest.label,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    dest.label,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = KleinBlue,
-                                selectedTextColor = KleinBlue,
-                                unselectedIconColor = Ink400,
-                                unselectedTextColor = Ink400,
-                                indicatorColor = KleinBlue.copy(alpha = 0.08f)
-                            ),
-                            alwaysShowLabel = true
-                        )
+                // overlay 打开时隐藏 NavigationBar，避免「Tab 栏在动、子页在动」的视觉混乱
+                if (!isAnyOverlayOpen) {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        tonalElevation = 0.dp,
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .height(64.dp)
+                    ) {
+                        NavDest.entries.forEach { dest ->
+                            val selected = currentDest == dest
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = { currentDest = dest },
+                                icon = {
+                                    Icon(
+                                        painterResource(dest.icon),
+                                        contentDescription = dest.label,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        dest.label,
+                                        fontSize = 10.sp,
+                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = KleinBlue,
+                                    selectedTextColor = KleinBlue,
+                                    unselectedIconColor = Ink400,
+                                    unselectedTextColor = Ink400,
+                                    indicatorColor = KleinBlue.copy(alpha = 0.08f)
+                                ),
+                                alwaysShowLabel = true
+                            )
+                        }
                     }
                 }
             }

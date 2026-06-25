@@ -1,5 +1,7 @@
 package com.yjtzc.bluelink.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -249,31 +251,40 @@ fun OverlayNavGraph(
                     )
                 }
             },
-            // ===== Google recipe 标准 Android push 动画 =====
-            // 动画时长 300ms（recipe 用 1000ms 是 demo）；new 从右滑入 / old 向左滑出
+            // ===== 统一动画：iOS-push 应用于所有 overlay 过渡（level 1+）=====
+            // 层级关系（自动从 backStack.size 推算，NavDisplay 内部已是新状态）：
+            // - backStack.size = 1：仅 NoOverlay（无 overlay）
+            // - backStack.size = 2：Level 1（一级 overlay，如 Reader/Editor/PrivacySecurity）
+            // - backStack.size = 3+：Level 2+（嵌套 overlay，如 PermissionManagement）
+            // - 栈顶 entry 的 level = backStack.size - 1
+            //
+            // 动画规则：所有 overlay 过渡统一 iOS-push（用户决策：彻底视觉统一）
+            // - push：新 overlay 从右滑入，旧 entry 驻留（KeepUntilTransitionsFinished）
+            // - pop：旧 overlay 向右滑出，新 entry 驻留（EnterTransition.None）
+            // - predictive pop：同 pop
+            //
+            // 扩展性：以后想区分 level 动画，只需在 if 分支里加规则（如 level 1 用 fade, level 2+ 用 slide）
             transitionSpec = {
+                // push 时 backStack 是新状态，新 entry 的 level = backStack.size - 1
+                val targetLevel = backStack.size - 1
+                check(targetLevel >= 1) { "push target 必须是 level 1+ overlay" }
                 slideInHorizontally(
                     initialOffsetX = { it },
                     animationSpec = tween(300)
-                ) togetherWith slideOutHorizontally(
-                    targetOffsetX = { -it },
-                    animationSpec = tween(300)
-                )
+                ) togetherWith ExitTransition.KeepUntilTransitionsFinished
             },
             popTransitionSpec = {
-                slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(300)
-                ) togetherWith slideOutHorizontally(
+                // pop 时 backStack 是新状态，被退出的 entry 的 level = backStack.size
+                val sourceLevel = backStack.size
+                check(sourceLevel >= 1) { "pop source 必须是 level 1+ overlay" }
+                EnterTransition.None togetherWith slideOutHorizontally(
                     targetOffsetX = { it },
                     animationSpec = tween(300)
                 )
             },
             predictivePopTransitionSpec = {
-                slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(300)
-                ) togetherWith slideOutHorizontally(
+                // predictive pop 同 pop
+                EnterTransition.None togetherWith slideOutHorizontally(
                     targetOffsetX = { it },
                     animationSpec = tween(300)
                 )

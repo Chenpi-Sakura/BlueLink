@@ -96,10 +96,20 @@ private const val SCRIM_ALPHA = 0.4f
 /**
  * Per-entry Scrim 黑色遮罩
  *
- * 放置在每个 overlay entry 自己 Box 的顶部（在 entry 内容之上）。
- * - 当只有 L1 打开：L1 的 scrim 覆盖在 L1 内容之上 → L1 内容被自己的 scrim 蒙黑
- * - 当 L2 打开时：L2 整个 entry（包括 L2 自己的 scrim）压上来，把 L1 整体盖住 → L1 的 scrim 也被盖住
- * - 下一级 entry 进来时，因为整个 entry 是「不透明整体」，本级 scrim 被自然遮住
+ * **Z 轴层级（从底到顶）**：
+ * 1. 底层：上一级内容（Tab 主页 / L1）—— 被压暗
+ * 2. 中间层：本 entry 的 scrim —— 压暗上一级（iOS-modal 核心）
+ * 3. 顶层：本 entry 的内容 —— 保持明亮、不透明
+ *
+ * **绘制顺序**：scrim 必须先画（在 Box 内放在 Screen 之前），才能垫在内容下面。
+ * - 错误：Box { Content(); Scrim() } → scrim 盖在自己内容上 → 新页面被自己蒙黑 ❌
+ * - 正确：Box { Scrim(); Content() } → scrim 垫在内容下 → 上一级被压暗 ✅
+ *
+ * **跨层级效果**：
+ * - 只有 L1 打开：L1 的 scrim 垫在 L1 内容下 → L1 内容清晰，Tab 被压暗
+ * - L1 → L2 切换：L2 整个 entry（含 L2 自己的 scrim + 内容）压上来，把 L1 整体盖住
+ *   L1 的 scrim 也被 L2 盖住，但 L2 又有自己的 scrim 垫底 → L1 被 L2 的 scrim 压暗
+ * - 任意返回：当前 entry 整体退场（包括自己的 scrim），上一级恢复明亮
  *
  * 动画：每次 entry 进入组合时 alpha 从 0 淡入到 SCRIM_ALPHA（300ms）
  */
@@ -146,9 +156,10 @@ fun OverlayNavGraph(
                 // ===== Reader =====
                 entry<OverlayNavKey.ReaderRoute> { key ->
                     val vm: ReaderViewModel = viewModel(factory = factory)
-                    // Per-entry scrim: 在自己 Box 顶部绘制 scrim（覆盖上一级内容），自己内容渲染在 scrim 之下
-                    // 下一级 entry 整体压上来时，会把这一级的 scrim 也盖住（正确层级）
+                    // Z 轴层级（从底到顶）：[上一级内容] → [OverlayScrim 压暗上一级] → [本 entry 内容清晰]
+                    // scrim 必须先画（放在 Screen 之前），才能垫在内容下面
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 先画：垫底，压暗上一级
                         Scaffold(
                             topBar = {
                                 TopAppBar(
@@ -175,8 +186,6 @@ fun OverlayNavGraph(
                                 modifier = Modifier.padding(innerPadding)
                             )
                         }
-                        // Scrim：覆盖在内容之上。下一级 entry 进来时整体压上来，本级 scrim 被遮住
-                        OverlayScrim()
                     }
                 }
 
@@ -185,6 +194,7 @@ fun OverlayNavGraph(
                 // readCardContent + 150ms 防闪 + "card not found" snackbar 逻辑
                 entry<OverlayNavKey.EditorRoute> { key ->
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底：压暗上一级
                         val cardsFlow = remember { container.captureRepository.observeAllCards() }
                         val cardsState = produceState<List<InspirationCardEntity>?>(
                             initialValue = null,
@@ -251,33 +261,33 @@ fun OverlayNavGraph(
                                 backStack.removeLastOrNull()
                             }
                         }
-                        OverlayScrim()
                     }
                 }
 
                 // ===== Mine 子页（6 个）=====
                 entry<OverlayNavKey.Appearance> {
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底
                         val vm: AppearanceViewModel = viewModel(factory = factory)
                         AppearanceSettingsScreen(
                             viewModel = vm,
                             onBack = { backStack.removeLastOrNull() }
                         )
-                        OverlayScrim()
                     }
                 }
                 entry<OverlayNavKey.CognitiveSettings> {
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底
                         val vm: MineViewModel = viewModel(factory = factory)
                         CognitiveSettingsScreen(
                             viewModel = vm,
                             onBack = { backStack.removeLastOrNull() }
                         )
-                        OverlayScrim()
                     }
                 }
                 entry<OverlayNavKey.PrivacySecurity> {
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底
                         val vm: MineViewModel = viewModel(factory = factory)
                         // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
                         PrivacySecurityScreen(
@@ -285,33 +295,32 @@ fun OverlayNavGraph(
                             onBack = { backStack.removeLastOrNull() },
                             onNavigate = { key -> backStack.add(key) }
                         )
-                        OverlayScrim()
                     }
                 }
                 entry<OverlayNavKey.PermissionManagement> {
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底
                         PermissionManagementScreen(onBack = { backStack.removeLastOrNull() })
-                        OverlayScrim()
                     }
                 }
                 entry<OverlayNavKey.DataExport> {
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底
                         val vm: DataManagementViewModel = viewModel(factory = factory)
                         DataExportScreen(
                             viewModel = vm,
                             onBack = { backStack.removeLastOrNull() }
                         )
-                        OverlayScrim()
                     }
                 }
                 entry<OverlayNavKey.PermanentDelete> {
                     Box(Modifier.fillMaxSize()) {
+                        OverlayScrim()  // 垫底
                         val vm: DataManagementViewModel = viewModel(factory = factory)
                         PermanentDeleteScreen(
                             viewModel = vm,
                             onBack = { backStack.removeLastOrNull() }
                         )
-                        OverlayScrim()
                     }
                 }
             },

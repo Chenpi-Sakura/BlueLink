@@ -265,18 +265,16 @@ fun OverlayNavGraph(
             //
             // 扩展性：以后想区分 level 动画，只需在 if 分支里加规则（如 level 1 用 fade, level 2+ 用 slide）
             transitionSpec = {
-                // push 时 backStack 是新状态，新 entry 的 level = backStack.size - 1
-                val targetLevel = backStack.size - 1
-                check(targetLevel >= 1) { "push target 必须是 level 1+ overlay" }
+                // iOS-push: 新 entry 从右滑入，旧 entry 驻留
+                // 适用于所有 level 1+ overlay（level 1 = 一级，level 2+ = 嵌套，统一动画）
                 slideInHorizontally(
                     initialOffsetX = { it },
                     animationSpec = tween(300)
                 ) togetherWith ExitTransition.KeepUntilTransitionsFinished
             },
             popTransitionSpec = {
-                // pop 时 backStack 是新状态，被退出的 entry 的 level = backStack.size
-                val sourceLevel = backStack.size
-                check(sourceLevel >= 1) { "pop source 必须是 level 1+ overlay" }
+                // iOS-push pop: 旧 entry 向右滑出，新 entry 驻留
+                // 适用于所有 level 1+ overlay pop
                 EnterTransition.None togetherWith slideOutHorizontally(
                     targetOffsetX = { it },
                     animationSpec = tween(300)

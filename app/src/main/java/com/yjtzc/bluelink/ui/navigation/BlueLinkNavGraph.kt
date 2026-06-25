@@ -1,9 +1,13 @@
 package com.yjtzc.bluelink.ui.navigation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,7 +35,13 @@ enum class NavDest(val label: String, val icon: Int) {
     MINE("我的", R.drawable.ic_account_box)
 }
 
-// V2.2 旧版 ReaderParams / MineRoute / Overlay / TransitionDirection / SCRIM_ALPHA 已删除
+/**
+ * Scrim 黑色遮罩的目标 alpha 值（iOS-modal 风格）
+ * 0.4 让底部 tab 页面看起来像蒙了一层黑纱，聚焦到子页面
+ */
+private const val SCRIM_ALPHA = 0.4f
+
+// V2.2 旧版 ReaderParams / MineRoute / Overlay / TransitionDirection 已删除
 // 全部能力由 androidx.navigation3 + OverlayNavKey / OverlayNavGraph 替代
 
 /**
@@ -53,6 +63,16 @@ fun BlueLinkNavGraph() {
     // 由 OverlayNavGraph 消费（NavDisplay.backStack），tab 回调通过 onNavigate 闭包 push
     val backStack = rememberNavBackStack(OverlayNavKey.NoOverlay)
     val onNavigate: (OverlayNavKey) -> Unit = { key -> backStack.add(key) }
+
+    // ===== Scrim 黑色遮罩 =====
+    // 派生状态：是否有 overlay 打开（栈大小 > 1 = 栈顶有 overlay，NoOverlay 是唯一时 = 无 overlay）
+    val isAnyOverlayOpen = backStack.size > 1
+    // scrim alpha：与 overlay 同步淡入淡出（300ms，与 NavDisplay 动画时长一致）
+    val scrimAlpha by animateFloatAsState(
+        targetValue = if (isAnyOverlayOpen) SCRIM_ALPHA else 0f,
+        animationSpec = tween(300),
+        label = "scrim"
+    )
 
     // ===== 复用 ViewModelFactory（避免每帧 new）=====
     val factory = remember(container) { BlueLinkViewModelFactory(container) }
@@ -145,6 +165,17 @@ fun BlueLinkNavGraph() {
                     )
                 }
             }
+        }
+
+        // ====== Scrim 黑色遮罩（iOS-modal 风格）======
+        // 层级：在 Scaffold（底部 Tab + 内容）之上，OverlayNavGraph（zIndex 1f）之下
+        // 动画：与 overlay 同步淡入淡出（300ms），让背景 Tab 蒙黑纱聚焦到子页面
+        if (scrimAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = scrimAlpha))
+            )
         }
 
         // ====== 覆盖层 Nav3（替代旧 OverlayLayer 手写动画）======

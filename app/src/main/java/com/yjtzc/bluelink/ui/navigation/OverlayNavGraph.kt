@@ -93,8 +93,10 @@ import kotlinx.coroutines.delay
  * iOS-push 没有全屏半透明黑色遮罩——新页面左侧边缘的 drop shadow + 旧页面自身
  * 稍微变暗（通过 `KeepUntilTransitionsFinished` 让旧页面驻留）就足以体现 Z 轴层次。
  * 默认直角矩形阴影契合 iOS-push 页面边缘直上直下的视觉。
+ *
+ * elevation 越大阴影扩散范围越广（更往外拉），更接近 iOS-push 真实观感。
  */
-private val OVERLAY_SHADOW_ELEVATION = 8.dp
+private val OVERLAY_SHADOW_ELEVATION = 24.dp
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -125,7 +127,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         Scaffold(
                             topBar = {
@@ -163,7 +165,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val cardsFlow = remember { container.captureRepository.observeAllCards() }
                         val cardsState = produceState<List<InspirationCardEntity>?>(
@@ -239,7 +241,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val vm: AppearanceViewModel = viewModel(factory = factory)
                         AppearanceSettingsScreen(
@@ -252,7 +254,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val vm: MineViewModel = viewModel(factory = factory)
                         CognitiveSettingsScreen(
@@ -265,7 +267,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val vm: MineViewModel = viewModel(factory = factory)
                         // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
@@ -280,7 +282,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         PermissionManagementScreen(onBack = { backStack.removeLastOrNull() })
                     }
@@ -289,7 +291,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val vm: DataManagementViewModel = viewModel(factory = factory)
                         DataExportScreen(
@@ -302,7 +304,7 @@ fun OverlayNavGraph(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION, clip = false)
                     ) {
                         val vm: DataManagementViewModel = viewModel(factory = factory)
                         PermanentDeleteScreen(
@@ -344,7 +346,7 @@ fun OverlayNavGraph(
             predictivePopTransitionSpec = {
                 // predictive pop 同 pop
                 EnterTransition.None togetherWith slideOutHorizontally(
-                    targetOffsetX = { it },
+                    targetOffsetX = { fullWidth -> fullWidth },
                     animationSpec = tween(300)
                 )
             }

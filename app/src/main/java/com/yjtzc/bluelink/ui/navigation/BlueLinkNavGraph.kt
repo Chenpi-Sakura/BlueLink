@@ -30,6 +30,13 @@ import com.yjtzc.bluelink.ui.chat.ChatScreen
 import com.yjtzc.bluelink.ui.graph.GraphScreen
 import com.yjtzc.bluelink.ui.home.HomeScreen
 import com.yjtzc.bluelink.ui.mine.AppearanceSettingsScreen
+import cafe.adriel.voyager.navigator.tab.CurrentTab
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
+import cafe.adriel.voyager.navigator.tab.TabNavigator
+import com.yjtzc.bluelink.ui.navigation.screen.ChatVoyagerScreen
+import com.yjtzc.bluelink.ui.navigation.screen.GraphVoyagerScreen
+import com.yjtzc.bluelink.ui.navigation.screen.HomeVoyagerScreen
+import com.yjtzc.bluelink.ui.navigation.screen.MineVoyagerScreen
 import com.yjtzc.bluelink.ui.mine.CognitiveSettingsScreen
 import com.yjtzc.bluelink.ui.mine.MineScreen
 import com.yjtzc.bluelink.ui.mine.MineViewModel
@@ -51,16 +58,6 @@ import com.yjtzc.bluelink.ui.editor.InspirationEditorScreen
 import com.yjtzc.bluelink.util.LocalAppContainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-/**
- * 底部 4 Tab 导航目的地
- */
-enum class NavDest(val label: String, val icon: Int) {
-    HOME("灵感", R.drawable.ic_home),
-    CHAT("对话", R.drawable.ic_chat),
-    GRAPH("图谱", R.drawable.ic_graph),
-    MINE("我的", R.drawable.ic_account_box)
-}
 
 /**
  * 阅读器导航参数
@@ -121,11 +118,12 @@ private const val SCRIM_ALPHA = 0.4f
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlueLinkNavGraph() {
-    var currentDest by remember { mutableStateOf(NavDest.HOME) }
+    // ===== 阶段 1：用 Voyager TabNavigator 替换原 currentDest state =====
+    // 阶段 1 仅迁移 Tab 切换：底 NavigationBar + 4 个 VoyagerScreen
+    // OverlayLayer（readerParams/editorCardId/mineRoute/mineFromRoute 状态机）完全保留——所有 push/pop 走原 OverlayLayer
+    // 阶段 2 才把 push/pop 改为 Voyager Navigator.push/pop，删除 state machine
     var readerParams by remember { mutableStateOf<ReaderParams?>(null) }
     var editorCardId by remember { mutableStateOf<String?>(null) }
-
-    // 我的模块子页面导航
     var mineRoute by remember { mutableStateOf<MineRoute?>(null) }
     var mineFromRoute by remember { mutableStateOf<MineRoute?>(null) }
 
@@ -158,96 +156,99 @@ fun BlueLinkNavGraph() {
     }
 
     Box(Modifier.fillMaxSize()) {
-        // ====== 底部 Tab 导航（始终组合） ======
-        Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            bottomBar = {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                    tonalElevation = 0.dp,
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .height(64.dp)
-                ) {
-                    NavDest.entries.forEach { dest ->
-                        val selected = currentDest == dest
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { currentDest = dest },
-                            icon = {
-                                Icon(
-                                    painterResource(dest.icon),
-                                    contentDescription = dest.label,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    dest.label,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = KleinBlue,
-                                selectedTextColor = KleinBlue,
-                                unselectedIconColor = Ink400,
-                                unselectedTextColor = Ink400,
-                                indicatorColor = KleinBlue.copy(alpha = 0.08f)
-                            ),
-                            alwaysShowLabel = true
-                        )
+        // ===== 阶段 1：底部 Tab 导航改用 Voyager TabNavigator =====
+        TabNavigator(HomeVoyagerScreen()) { tabNavigator ->
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        tonalElevation = 0.dp,
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .height(64.dp)
+                    ) {
+                        val tabs = remember { listOf(
+                            HomeVoyagerScreen(),
+                            ChatVoyagerScreen(),
+                            GraphVoyagerScreen(),
+                            MineVoyagerScreen()
+                        ) }
+                        val tabIcons = remember { listOf(
+                            R.drawable.ic_home,
+                            R.drawable.ic_chat,
+                            R.drawable.ic_graph,
+                            R.drawable.ic_account_box
+                        ) }
+                        tabs.forEachIndexed { index, tab ->
+                            val selected = tabNavigator.current == tab
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = { tabNavigator.current = tab },
+                                icon = { Icon(painterResource(tabIcons.getOrElse(index) { R.drawable.ic_home }), contentDescription = tab.options.title, modifier = Modifier.size(24.dp)) },
+                                label = { Text(tab.options.title, fontSize = 10.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = KleinBlue,
+                                    selectedTextColor = KleinBlue,
+                                    unselectedIconColor = Ink400,
+                                    unselectedTextColor = Ink400,
+                                    indicatorColor = KleinBlue.copy(alpha = 0.08f)
+                                ),
+                                alwaysShowLabel = true
+                            )
+                        }
                     }
                 }
-            }
-        ) { innerPadding ->
-            when (currentDest) {
-                NavDest.HOME -> HomeScreen(
-                    viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
-                    // TODO: 接入暗色模式 state（当前临时硬编码 false，build 通过优先）
-                    isDarkMode = false,
-                    // TODO: 接入搜索意图（当前 no-op，build 通过优先）
-                    onSearch = { /* TODO: 跳转到 SearchScreen */ },
-                    // TODO: 接入抽屉打开（当前 no-op，build 通过优先）
-                    onOpenDrawer = { /* TODO: 打开侧滑抽屉 */ },
-                    // TODO: 接入暗色模式切换（当前 no-op，build 通过优先）
-                    onToggleDarkMode = { /* TODO: 切换 dark/light theme */ },
-                    onOpenInspiration = { cardId -> editorCardId = cardId },
-                    modifier = Modifier.padding(innerPadding)
-                )
-                NavDest.CHAT -> ChatScreen(
-                    viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
-                    onNavigateToReader = { segmentId ->
-                        scope.launch {
-                            val segment = container.documentRepository.getSegmentById(segmentId)
-                            if (segment != null) {
-                                readerParams = ReaderParams(
-                                    docId = segment.docId,
-                                    spotlightSegmentId = segmentId
-                                )
-                            } else {
-                                snackbarHostState.showSnackbar(message = "未找到该锚点对应的文档片段")
-                            }
+            ) { innerPadding ->
+                // 阶段 1：Tab 切换用 Voyager TabNavigator，但二级页面回调仍直接设置 BlueLinkNavGraph 的 state
+                //（editorCardId / readerParams / mineRoute 等），不走 navigator.push（阶段 2 才接）
+                // 这样 Tab 切换 TabNavigator 负责、二级页面行为完全保留
+                Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    when (tabNavigator.current) {
+                        is HomeVoyagerScreen -> HomeScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            isDarkMode = false,
+                            onSearch = { },
+                            onOpenDrawer = { },
+                            onToggleDarkMode = { },
+                            onOpenInspiration = { cardId -> editorCardId = cardId },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        is ChatVoyagerScreen -> ChatScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            onNavigateToReader = { segmentId ->
+                                scope.launch {
+                                    val segment = container.documentRepository.getSegmentById(segmentId)
+                                    if (segment != null) {
+                                        readerParams = ReaderParams(
+                                            docId = segment.docId,
+                                            spotlightSegmentId = segmentId
+                                        )
+                                    } else {
+                                        snackbarHostState.showSnackbar(message = "未找到该锚点对应的文档片段")
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        is GraphVoyagerScreen -> GraphScreen(
+                            viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        is MineVoyagerScreen -> {
+                            val mineVM: MineViewModel = viewModel(factory = BlueLinkViewModelFactory(container))
+                            MineScreen(
+                                viewModel = mineVM,
+                                onNavigateToAppearance = { mineFromRoute = null; mineRoute = MineRoute.Appearance },
+                                onNavigateToCognitive = { mineFromRoute = null; mineRoute = MineRoute.CognitiveSettings },
+                                onNavigateToPrivacySecurity = { mineFromRoute = null; mineRoute = MineRoute.PrivacySecurity },
+                                onNavigateToPermission = { mineFromRoute = null; mineRoute = MineRoute.PermissionManagement },
+                                onNavigateToDataExport = { mineFromRoute = null; mineRoute = MineRoute.DataExport },
+                                onNavigateToPermanentDelete = { mineFromRoute = null; mineRoute = MineRoute.PermanentDelete },
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
-                    },
-                    modifier = Modifier.padding(innerPadding)
-                )
-                NavDest.GRAPH -> GraphScreen(
-                    viewModel = viewModel(factory = BlueLinkViewModelFactory(container)),
-                    modifier = Modifier.padding(innerPadding)
-                )
-                NavDest.MINE -> {
-                    val mineViewModel: MineViewModel = viewModel(factory = BlueLinkViewModelFactory(container))
-                    MineScreen(
-                        viewModel = mineViewModel,
-                        onNavigateToAppearance = { mineFromRoute = null; mineRoute = MineRoute.Appearance },
-                        onNavigateToCognitive = { mineFromRoute = null; mineRoute = MineRoute.CognitiveSettings },
-                        onNavigateToPrivacySecurity = { mineFromRoute = null; mineRoute = MineRoute.PrivacySecurity },
-                        onNavigateToPermission = { mineFromRoute = null; mineRoute = MineRoute.PermissionManagement },
-                        onNavigateToDataExport = { mineFromRoute = null; mineRoute = MineRoute.DataExport },
-                        onNavigateToPermanentDelete = { mineFromRoute = null; mineRoute = MineRoute.PermanentDelete },
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    }
                 }
             }
         }

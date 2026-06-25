@@ -23,6 +23,9 @@ lifecycle-viewmodel-compose = "2.7.0"
 coroutines = "1.8.0"
 coroutines-android = "1.8.0"
 
+# ====== V2.2 新增：Voyager 导航（替代 androidx-navigation-compose） ======
+voyager = "1.0.1"
+
 [libraries]
 # ====== 已有 ======
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -69,8 +72,15 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 # ====== V2.1 新增：安全加密 ======
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security-crypto" }
 
-# ====== V2.1 新增：导航 ======
-androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-compose" }
+# ====== V2.1 新增：导航（Voyager 替代） ======
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-compose" }  # 保留兼容，但实际使用 Voyager
+
+# ====== V2.2 新增：Voyager 多平台导航 ======
+voyager-navigator = { group = "cafe.adriel.voyager", name = "voyager-navigator", version.ref = "voyager" }
+voyager-tab-navigator = { group = "cafe.adriel.voyager", name = "voyager-tab-navigator", version.ref = "voyager" }
+voyager-bottom-sheet-navigator = { group = "cafe.adriel.voyager", name = "voyager-bottom-sheet-navigator", version.ref = "voyager" }
+voyager-transitions = { group = "cafe.adriel.voyager", name = "voyager-transitions", version.ref = "voyager" }
+voyager-screenmodel = { group = "cafe.adriel.voyager", name = "voyager-screenmodel", version.ref = "voyager" }
 
 # ====== V2.1 新增：ViewModel ======
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }

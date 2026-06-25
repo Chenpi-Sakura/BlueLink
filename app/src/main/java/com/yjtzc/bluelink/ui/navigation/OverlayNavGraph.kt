@@ -2,6 +2,7 @@ package com.yjtzc.bluelink.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -10,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
@@ -84,6 +86,41 @@ import kotlinx.coroutines.delay
  * @param factory 复用父级 hoist 的 [BlueLinkViewModelFactory]
  * @param onEmptyBack 栈只剩 [OverlayNavKey.NoOverlay] 时回调（系统返回自动 fallback 到 app minimize）
  */
+
+/**
+ * Scrim 黑色遮罩的目标 alpha 值（iOS-modal 风格）
+ * 0.4 让上一级内容看起来像蒙了一层黑纱，聚焦到当前 entry
+ */
+private const val SCRIM_ALPHA = 0.4f
+
+/**
+ * Per-entry Scrim 黑色遮罩
+ *
+ * 放置在每个 overlay entry 自己 Box 的顶部（在 entry 内容之上）。
+ * - 当只有 L1 打开：L1 的 scrim 覆盖在 L1 内容之上 → L1 内容被自己的 scrim 蒙黑
+ * - 当 L2 打开时：L2 整个 entry（包括 L2 自己的 scrim）压上来，把 L1 整体盖住 → L1 的 scrim 也被盖住
+ * - 下一级 entry 进来时，因为整个 entry 是「不透明整体」，本级 scrim 被自然遮住
+ *
+ * 动画：每次 entry 进入组合时 alpha 从 0 淡入到 SCRIM_ALPHA（300ms）
+ */
+@Composable
+private fun OverlayScrim() {
+    // 每次 entry 进入组合时 alpha 从 0 开始，淡入到 SCRIM_ALPHA
+    // 用 animateFloatAsState + initialValue 保证淡入效果
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) SCRIM_ALPHA else 0f,
+        animationSpec = tween(300),
+        label = "scrim"
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = alpha))
+    )
+}
+
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun OverlayNavGraph(
@@ -109,31 +146,37 @@ fun OverlayNavGraph(
                 // ===== Reader =====
                 entry<OverlayNavKey.ReaderRoute> { key ->
                     val vm: ReaderViewModel = viewModel(factory = factory)
-                    Scaffold(
-                        topBar = {
-                            TopAppBar(
-                                title = { Text("阅读") },
-                                navigationIcon = {
-                                    IconButton(onClick = { backStack.removeLastOrNull() }) {
-                                        Icon(
-                                            Icons.AutoMirrored.Filled.ArrowBack,
-                                            contentDescription = "返回"
-                                        )
-                                    }
-                                },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.background
+                    // Per-entry scrim: 在自己 Box 顶部绘制 scrim（覆盖上一级内容），自己内容渲染在 scrim 之下
+                    // 下一级 entry 整体压上来时，会把这一级的 scrim 也盖住（正确层级）
+                    Box(Modifier.fillMaxSize()) {
+                        Scaffold(
+                            topBar = {
+                                TopAppBar(
+                                    title = { Text("阅读") },
+                                    navigationIcon = {
+                                        IconButton(onClick = { backStack.removeLastOrNull() }) {
+                                            Icon(
+                                                Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = "返回"
+                                            )
+                                        }
+                                    },
+                                    colors = TopAppBarDefaults.topAppBarColors(
+                                        containerColor = MaterialTheme.colorScheme.background
+                                    )
                                 )
+                            },
+                            snackbarHost = { SnackbarHost(snackbarHostState) }
+                        ) { innerPadding ->
+                            ReaderScreen(
+                                viewModel = vm,
+                                docId = key.docId,
+                                spotlightSegmentId = key.spotlightSegmentId,
+                                modifier = Modifier.padding(innerPadding)
                             )
-                        },
-                        snackbarHost = { SnackbarHost(snackbarHostState) }
-                    ) { innerPadding ->
-                        ReaderScreen(
-                            viewModel = vm,
-                            docId = key.docId,
-                            spotlightSegmentId = key.spotlightSegmentId,
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                        }
+                        // Scrim：覆盖在内容之上。下一级 entry 进来时整体压上来，本级 scrim 被遮住
+                        OverlayScrim()
                     }
                 }
 
@@ -141,114 +184,135 @@ fun OverlayNavGraph(
                 // 搬移自旧 BlueLinkNavGraph.kt 的 cardsFlow + produceState + cachedCard +
                 // readCardContent + 150ms 防闪 + "card not found" snackbar 逻辑
                 entry<OverlayNavKey.EditorRoute> { key ->
-                    val cardsFlow = remember { container.captureRepository.observeAllCards() }
-                    val cardsState = produceState<List<InspirationCardEntity>?>(
-                        initialValue = null,
-                        cardsFlow
-                    ) {
-                        cardsFlow.collect { value = it }
-                    }
-                    val cards = cardsState.value
-                    val card = cards?.find { it.id == key.cardId }
-
-                    // 缓存最后找到的 card，避免 Flow 中间态 emit 空列表时误判卡片不存在
-                    val cachedCard = remember(key.cardId) {
-                        mutableStateOf<InspirationCardEntity?>(null)
-                    }
-                    if (card != null) cachedCard.value = card
-                    val displayCard = card ?: cachedCard.value
-
-                    if (displayCard != null) {
-                        // 预加载完整内容（避免 blocks 数 1→N 跳变）
-                        val fullContentState = produceState<String?>(
+                    Box(Modifier.fillMaxSize()) {
+                        val cardsFlow = remember { container.captureRepository.observeAllCards() }
+                        val cardsState = produceState<List<InspirationCardEntity>?>(
                             initialValue = null,
-                            displayCard.id
+                            cardsFlow
                         ) {
-                            value = runCatching {
-                                container.captureRepository.readCardContent(displayCard)
-                            }.getOrNull()
+                            cardsFlow.collect { value = it }
                         }
-                        val fullContent = fullContentState.value
+                        val cards = cardsState.value
+                        val card = cards?.find { it.id == key.cardId }
 
-                        if (fullContent != null) {
-                            InspirationEditorScreen(
-                                card = displayCard,
-                                preloadedContent = fullContent,
-                                captureRepository = container.captureRepository,
-                                onBack = { backStack.removeLastOrNull() }
+                        // 缓存最后找到的 card，避免 Flow 中间态 emit 空列表时误判卡片不存在
+                        val cachedCard = remember(key.cardId) {
+                            mutableStateOf<InspirationCardEntity?>(null)
+                        }
+                        if (card != null) cachedCard.value = card
+                        val displayCard = card ?: cachedCard.value
+
+                        if (displayCard != null) {
+                            // 预加载完整内容（避免 blocks 数 1→N 跳变）
+                            val fullContentState = produceState<String?>(
+                                initialValue = null,
+                                displayCard.id
+                            ) {
+                                value = runCatching {
+                                    container.captureRepository.readCardContent(displayCard)
+                                }.getOrNull()
+                            }
+                            val fullContent = fullContentState.value
+
+                            if (fullContent != null) {
+                                InspirationEditorScreen(
+                                    card = displayCard,
+                                    preloadedContent = fullContent,
+                                    captureRepository = container.captureRepository,
+                                    onBack = { backStack.removeLastOrNull() }
+                                )
+                            } else {
+                                // 完整内容加载中：debounce 延迟显示 Spinner（避免 100ms 一闪而过的 FOUC）
+                                var showLoading by remember { mutableStateOf(false) }
+                                LaunchedEffect(Unit) {
+                                    delay(150)
+                                    showLoading = true
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.background),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (showLoading) CircularProgressIndicator()
+                                }
+                            }
+                        } else if (cards == null) {
+                            // Flow 还没 emit（正在查询数据库），loading 占位（必须有 opaque background 避免透出 HOME）
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background)
                             )
                         } else {
-                            // 完整内容加载中：debounce 延迟显示 Spinner（避免 100ms 一闪而过的 FOUC）
-                            var showLoading by remember { mutableStateOf(false) }
-                            LaunchedEffect(Unit) {
-                                delay(150)
-                                showLoading = true
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.background),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (showLoading) CircularProgressIndicator()
+                            // Flow 已 emit 且卡片确实不存在
+                            LaunchedEffect(key.cardId) {
+                                snackbarHostState.showSnackbar("灵感不存在或已被删除")
+                                backStack.removeLastOrNull()
                             }
                         }
-                    } else if (cards == null) {
-                        // Flow 还没 emit（正在查询数据库），loading 占位（必须有 opaque background 避免透出 HOME）
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                        )
-                    } else {
-                        // Flow 已 emit 且卡片确实不存在
-                        LaunchedEffect(key.cardId) {
-                            snackbarHostState.showSnackbar("灵感不存在或已被删除")
-                            backStack.removeLastOrNull()
-                        }
+                        OverlayScrim()
                     }
                 }
 
                 // ===== Mine 子页（6 个）=====
                 entry<OverlayNavKey.Appearance> {
-                    val vm: AppearanceViewModel = viewModel(factory = factory)
-                    AppearanceSettingsScreen(
-                        viewModel = vm,
-                        onBack = { backStack.removeLastOrNull() }
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        val vm: AppearanceViewModel = viewModel(factory = factory)
+                        AppearanceSettingsScreen(
+                            viewModel = vm,
+                            onBack = { backStack.removeLastOrNull() }
+                        )
+                        OverlayScrim()
+                    }
                 }
                 entry<OverlayNavKey.CognitiveSettings> {
-                    val vm: MineViewModel = viewModel(factory = factory)
-                    CognitiveSettingsScreen(
-                        viewModel = vm,
-                        onBack = { backStack.removeLastOrNull() }
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        val vm: MineViewModel = viewModel(factory = factory)
+                        CognitiveSettingsScreen(
+                            viewModel = vm,
+                            onBack = { backStack.removeLastOrNull() }
+                        )
+                        OverlayScrim()
+                    }
                 }
                 entry<OverlayNavKey.PrivacySecurity> {
-                    val vm: MineViewModel = viewModel(factory = factory)
-                    // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
-                    PrivacySecurityScreen(
-                        viewModel = vm,
-                        onBack = { backStack.removeLastOrNull() },
-                        onNavigate = { key -> backStack.add(key) }
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        val vm: MineViewModel = viewModel(factory = factory)
+                        // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
+                        PrivacySecurityScreen(
+                            viewModel = vm,
+                            onBack = { backStack.removeLastOrNull() },
+                            onNavigate = { key -> backStack.add(key) }
+                        )
+                        OverlayScrim()
+                    }
                 }
                 entry<OverlayNavKey.PermissionManagement> {
-                    PermissionManagementScreen(onBack = { backStack.removeLastOrNull() })
+                    Box(Modifier.fillMaxSize()) {
+                        PermissionManagementScreen(onBack = { backStack.removeLastOrNull() })
+                        OverlayScrim()
+                    }
                 }
                 entry<OverlayNavKey.DataExport> {
-                    val vm: DataManagementViewModel = viewModel(factory = factory)
-                    DataExportScreen(
-                        viewModel = vm,
-                        onBack = { backStack.removeLastOrNull() }
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        val vm: DataManagementViewModel = viewModel(factory = factory)
+                        DataExportScreen(
+                            viewModel = vm,
+                            onBack = { backStack.removeLastOrNull() }
+                        )
+                        OverlayScrim()
+                    }
                 }
                 entry<OverlayNavKey.PermanentDelete> {
-                    val vm: DataManagementViewModel = viewModel(factory = factory)
-                    PermanentDeleteScreen(
-                        viewModel = vm,
-                        onBack = { backStack.removeLastOrNull() }
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        val vm: DataManagementViewModel = viewModel(factory = factory)
+                        PermanentDeleteScreen(
+                            viewModel = vm,
+                            onBack = { backStack.removeLastOrNull() }
+                        )
+                        OverlayScrim()
+                    }
                 }
             },
             // ===== 统一动画：iOS-push 应用于所有 overlay 过渡（level 1+）=====

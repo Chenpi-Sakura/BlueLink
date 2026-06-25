@@ -2,7 +2,6 @@ package com.yjtzc.bluelink.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -11,7 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
@@ -88,48 +88,13 @@ import kotlinx.coroutines.delay
  */
 
 /**
- * Scrim 黑色遮罩的目标 alpha 值（iOS-modal 风格）
- * 0.4 让上一级内容看起来像蒙了一层黑纱，聚焦到当前 entry
+ * Overlay 边缘阴影的 elevation 值（iOS-push drop shadow）
+ *
+ * iOS-push 没有全屏半透明黑色遮罩——新页面左侧边缘的 drop shadow + 旧页面自身
+ * 稍微变暗（通过 `KeepUntilTransitionsFinished` 让旧页面驻留）就足以体现 Z 轴层次。
+ * 默认直角矩形阴影契合 iOS-push 页面边缘直上直下的视觉。
  */
-private const val SCRIM_ALPHA = 0.4f
-
-/**
- * Per-entry Scrim 黑色遮罩
- *
- * **Z 轴层级（从底到顶）**：
- * 1. 底层：上一级内容（Tab 主页 / L1）—— 被压暗
- * 2. 中间层：本 entry 的 scrim —— 压暗上一级（iOS-modal 核心）
- * 3. 顶层：本 entry 的内容 —— 保持明亮、不透明
- *
- * **绘制顺序**：scrim 必须先画（在 Box 内放在 Screen 之前），才能垫在内容下面。
- * - 错误：Box { Content(); Scrim() } → scrim 盖在自己内容上 → 新页面被自己蒙黑 ❌
- * - 正确：Box { Scrim(); Content() } → scrim 垫在内容下 → 上一级被压暗 ✅
- *
- * **跨层级效果**：
- * - 只有 L1 打开：L1 的 scrim 垫在 L1 内容下 → L1 内容清晰，Tab 被压暗
- * - L1 → L2 切换：L2 整个 entry（含 L2 自己的 scrim + 内容）压上来，把 L1 整体盖住
- *   L1 的 scrim 也被 L2 盖住，但 L2 又有自己的 scrim 垫底 → L1 被 L2 的 scrim 压暗
- * - 任意返回：当前 entry 整体退场（包括自己的 scrim），上一级恢复明亮
- *
- * 动画：每次 entry 进入组合时 alpha 从 0 淡入到 SCRIM_ALPHA（300ms）
- */
-@Composable
-private fun OverlayScrim() {
-    // 每次 entry 进入组合时 alpha 从 0 开始，淡入到 SCRIM_ALPHA
-    // 用 animateFloatAsState + initialValue 保证淡入效果
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) SCRIM_ALPHA else 0f,
-        animationSpec = tween(300),
-        label = "scrim"
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = alpha))
-    )
-}
+private val OVERLAY_SHADOW_ELEVATION = 8.dp
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -156,10 +121,12 @@ fun OverlayNavGraph(
                 // ===== Reader =====
                 entry<OverlayNavKey.ReaderRoute> { key ->
                     val vm: ReaderViewModel = viewModel(factory = factory)
-                    // Z 轴层级（从底到顶）：[上一级内容] → [OverlayScrim 压暗上一级] → [本 entry 内容清晰]
-                    // scrim 必须先画（放在 Screen 之前），才能垫在内容下面
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 先画：垫底，压暗上一级
+                    // iOS-push: 新页面自身不透明，左侧边缘 drop shadow 体现 Z 轴层次
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         Scaffold(
                             topBar = {
                                 TopAppBar(
@@ -193,8 +160,11 @@ fun OverlayNavGraph(
                 // 搬移自旧 BlueLinkNavGraph.kt 的 cardsFlow + produceState + cachedCard +
                 // readCardContent + 150ms 防闪 + "card not found" snackbar 逻辑
                 entry<OverlayNavKey.EditorRoute> { key ->
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底：压暗上一级
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         val cardsFlow = remember { container.captureRepository.observeAllCards() }
                         val cardsState = produceState<List<InspirationCardEntity>?>(
                             initialValue = null,
@@ -266,8 +236,11 @@ fun OverlayNavGraph(
 
                 // ===== Mine 子页（6 个）=====
                 entry<OverlayNavKey.Appearance> {
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         val vm: AppearanceViewModel = viewModel(factory = factory)
                         AppearanceSettingsScreen(
                             viewModel = vm,
@@ -276,8 +249,11 @@ fun OverlayNavGraph(
                     }
                 }
                 entry<OverlayNavKey.CognitiveSettings> {
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         val vm: MineViewModel = viewModel(factory = factory)
                         CognitiveSettingsScreen(
                             viewModel = vm,
@@ -286,8 +262,11 @@ fun OverlayNavGraph(
                     }
                 }
                 entry<OverlayNavKey.PrivacySecurity> {
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         val vm: MineViewModel = viewModel(factory = factory)
                         // V2.2 统一 onNavigate 回调（3 个 onNavigateTo* 已收敛）
                         PrivacySecurityScreen(
@@ -298,14 +277,20 @@ fun OverlayNavGraph(
                     }
                 }
                 entry<OverlayNavKey.PermissionManagement> {
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         PermissionManagementScreen(onBack = { backStack.removeLastOrNull() })
                     }
                 }
                 entry<OverlayNavKey.DataExport> {
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         val vm: DataManagementViewModel = viewModel(factory = factory)
                         DataExportScreen(
                             viewModel = vm,
@@ -314,8 +299,11 @@ fun OverlayNavGraph(
                     }
                 }
                 entry<OverlayNavKey.PermanentDelete> {
-                    Box(Modifier.fillMaxSize()) {
-                        OverlayScrim()  // 垫底
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .shadow(elevation = OVERLAY_SHADOW_ELEVATION)
+                    ) {
                         val vm: DataManagementViewModel = viewModel(factory = factory)
                         PermanentDeleteScreen(
                             viewModel = vm,
